@@ -26,7 +26,7 @@ class Node(object):
         self.y = y
 
 class Element(object):
-    def __init__(self, node_1,node_2):
+    def __init__(self, node_1, node_2):
         self.node_1 = node_1
         self.node_2 = node_2
 
