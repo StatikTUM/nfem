@@ -1,3 +1,4 @@
+import time
 import copy
 
 class History(object):
@@ -34,31 +35,36 @@ class Model(object):
     def __init__(self):
         self.elements = []
 
-node_1 = Node(0, 0)
-node_2 = Node(1, 1)
-node_3 = Node(2, 0)
-element_1 = Element(node_1, node_2)
-element_2 = Element(node_2, node_3)
+# TESTING
+n_elements = 100
+n_steps = 1000
 
+# create the initial model
 model = Model()
-model.elements.append(element_1)
-model.elements.append(element_2)
+for i in range(0, n_elements):
+    node_1 = Node(0, 0)
+    node_2 = Node(1, 1)
+    element_1 = Element(node_1, node_2)
+    model.elements.append(element_1)
 
-###############################
-step = 0
+# init history
 history = History(model)
-step += 1
-model.elements[0].node_2.y = 0.75
-history.AddModel(step, model)
-step += 1
-model.elements[0].node_2.y = 0.5
-history.AddModel(step, model)
-step += 1
-model.elements[0].node_2.y = 0.25
-history.AddModel(step, model)
+
+start = time.time()
+for step in range(1, n_steps):
+    #print("Add step ", step)
+    model.elements[0].node_2.y *= 0.99
+    history.AddModel(step, model)
+end = time.time()
+print("Adding models", end - start)
+
+start = time.time()
+for step in range(1, n_steps):
+    value = history.GetModel(step).elements[0].node_2.y
+    #print("Get step ", step, "value ", value)
+end = time.time()
+print("Using models", end - start)
 
 print("Initial value: ", history.GetModel(0).elements[0].node_2.y)
-print("Step 1 value: ", history.GetModel(1).elements[0].node_2.y)
-print("Step 2 value: ", history.GetModel(2).elements[0].node_2.y)
-print("Step 3 value: ", history.GetModel(3).elements[0].node_2.y)
 print("Current model value: ", model.elements[0].node_2.y)
+
