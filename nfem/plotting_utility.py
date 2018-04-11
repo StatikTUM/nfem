@@ -21,6 +21,7 @@ def plot_cont_animated(history,speed = 1):
             if type(value) == Truss:
                 node_a = value.node_a
                 node_b = value.node_b
+                # TODO LineCollection for speedup
                 ax.plot([node_a.x,node_b.x], [node_a.y,node_b.y], [node_a.z,node_b.z], color ='blue')
 
         ax.grid()
