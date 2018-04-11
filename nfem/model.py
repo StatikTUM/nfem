@@ -47,7 +47,7 @@ class Node(object):
             self.z += value
             return
 
-        raise RuntimeError(f'Node has no Dof of type {dof_type}')
+        raise RuntimeError('Node has no Dof of type {}'.format().format(dof_type))
 
 class Truss(ElementBase):
     """FIXME"""
@@ -147,7 +147,7 @@ class Model(object):
         """FIXME"""
 
         if id in self.nodes:
-            raise RuntimeError(f'The model already contains a node with id {id}')
+            raise RuntimeError('The model already contains a node with id {}'.format(id))
 
         self.nodes[id] = Node(id, x, y, z)
 
@@ -155,54 +155,51 @@ class Model(object):
         """FIXME"""
 
         if id in self.elements:
-            raise RuntimeError(f'The model already contains an element with id {id}')
-            
+            raise RuntimeError('The model already contains an element with id {}'.format(id))
+
         if node_a not in self.nodes:
-            raise RuntimeError(f'The model does not contain a node with id {node_a}')
+            raise RuntimeError('The model does not contain a node with id {}'.format(node_a))
 
         if node_b not in self.nodes:
-            raise RuntimeError(f'The model does not contain a node with id {node_b}')
+            raise RuntimeError('The model does not contain a node with id {}'.format(node_b))
 
         self.elements[id] = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area)
 
-    def AddDirichletCondition(self, node, dof_types, value):
+    def AddDirichletCondition(self, node_id, dof_types, value):
         """FIXME"""
 
-        if node not in self.nodes:
-            raise RuntimeError(f'The model does not contain a node with id {node}')
+        if node_id not in self.nodes:
+            raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
 
         for dof_type in dof_types:
-            dof = (node, dof_type)
+            dof = (node_id, dof_type)
 
             if dof in self.dirichlet_conditions:
-                raise RuntimeError(f'The model already contains a dirichlet condition for {dof}')
+                raise RuntimeError('The model already contains a dirichlet condition for {}'.format(dof))
 
             self.dirichlet_conditions[dof] = value
 
-    def AddSingleLoad(self, id, node, fu=0, fv=0, fw=0):
+    def AddSingleLoad(self, id, node_id, fu=0, fv=0, fw=0):
         """FIXME"""
 
         if id in self.elements:
-            raise RuntimeError(f'The model already contains an element with id {id}')
+            raise RuntimeError('The model already contains an element with id {}'.format(id))
 
-        if node not in self.nodes:
-            raise RuntimeError(f'The model does not contain a node with id {node}')
+        if node_id not in self.nodes:
+            raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
 
-        self.elements[id] = SingleLoad(id, self.nodes[node], fu, fv, fw)
+        self.elements[id] = SingleLoad(id, self.nodes[node_id], fu, fv, fw)
 
-    def PerformLinearSolutionStep(self):
+    def PerformLinearSolutionStep(self, lam=1.0):
         """Just for testing"""
 
-        model = deepcopy(self)
-
-        assembler = Assembler(model)
+        assembler = Assembler(self)
 
         dof_count = assembler.dof_count
 
         u = np.zeros(dof_count)
-        lam = 1.0
 
-        for dof, value in model.dirichlet_conditions.items():
+        for dof, value in self.dirichlet_conditions.items():
             index = assembler.IndexOfDof(dof)
             u[index] = value
 
@@ -223,6 +220,6 @@ class Model(object):
 
             value = u[index]
 
-            model.nodes[node_id].Update(dof_type, value)
+            self.nodes[node_id].Update(dof_type, value)
 
-        return model
+        return
