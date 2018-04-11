@@ -17,3 +17,6 @@ class History(object):
     def ResetHistoryToStep(self, step):
         self.history = self.history[0:step]
         return self.GetModel(step)
+    
+    def ReturnHistorySize(self):
+        return len(self.history)
