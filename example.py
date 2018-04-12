@@ -14,7 +14,7 @@ model.AddSingleLoad(id='F', node_id='B', fv=-1)
 
 n_steps = 10
 
-for lam in np.linspace(0, 10, n_steps):
+for lam in np.linspace(0, 10, n_steps+1):
     model = model.PerformLinearSolutionStep(lam)
 
 initial = model.GetInitialModel()

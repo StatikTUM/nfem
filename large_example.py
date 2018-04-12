@@ -42,7 +42,7 @@ for i in range(n_models):
     model.AddDirichletCondition(node_id=node_c, dof_types='uvw', value=0)
 
 # solving a linear system in each step
-for lam in np.linspace(0, 10, n_steps):
+for lam in np.linspace(0, 10, n_steps+1):
     model = model.PerformLinearSolutionStep(lam)
 
 history = model.GetModelHistory()

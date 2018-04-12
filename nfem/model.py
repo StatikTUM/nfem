@@ -47,7 +47,7 @@ class Node(object):
             self.z += value
             return
 
-        raise RuntimeError('Node has no Dof of type {}'.format().format(dof_type))
+        raise RuntimeError('Node has no Dof of type {}'.format(dof_type))
 
 class Truss(ElementBase):
     """FIXME"""
