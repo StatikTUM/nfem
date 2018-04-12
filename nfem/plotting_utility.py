@@ -30,7 +30,7 @@ def PlotAnimation(history, speed=1):
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
-        plt.title(f'Deformed structure at time step {step}\n{step_model.name}')
+        plt.title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
 
     a = anim.FuncAnimation(fig, Update, frames=history_size, repeat=True, interval=speed)
     plt.show()

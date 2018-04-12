@@ -334,7 +334,7 @@ class Model(object):
 
         model = self.Duplicate()
 
-        model.name = f'Linear solution step (lambda={lam:.3})'
+        model.name = 'Linear solution step (lambda={:.3f})'.format(lam)
 
         assembler = Assembler(model)
 
@@ -409,5 +409,5 @@ class Model(object):
         # remove iterations from history
         # TODO
 
-        model.name = f'Non linear solution step (lambda={lam:.3})'
+        model.name = 'Non linear solution step (lambda={:.3f})'.format(lam)
         return model
