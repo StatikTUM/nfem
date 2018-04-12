@@ -49,7 +49,7 @@ class Node(object):
         elif dof_type == 'w':
             self.z += value
         else:
-        raise RuntimeError('Node has no Dof of type {}'.format(dof_type))
+            raise RuntimeError('Node has no Dof of type {}'.format(dof_type))
 
 class Truss(ElementBase):
     """FIXME"""
@@ -70,37 +70,162 @@ class Truss(ElementBase):
 
         return [(a_id, 'u'), (a_id, 'v'), (a_id, 'w'), (b_id, 'u'), (b_id, 'v'), (b_id, 'w')]
 
+    def CalculateElasticStiffnessMatrix(self):
+        """FIXME"""
+
+        location_a = self.node_a.GetReferenceLocation()
+        location_b = self.node_b.GetReferenceLocation()
+        EA = self.youngs_modulus * self.area
+
+        dx, dy, dz = location_b - location_a
+
+        L = la.norm([dx, dy, dz])
+        L3 = L**3
+
+        k_e = np.zeros((6, 6))
+
+        k_e[0, 0] = (EA * dx * dx) / L3
+        k_e[3, 3] = k_e[0, 0]
+
+        k_e[1, 1] = (EA * dy * dy) / L3
+        k_e[4, 4] = k_e[1, 1]
+
+        k_e[2, 2] = (EA * dz * dz) / L3
+        k_e[5, 5] = k_e[2, 2]
+
+        k_e[0, 1] = (EA * dx * dy) / L3
+        k_e[1, 0] = k_e[0, 1]
+
+        k_e[0, 2] = (EA * dx * dz) / L3
+        k_e[2, 0] = k_e[0, 2]
+
+        k_e[0, 3] = -k_e[0, 0]
+        k_e[3, 0] = k_e[0, 3]
+
+        k_e[0, 4] = -k_e[0, 1]
+        k_e[4, 0] = k_e[0, 4]
+
+        k_e[0, 5] = -k_e[0, 2]
+        k_e[5, 0] = k_e[0, 5]
+
+        k_e[1, 2] = (EA * dy * dz) / L3
+        k_e[2, 1] = k_e[1, 2]
+
+        k_e[1, 3] = k_e[0, 4]
+        k_e[3, 1] = k_e[1, 3]
+
+        k_e[1, 4] = -k_e[1, 1]
+        k_e[4, 1] = k_e[1, 4]
+
+        k_e[1, 5] = -k_e[1, 2]
+        k_e[5, 1] = k_e[1, 5]
+
+        k_e[2, 3] = -k_e[0, 2]
+        k_e[3, 2] = k_e[2, 3]
+
+        k_e[2, 4] = -k_e[1, 2]
+        k_e[4, 2] = k_e[2, 4]
+
+        k_e[2, 5] = -k_e[2, 2]
+        k_e[5, 2] = k_e[2, 5]
+
+        k_e[3, 4] = k_e[0, 1]
+        k_e[4, 3] = k_e[3, 4]
+
+        k_e[3, 5] = k_e[0, 2]
+        k_e[5, 3] = k_e[3, 5]
+
+        k_e[4, 5] = k_e[1, 2]
+        k_e[5, 4] = k_e[4, 5]
+
+        return k_e
+
+    def CalculateGeometricStiffnessMatrix(self, u):
+        """FIXME"""
+
+        location_a = self.node_a.GetReferenceLocation()
+        location_b = self.node_b.GetReferenceLocation()
+        E = self.youngs_modulus
+        A = self.area
+
+        prestress = 0
+
+        du, dv, dw = u[3:] - u[3:]
+        dx, dy, dz = location_b - location_a
+
+        L = la.norm([dx, dy, dz])
+        l = la.norm([dx + du, dy + dv, dz + dw])
+
+        e_gL = (l**3 - L**2) / (2.00 * L**2)
+        L3 = L**3
+
+        K_sigma = ((E * A * e_gL) / L) + ((prestress * A) / L)
+        K_uij = (E * A) / L3
+
+        k_g = np.zeros((6, 6))
+
+        k_g[0, 0] = K_sigma + K_uij * (2 * du * dx + du * du)
+        k_g[3, 3] = k_g[0, 0]
+
+        k_g[1, 1] = K_sigma + K_uij * (2 * dv * dy + dv * dv)
+        k_g[4, 4] = k_g[1, 1]
+
+        k_g[2, 2] = K_sigma + K_uij * (2 * dw * dz + dw * dw)
+        k_g[5, 5] = k_g[2, 2]
+
+        k_g[0, 1] = K_uij * (dx * dv + dy * du + du * dv)
+        k_g[1, 0] = k_g[0, 1]
+
+        k_g[0, 2] = K_uij * (dx * dw + dz * du + du * dw)
+        k_g[2, 0] = k_g[0, 2]
+
+        k_g[0, 3] = -k_g[0, 0]
+        k_g[3, 0] = k_g[0, 3]
+
+        k_g[0, 4] = -k_g[0, 1]
+        k_g[4, 0] = k_g[0, 4]
+
+        k_g[0, 5] = -k_g[0, 2]
+        k_g[5, 0] = k_g[0, 5]
+
+        k_g[1, 2] = K_uij * (dy * dw + dz * dv + dv * dw)
+        k_g[2, 1] = k_g[1, 2]
+
+        k_g[1, 3] = k_g[0, 4]
+        k_g[3, 1] = k_g[1, 3]
+
+        k_g[1, 4] = -k_g[1, 1]
+        k_g[4, 1] = k_g[1, 4]
+
+        k_g[1, 5] = -k_g[1, 2]
+        k_g[5, 1] = k_g[1, 5]
+
+        k_g[2, 3] = -k_g[0, 2]
+        k_g[3, 2] = k_g[2, 3]
+
+        k_g[2, 4] = -k_g[1, 2]
+        k_g[4, 2] = k_g[2, 4]
+
+        k_g[2, 5] = -k_g[2, 2]
+        k_g[5, 2] = k_g[2, 5]
+
+        k_g[3, 4] = k_g[0, 1]
+        k_g[4, 3] = k_g[3, 4]
+
+        k_g[3, 5] = k_g[0, 2]
+        k_g[5, 3] = k_g[3, 5]
+
+        k_g[4, 5] = k_g[1, 2]
+        k_g[5, 4] = k_g[4, 5]
+
+        return k_g
+
     def Calculate(self, u, lam):
         """FIXME"""
 
-        youngs_modulus = self.youngs_modulus
-        area = self.area
-        node_a = self.node_a
-        node_b = self.node_b
-
-        location_a = np.array([node_a.reference_x + u[0], node_a.reference_y + u[1], node_a.reference_z + u[2]])
-        location_b = np.array([node_b.reference_x + u[3], node_b.reference_y + u[4], node_a.reference_z + u[5]])
-
-        vector_ab = location_b - location_a
-
-        length = la.norm(vector_ab)
-
-        c_x = vector_ab[0] / length
-        c_y = vector_ab[1] / length
-        c_z = vector_ab[2] / length
-
-        transformation_matrix = np.array([
-            [ c_x**2 ,  c_x*c_y,  c_x*c_z, - c_x**2, -c_x*c_y, -c_x*c_z],
-            [ c_x*c_y,   c_y**2,  c_y*c_z, -c_x*c_y, - c_y**2, -c_y*c_z],
-            [ c_x*c_z,  c_y*c_z,   c_z**2, -c_x*c_z, -c_y*c_z, - c_z**2],
-            [- c_x**2, -c_x*c_y, -c_x*c_z,   c_x**2,  c_x*c_y,  c_x*c_z],
-            [-c_x*c_y, - c_y**2, -c_y*c_z,  c_x*c_y,   c_y**2,  c_y*c_z],
-            [-c_x*c_z, -c_y*c_z, - c_z**2,  c_x*c_z,  c_y*c_z,   c_z**2],
-        ])
-
-        element_k_e = transformation_matrix * youngs_modulus * area / length
+        element_k_e = self.CalculateElasticStiffnessMatrix()
         element_k_u = None
-        element_k_g = None
+        element_k_g = self.CalculateGeometricStiffnessMatrix(u)
         element_f = None
 
         return element_k_e, element_k_u, element_k_g, element_f
