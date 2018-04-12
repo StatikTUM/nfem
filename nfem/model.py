@@ -143,7 +143,7 @@ class Truss(ElementBase):
         L = la.norm([dx, dy, dz])
         l = la.norm([dx + du, dy + dv, dz + dw])
 
-        e_gl = (l**3 - L**2) / (2.00 * L**2)
+        e_gl = (l**2 - L**2) / (2.00 * L**2)
         L3 = L**3
 
         K_sigma = ((E * A * e_gl) / L) + ((prestress * A) / L)
