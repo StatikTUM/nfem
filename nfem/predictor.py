@@ -32,7 +32,7 @@ class DisplacementIncrementPredictor(Predictor):
 
     def __init__(self, node_id, dof_type):
         if len(dof_type) != 1:
-            raise RuntimeError('Only single dof can be Incremented by this predictor')
+            raise RuntimeError('Only single dof can be incremented by this predictor')
         self.dof = (node_id, dof_type)
 
     def GetPredictor(self, model):

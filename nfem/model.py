@@ -395,7 +395,7 @@ class Model(object):
 
         return model
 
-    def PerformNonLinearSolutionStep(self, path_following_class=LoadControl, predictor_class=LoadIncrementPredictor, prescribed_value=1.0 ):
+    def PerformNonLinearSolutionStep(self, path_following_class=None, predictor_class=None, prescribed_value=1.0 ):
         """Currently hardcoded for LoadControl"""
 
         path_following_method = path_following_class(prescribed_value)
@@ -426,7 +426,7 @@ class Model(object):
             return LHS
         def Compute_RHS(x):
             # TODO assemble
-            pass RHS 
+            return RHS 
 
         # solve newton raphson
         x = NewtonRaphson().solve(Compute_LHS, compute_RHS, x_initial=x)
