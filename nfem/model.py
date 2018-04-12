@@ -6,6 +6,7 @@ import numpy as np
 import numpy.linalg as la
 
 from .assembler import Assembler
+from .newton_raphson import NewtonRaphson
 
 class ElementBase(object):
     """FIXME"""
@@ -142,6 +143,7 @@ class Model(object):
         self.elements = dict()
         self.dirichlet_conditions = dict()
         self.neumann_conditions = dict()
+        self.lam = None
         self.previous_model = None
 
     def AddNode(self, id, x, y, z):
@@ -264,4 +266,49 @@ class Model(object):
 
             model.nodes[node_id].Update(dof_type, value)
 
+        return model
+
+    def PerformNonLinearSolutionStep(self, path_following_class=LoadControl, predictor_class=LoadIncrementPredictor, prescribed_value=1.0 ):
+        """Currently hardcoded for LoadControl"""
+
+        path_following_method = path_following_class(prescribed_value)
+
+        # create a model for the predictor
+        predictor_model = self.Duplicate()
+        predictor_model.internal_flag = True
+
+        # calculate the direction of the predictor
+        predictor_model = predictor_class().Predict(predictor_model)
+
+        # rotate the predictor if necessary (e.g. for branch switching)
+
+        # scale the predictor so it fulfills the path following constraint
+        predictor_model = path_following_method.ScalePredictor(predictor_model)
+
+        # initialize working matrices and functions for newton raphson
+        assembler = Assembler(model)
+        dof_count = assembler.dof_count
+        LHS = np.zeros((dof_count+1,dof_count+1))
+        RHS = np.zeros(dof_count+1)
+        x = np.zeros(dof_count+1) # TODO assemble from model: u = x-reference_x
+        model = predictor_model
+        def UpdateModel(x):
+            pass # store a updated model if necessary
+        def Compute_LHS(x):
+            # TODO assemble
+            return LHS
+        def Compute_RHS(x):
+            # TODO assemble
+            pass RHS 
+
+        # solve newton raphson
+        x = NewtonRaphson().solve(Compute_LHS, compute_RHS, x_initial=x)
+
+        # update model (maybe this should happen already in newton raphson)
+        # TODO
+
+        # remove iterations from history
+        # TODO
+
+        model.name = f'Non linear solution step (lambda={lam:.3})'
         return model
