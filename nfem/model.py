@@ -32,6 +32,13 @@ class Node(object):
         self.reference_y = y
         self.reference_z = z
 
+    def GetReferenceLocation(self):
+        return np.array([
+            self.reference_x,
+            self.reference_y,
+            self.reference_z
+        ])
+
     def Update(self, dof_type, value):
         """FIXME"""
 
