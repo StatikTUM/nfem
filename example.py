@@ -1,4 +1,4 @@
-from nfem import Model, Assembler, History, plotting_utility
+from nfem import Model, PlotAnimation
 import numpy as np
 
 model = Model('Initial Model')
@@ -12,24 +12,26 @@ model.AddDirichletCondition(node_id='B', dof_types='w'  , value=0)
 model.AddDirichletCondition(node_id='C', dof_types='uvw', value=0)
 model.AddSingleLoad(id='F', node_id='B', fv=-1)
 
-history = History(model)
 n_steps = 10
-lam = 0.1
 
-for step in range(1,n_steps):
-    model.PerformLinearSolutionStep(lam*step)
-    history.AddModel(step, model)
+for lam in np.linspace(0, 10, n_steps):
+    model = model.PerformLinearSolutionStep(lam)
+
+initial = model.GetInitialModel()
+
+print(initial)
 
 print('Initial:')
-print(model.nodes['B'].x)
-print(model.nodes['B'].y)
-print(model.nodes['B'].z)
+print(initial.nodes['B'].x)
+print(initial.nodes['B'].y)
+print(initial.nodes['B'].z)
 
-for step in range(1,n_steps):
-    print('Deformed step',step,':')
-    deformed = history.GetModel(step)
+history = model.GetModelHistory()
+
+for step, deformed in enumerate(history):
+    print(f'Deformed step {step}:')
     print(deformed.nodes['B'].x)
     print(deformed.nodes['B'].y)
     print(deformed.nodes['B'].z)
 
-plotting_utility.plot_cont_animated(history,speed=10)
+PlotAnimation(history)

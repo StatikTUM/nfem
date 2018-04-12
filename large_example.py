@@ -1,4 +1,4 @@
-from nfem import Model, Assembler, History, plotting_utility
+from nfem import Model, PlotAnimation
 import numpy as np
 
 # Here, multiple two bar trusses are simulated at the same time to test efficiency
@@ -13,42 +13,46 @@ n_steps = 100
 model = Model('Initial Model')
 node_count = 0
 element_count = 0
-for i in range(0,n_models):
-    z = i*0.1
-    node_a = node_count
+
+for i in range(n_models):
+    id_offset = 100 * i
+
+    z = i * 0.1
+
+    node_a = id_offset + 1
+    node_b = id_offset + 2
+    node_c = id_offset + 3
+
     model.AddNode(id=node_a, x= 0, y=0, z=z)
-    node_count += 1
-    node_b = node_count
     model.AddNode(id=node_b, x= 5, y=2, z=z)
-    node_count += 1
-    node_c = node_count
     model.AddNode(id=node_c, x=10, y=0, z=z)
-    node_count += 1
-    model.AddTrussElement(id=element_count, node_a=node_a, node_b=node_b, youngs_modulus=10, area=2)
-    element_count += 1
-    model.AddTrussElement(id=element_count, node_a=node_b, node_b=node_c, youngs_modulus=10, area=2)
-    element_count += 1
+
+    truss_1 = id_offset + 11
+    truss_2 = id_offset + 12
+
+    model.AddTrussElement(id=truss_1, node_a=node_a, node_b=node_b, youngs_modulus=10, area=2)
+    model.AddTrussElement(id=truss_2, node_a=node_b, node_b=node_c, youngs_modulus=10, area=2)
+
+    load_b = id_offset + 21
+
+    model.AddSingleLoad(id=load_b, node_id=node_b, fv=-1)
+
     model.AddDirichletCondition(node_id=node_a, dof_types='uvw', value=0)
     model.AddDirichletCondition(node_id=node_b, dof_types='w'  , value=0)
     model.AddDirichletCondition(node_id=node_c, dof_types='uvw', value=0)
-    model.AddSingleLoad(id=element_count, node_id=node_b, fv=-1)
-    element_count += 1
-
-# initializing history
-history = History(model)
-lam = 0.1
 
 # solving a linear system in each step
-for step in range(1,n_steps):
-    model.PerformLinearSolutionStep(lam*step)
-    history.AddModel(step, model)
+for lam in np.linspace(0, 10, n_steps):
+    model = model.PerformLinearSolutionStep(lam)
 
-# print the result of one step
-print('Deformed step',n_steps,':')
-deformed = history.GetModel(n_steps-1)
-print(deformed.nodes[1].x)
-print(deformed.nodes[1].y)
-print(deformed.nodes[1].z)
+history = model.GetModelHistory()
+
+# print the result of last step
+deformed = history[-1]
+print(f'Deformed step {n_steps}:')
+print(deformed.nodes[2].x)
+print(deformed.nodes[2].y)
+print(deformed.nodes[2].z)
 
 # animated plot
-plotting_utility.plot_cont_animated(history,speed=1)
+PlotAnimation(history)

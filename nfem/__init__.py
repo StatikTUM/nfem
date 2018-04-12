@@ -2,4 +2,4 @@
 
 from .model import Model
 from .assembler import Assembler
-from .history import History
+from .plotting_utility import PlotAnimation

@@ -142,6 +142,7 @@ class Model(object):
         self.elements = dict()
         self.dirichlet_conditions = dict()
         self.neumann_conditions = dict()
+        self.previous_model = None
 
     def AddNode(self, id, x, y, z):
         """FIXME"""
@@ -190,16 +191,57 @@ class Model(object):
 
         self.elements[id] = SingleLoad(id, self.nodes[node_id], fu, fv, fw)
 
+    def GetInitialModel(self):
+        """FIXME"""
+
+        current_model = self
+
+        while current_model.previous_model is not None:
+            current_model = current_model.previous_model
+
+        return current_model
+
+    def GetModelHistory(self):
+        """FIXME"""
+
+        history = [self]
+
+        current_model = self
+
+        while current_model.previous_model is not None:
+            current_model = current_model.previous_model
+
+            history = [current_model] + history
+
+        return history
+
+    def Duplicate(self):
+        """FIXME"""
+
+        self_previous_model = self.previous_model
+        self.previous_model = None
+
+        clone = deepcopy(self)
+
+        self.previous_model = self_previous_model
+        clone.previous_model = self
+
+        return clone
+
     def PerformLinearSolutionStep(self, lam=1.0):
         """Just for testing"""
 
-        assembler = Assembler(self)
+        model = self.Duplicate()
+
+        model.name = f'Linear solution step (lambda={lam:.3})'
+
+        assembler = Assembler(model)
 
         dof_count = assembler.dof_count
 
         u = np.zeros(dof_count)
 
-        for dof, value in self.dirichlet_conditions.items():
+        for dof, value in model.dirichlet_conditions.items():
             index = assembler.IndexOfDof(dof)
             u[index] = value
 
@@ -220,6 +262,6 @@ class Model(object):
 
             value = u[index]
 
-            self.nodes[node_id].Update(dof_type, value)
+            model.nodes[node_id].Update(dof_type, value)
 
-        return
+        return model

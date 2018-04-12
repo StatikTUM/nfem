@@ -4,25 +4,24 @@ import matplotlib.animation as anim
 
 from .model import Truss
 
-def plot_cont_animated(history,speed = 1):
+def PlotAnimation(history, speed=1):
+    history_size = len(history)
 
-    history_size = history.ReturnHistorySize()
-    max_x,max_y,min_x,min_y,max_z,min_z = find_max_min_entry(history)
+    max_x, max_y, min_x, min_y, max_z, min_z = FindLimits(history)
 
     fig = plt.figure()
-    ax = fig.add_subplot(111,projection='3d')
+    ax = fig.add_subplot(111, projection='3d')
 
-
-    def update(step):
+    def Update(step):
         ax.clear()
-        step_model = history.GetModel(step)
-        for key, value in step_model.elements.items():
+        step_model = history[step]
+        for element in step_model.elements.values():
             # Truss elements
-            if type(value) == Truss:
-                node_a = value.node_a
-                node_b = value.node_b
+            if type(element) == Truss:
+                node_a = element.node_a
+                node_b = element.node_b
                 # TODO LineCollection for speedup
-                ax.plot([node_a.x,node_b.x], [node_a.y,node_b.y], [node_a.z,node_b.z], color ='blue')
+                ax.plot([node_a.x, node_b.x], [node_a.y, node_b.y], [node_a.z, node_b.z], color='blue')
 
         ax.grid()
         ax.set_xlim(min_x,max_x)
@@ -31,38 +30,23 @@ def plot_cont_animated(history,speed = 1):
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
-        plt.title('Deformed structure at time step %i' %step)
+        plt.title(f'Deformed structure at time step {step}\n{step_model.name}')
 
-
-
-    a = anim.FuncAnimation(fig, update, frames=history_size, repeat=True, interval = speed)
+    a = anim.FuncAnimation(fig, Update, frames=history_size, repeat=True, interval=speed)
     plt.show()
 
+def FindLimits(history):
+    """Finds the bounding box for all models in the history."""
 
-def find_max_min_entry(history):
-    ## find max entry for limits
-    max_x,max_y,min_x,min_y,max_z,min_z = 0.0,0.0,0.0,0.0,0.0,0.0
+    nodes = [node for model in history for node in model.nodes.values()]
 
-    history_size = history.ReturnHistorySize()
-    for step in range(history_size):
-        step_model = history.GetModel(step)
-        for key, value in step_model.nodes.items():
-            x_i = value.x
-            y_i = value.y
-            z_i = value.z
-            if x_i < min_x:
-                min_x = x_i
-            elif x_i > max_x:
-                max_x = x_i
+    min_x = min(node.x for node in nodes)
+    max_x = max(node.x for node in nodes)
 
-            if y_i < min_y:
-                min_y = y_i
-            elif y_i > max_y:
-                max_y = y_i
+    min_y = min(node.y for node in nodes)
+    max_y = max(node.y for node in nodes)
 
-            if z_i < min_z:
-                min_z = z_i
-            elif z_i > max_z:
-                max_z = z_i
+    min_z = min(node.z for node in nodes)
+    max_z = max(node.z for node in nodes)
 
-    return max_x,max_y,min_x,min_y,max_z,min_z
+    return max_x, max_y, min_x, min_y, max_z, min_z
