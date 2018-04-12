@@ -1,7 +1,10 @@
-from nfem import Model, PlotAnimation
+"""
+Here, multiple two bar trusses are simulated at the same time to test efficiency
+"""
+
 import numpy as np
 
-# Here, multiple two bar trusses are simulated at the same time to test efficiency
+from nfem import Model, PlotAnimation
 
 # Number of two bar trusses
 n_models = 100
@@ -23,8 +26,8 @@ for i in range(n_models):
     node_b = id_offset + 2
     node_c = id_offset + 3
 
-    model.AddNode(id=node_a, x= 0, y=0, z=z)
-    model.AddNode(id=node_b, x= 5, y=2, z=z)
+    model.AddNode(id=node_a, x=0, y=0, z=z)
+    model.AddNode(id=node_b, x=5, y=2, z=z)
     model.AddNode(id=node_c, x=10, y=0, z=z)
 
     truss_1 = id_offset + 11
@@ -38,7 +41,7 @@ for i in range(n_models):
     model.AddSingleLoad(id=load_b, node_id=node_b, fv=-1)
 
     model.AddDirichletCondition(node_id=node_a, dof_types='uvw', value=0)
-    model.AddDirichletCondition(node_id=node_b, dof_types='w'  , value=0)
+    model.AddDirichletCondition(node_id=node_b, dof_types='w', value=0)
     model.AddDirichletCondition(node_id=node_c, dof_types='uvw', value=0)
 
 # solving a linear system in each step
