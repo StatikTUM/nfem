@@ -44,16 +44,11 @@ class Node(object):
 
         if dof_type == 'u':
             self.x += value
-            return
-
-        if dof_type == 'v':
+        elif dof_type == 'v':
             self.y += value
-            return
-
-        if dof_type == 'w':
+        elif dof_type == 'w':
             self.z += value
-            return
-
+        else:
         raise RuntimeError('Node has no Dof of type {}'.format(dof_type))
 
 class Truss(ElementBase):
