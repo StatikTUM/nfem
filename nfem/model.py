@@ -137,7 +137,7 @@ class Truss(ElementBase):
 
         prestress = 0
 
-        du, dv, dw = u[3:] - u[3:]
+        du, dv, dw = u[3:] - u[:3]
         dx, dy, dz = location_b - location_a
 
         L = la.norm([dx, dy, dz])
