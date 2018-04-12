@@ -6,19 +6,19 @@ class NewtonRaphson(object):
         self.max_iterations = max_iterations
         self.tolerance = tolerance
 
-    def Solve(self, UpdateModel, compute_LHS, compute_RHS, x_initial):
+    def Solve(self, UpdateModel, Compute_LHS, Compute_RHS, x_initial):
         x = x_initial
         residual_norm = None
         for i in range(1,self.max_iterations):
             # check residual
-            RHS = compute_RHS(x)
+            RHS = Compute_RHS(x)
             residual_norm = np.linalg(RHS)
             if RHS < self.tolerance:
                 print('Newthon-Rapshon converged in step {}.'.format(i))
                 print('Residual norm:', residual_norm)
                 return x
             # compute delta_x
-            LHS = compute_LHS(x)
+            LHS = Compute_LHS(x)
             delta_x = np.linalg.solve(LHS, RHS)
             # update x
             x = x + delta_x

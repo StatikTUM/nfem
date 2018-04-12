@@ -8,6 +8,9 @@ import numpy.linalg as la
 from .assembler import Assembler
 from .newton_raphson import NewtonRaphson
 
+from .path_following_method import LoadControl
+from .predictor import LoadIncrementPredictor
+
 class ElementBase(object):
     """FIXME"""
 
@@ -242,7 +245,7 @@ class Model(object):
         self.elements = dict()
         self.dirichlet_conditions = dict()
         self.neumann_conditions = dict()
-        self.lam = None
+        self.lam = 0.0
         self.previous_model = None
 
     def AddNode(self, id, x, y, z):
@@ -367,8 +370,14 @@ class Model(object):
 
         return model
 
-    def PerformNonLinearSolutionStep(self, path_following_class=None, predictor_class=None, prescribed_value=1.0 ):
+    def PerformNonLinearSolutionStep(self, 
+                                     path_following_class=LoadControl, 
+                                     predictor_class=LoadIncrementPredictor, 
+                                     prescribed_value=1.0 ):
         """Currently hardcoded for LoadControl"""
+
+        print(LoadControl)
+        print(path_following_class)
 
         path_following_method = path_following_class(prescribed_value)
 
@@ -385,23 +394,33 @@ class Model(object):
         predictor_model = path_following_method.ScalePredictor(predictor_model)
 
         # initialize working matrices and functions for newton raphson
+        model = predictor_model
         assembler = Assembler(model)
         dof_count = assembler.dof_count
         LHS = np.zeros((dof_count+1,dof_count+1))
         RHS = np.zeros(dof_count+1)
         x = np.zeros(dof_count+1) # TODO assemble from model: u = x-reference_x
-        model = predictor_model
         def UpdateModel(x):
             pass # store a updated model if necessary
         def Compute_LHS(x):
-            # TODO assemble
+            k = LHS[:-1]
+            u = x[:-1]
+            lam = x[-1]
+            f = np.zeros(dof_count)
+            assembler.Calculate(u, lam, k, k, k , f)
             return LHS
         def Compute_RHS(x):
-            # TODO assemble
+            k = LHS[:-1]
+            u = x[:-1]
+            lam = x[-1]
+            f = np.zeros(dof_count)
+            assembler.Calculate(u, lam, k, k, k, f)
+            print (k,u,f)
+            RHS = (k*u)-f
             return RHS 
 
         # solve newton raphson
-        x = NewtonRaphson().solve(Compute_LHS, compute_RHS, x_initial=x)
+        x = NewtonRaphson().Solve(UpdateModel, Compute_LHS, Compute_RHS, x_initial=x)
 
         # update model (maybe this should happen already in newton raphson)
         # TODO

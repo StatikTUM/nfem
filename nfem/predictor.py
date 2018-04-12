@@ -4,27 +4,18 @@ from .assembler import Assembler
 class Predictor():
 
     def __init__(self):
+        pass
 
-    def GetPredictor(self, model):
+    def Predict(self, model):
         """Returns a normalized predictor"""
         raise NotImplementedError
 
 class LoadIncrementPredictor(Predictor):
 
-    def GetPredictor(self, model):
-        assembler = Assembler(model)
-        dof_count = assembler.dof_count
-        predictor = np.zeros(dof_count+1)
-        predictor[-1] = 1
-        return
+    def __init__(self):
+        pass
 
-class LoadIncrementPredictor(Predictor):
-
-    def GetPredictedModel(self, model):
-        model = model.Duplicate()
-        model.name = 'Predictor'
-        if model.lam == None:
-            model.lam = 0.0
+    def Predict(self, model):
         model.lam += 1.0
         return model
         
@@ -35,7 +26,7 @@ class DisplacementIncrementPredictor(Predictor):
             raise RuntimeError('Only single dof can be incremented by this predictor')
         self.dof = (node_id, dof_type)
 
-    def GetPredictor(self, model):
+    def Predict(self, model):
         assembler = Assembler(model)
         dof_count = assembler.dof_count
         predictor = np.zeros(dof_count+1)
@@ -48,7 +39,7 @@ class LastDeltaPredictor(Predictor):
     def __init__(self, history):
         self.history = history
 
-    def GetPredictor(self, model):
+    def Predict(self, model):
         assembler = Assembler(model)
         dof_count = assembler.dof_count
         predictor = np.zeros(dof_count+1)
@@ -77,7 +68,7 @@ class LastDeltaPredictor(Predictor):
 
 class TangentVectorPredictor(Predictor):
 
-    def GetPredictor(self, model):        
+    def Predict(self, model):        
         assembler = Assembler(self)
         dof_count = assembler.dof_count
 
@@ -112,5 +103,3 @@ class TangentVectorPredictor(Predictor):
 # 3. [delta_u, delta_lambda] -> requires a previous solution
 # 4. use tangent stiffness at current equilibrium point
 # 5. some manual values
-
-LoadIncrementPredictor().GetPredictor(None)
