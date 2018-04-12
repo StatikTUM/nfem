@@ -9,6 +9,7 @@ class PathFollowingMethod(ABC):
     def Predict(self, previous_u, previous_Lambda, current_u, current_Lambda):
         # TODO predictor direction as input
         # TODO scale this direction according to the method
+        # TODO renaming to scale predictor? (does not have to be called)
         #returns new_u, new_Lambda
         return NotImplemented
 
