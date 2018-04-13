@@ -34,7 +34,7 @@ print(initial.nodes['B'].z)
 history = model.GetModelHistory()
 
 for step, deformed in enumerate(history):
-    print(f'Deformed step {step}:')
+    print('Deformed step {}:'.format(step))
     print(deformed.nodes['B'].x)
     print(deformed.nodes['B'].y)
     print(deformed.nodes['B'].z)

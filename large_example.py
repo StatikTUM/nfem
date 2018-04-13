@@ -52,7 +52,7 @@ history = model.GetModelHistory()
 
 # print the result of last step
 deformed = history[-1]
-print(f'Deformed step {n_steps}:')
+print('Deformed step {}:'.format(n_steps))
 print(deformed.nodes[2].x)
 print(deformed.nodes[2].y)
 print(deformed.nodes[2].z)
