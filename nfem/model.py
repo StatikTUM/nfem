@@ -500,7 +500,6 @@ class Model(object):
 
         x = np.zeros(free_count+1) # TODO assemble from model: u = x-reference_x
         for i in range(free_count):
-            print(i)
             dof = assembler.dofs[i]
             node = model.nodes[dof[0]]
             if dof[1] == 'u':

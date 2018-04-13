@@ -2,17 +2,18 @@ import numpy as np
 from .assembler import Assembler
 
 class PathFollowingMethod():
-    def __init__(self):
-        pass
 
     def ScalePredictor(self, model):
+        """ FIXME """
         raise NotImplementedError
 
     def CalculateConstraint(self, model):
+        """ FIXME """
         #returns c
         raise NotImplementedError
 
     def CalculateDerivatives(self, model):
+        """ FIXME """
         #returns dc_du, dc_dLambda
         raise NotImplementedError
 
@@ -42,7 +43,6 @@ class LoadControl(PathFollowingMethod):
         self.Lambda_hat = Lambda_hat
 
     def ScalePredictor(self, model):
-        #returns new_u, new_Lambda
         previous_model = model.previous_model
         delta_lambda = model.lam - previous_model.lam
         factor = self.Lambda_hat/delta_lambda
@@ -86,22 +86,41 @@ class DisplacementControl(PathFollowingMethod):
         dc[index] = 1.0
         return dc
 
-# class ArcLengthControl(PathFollowingMethod):
-#     def __init__(self, l_hat):
-#         super(ArcLengthControl, self).__init__()
-#         self.l_hat = l_hat
+class ArcLengthControl(PathFollowingMethod):
+    def __init__(self, l_hat):
+        super(ArcLengthControl, self).__init__()
+        self.squared_l_hat = l_hat*l_hat
 
-#     def Predict(self, previous_u, previous_Lambda, current_u, current_Lambda):
-#         #returns new_u, new_Lambda
-#         predicted_u = u
-#         predicted_Lambda = self.Lambda_hat
-#         return predicted_u, predicted_Lambda
+    def ScalePredictor(self, model):
+        squared_l = self.__CalculateSquaredPredictorLength(model)
+        factor = self.squared_l_hat/squared_l
+        self.ScaleDeltaUandLambda(model, factor)
+        return model
 
-#     def CalculateConstraint(self, previous_u, previous_Lambda, current_u, current_Lambda):
-#         c = Lambda - self.Lambda_hat
-#         return c
+    def CalculateConstraint(self, model):
+        squared_l = self.__CalculateSquaredPredictorLength(model)
+        c = squared_l - self.squared_l_hat
+        return c
 
-#     def CalculateDerivatives(self, previous_u, previous_Lambda, current_u, current_Lambda):
-#         dc_du = 0
-#         dc_dLambda = 1
-#         return dc_du, dc_dLambda
+    def CalculateDerivatives(self, model, dc):   
+        assembler = Assembler(model)
+        free_count = assembler.free_dof_count
+        for i in range(free_count):
+            dof = assembler.dofs[i]
+            node = model.nodes[dof[0]]
+            if dof[1] == 'u':
+                dc[i] = node.x - node.reference_x
+            elif dof[1] == 'v':
+                dc[i] = node.y - node.reference_y
+            elif dof[1] == 'w':
+                dc[i] = node.z - node.reference_z
+        dc[-1] = model.lam
+        return dc
+
+    def __CalculateSquaredPredictorLength(self, model):
+        previous_model = model.previous_model       
+        squared_l = 0.0 
+        for (node, previous_node) in zip(model.nodes.values(), previous_model.nodes.values()):
+            dx, dy, dz = node.GetActualLocation() - previous_node.GetActualLocation()
+            squared_l += dx*dx + dy*dy + dz*dz
+        return squared_l
