@@ -20,9 +20,21 @@ class ElementBase(object):
         """FIXME"""
         raise NotImplementedError
 
-    def Calculate(self, u, lam):
+    def CalculateElasticStiffnessMatrix(self):
         """FIXME"""
-        raise NotImplementedError
+        return None
+
+    def CalculateGeometricStiffnessMatrix(self):
+        """FIXME"""
+        return None
+
+    def CalculateStiffnessMatrix(self):
+        """FIXME"""
+        return None
+
+    def CalculateLoadVector(self):
+        """FIXME"""
+        return None
 
 class Node(object):
     """FIXME"""
@@ -132,11 +144,9 @@ class Truss(ElementBase):
 
         return k_e
 
-    def CalculateGeometricStiffnessMatrix(self, u):
+    def CalculateGeometricStiffnessMatrix(self):
         """FIXME"""
 
-        location_a = self.node_a.GetReferenceLocation()
-        location_b = self.node_b.GetReferenceLocation()
         E = self.youngs_modulus
         A = self.area
 
@@ -198,15 +208,13 @@ class Truss(ElementBase):
 
         return k_g
 
-    def Calculate(self, u, lam):
+    def CalculateStiffnessMatrix(self):
         """FIXME"""
 
         element_k_e = self.CalculateElasticStiffnessMatrix()
-        element_k_u = None
-        element_k_g = self.CalculateGeometricStiffnessMatrix(u)
-        element_f = None
+        element_k_g = self.CalculateGeometricStiffnessMatrix()
 
-        return element_k_e, element_k_u, element_k_g, element_f
+        return element_k_e + element_k_g
 
 class SingleLoad(ElementBase):
     """FIXME"""
@@ -226,15 +234,10 @@ class SingleLoad(ElementBase):
 
         return [(node_id, 'u'), (node_id, 'v'), (node_id, 'w')]
 
-    def Calculate(self, u, lam):
+    def CalculateLoadVector(self):
         """FIXME"""
 
-        element_k_e = None
-        element_k_u = None
-        element_k_g = None
-        element_f = np.array([self.fu, self.fv, self.fw])
-
-        return element_k_e, element_k_u, element_k_g, element_f
+        return np.array([self.fu, self.fv, self.fw])
 
 class Model(object):
     """FIXME"""
@@ -354,7 +357,8 @@ class Model(object):
         k = np.zeros((dof_count, dof_count))
         f = np.zeros(dof_count)
 
-        assembler.Calculate(u, lam, k, k, k, f)
+        assembler.AssembleMatrix(k, lambda element: element.CalculateElasticStiffnessMatrix())
+        assembler.AssembleVector(f, lambda element: element.CalculateLoadVector())
 
         f *= lam
 
@@ -436,7 +440,9 @@ class Model(object):
             f = np.zeros(dof_count)
 
             # assemble stiffness and force
-            assembler.Calculate(u, lam, ke, ku, kg, f)
+            assembler.AssembleMatrix(ke, lambda element: element.CalculateElasticStiffnessMatrix())
+            assembler.AssembleMatrix(ku, lambda element: element.CalculateGeometricStiffnessMatrix())
+            assembler.AssembleVector(f, lambda element: element.CalculateLoadVector())
             k = ke + ku + kg
 
             # assemble left and right hand side for newton raphson

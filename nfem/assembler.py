@@ -61,22 +61,27 @@ class Assembler(object):
 
         return self.dofs[index]
 
-    def Calculate(self, u, lam, system_k_e, system_k_u, system_k_g, system_f):
+    def AssembleMatrix(self, system_matrix, calculate_element_matrix):
         """FIXME"""
 
         for element, indices in self.element_freedom_table:
-            element_u = np.array([u[index] for index in indices])
+            element_matrix = calculate_element_matrix(element)
 
-            element_k_e, element_k_u, element_k_g, element_f = element.Calculate(element_u, lam)
+            if element_matrix is None:
+                continue
 
             for element_row, system_row in enumerate(indices):
                 for element_col, system_col in enumerate(indices):
-                    if element_k_e is not None:
-                        system_k_e[system_row, system_col] += element_k_e[element_row, element_col]
-                    if element_k_u is not None:
-                        system_k_u[system_row, system_col] += element_k_u[element_row, element_col]
-                    if element_k_g is not None:
-                        system_k_g[system_row, system_col] += element_k_g[element_row, element_col]
+                    system_matrix[system_row, system_col] += element_matrix[element_row, element_col]
 
-                if element_f is not None:
-                    system_f[system_row] += element_f[element_row]
+    def AssembleVector(self, system_vector, calculate_element_vector):
+        """FIXME"""
+
+        for element, indices in self.element_freedom_table:
+            element_vector = calculate_element_vector(element)
+
+            if element_vector is None:
+                continue
+
+            for element_row, system_row in enumerate(indices):
+                system_vector[system_row] += element_vector[element_row]
