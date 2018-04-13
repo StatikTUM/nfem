@@ -362,6 +362,7 @@ class Model(object):
 
         assembler = Assembler(self)
 
+        model.lam = lam
         dof_count = assembler.dof_count
 
         u = np.zeros(dof_count)

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.animation as anim
+import numpy as np
 
 from .model import Truss
 
@@ -50,3 +51,27 @@ def FindLimits(history):
     max_z = max(node.z for node in nodes)
 
     return max_x, max_y, min_x, min_y, max_z, min_z
+
+def PlotGraph(history, switch_x_axis=True):
+    x_data = np.zeros(len(history))
+    y_data = np.zeros(len(history))
+
+    # Data for plotting
+    for i, model in enumerate(history):
+        y_data[i] = model.lam
+        x_data[i] = model.nodes['B'].y
+
+    # Note that using plt.subplots below is equivalent to using
+    # fig = plt.figure() and then ax = fig.add_subplot(111)
+    fig, ax = plt.subplots()
+    plotted_line = ax.plot(x_data, y_data, 'bo')
+
+    ax.legend(plotted_line, 'B.y', loc='upper right')
+
+    ax.set(xlabel='u', ylabel='lambda',
+        title='Load displacement diagram')
+    ax.grid()
+
+    plt.gca().invert_xaxis()
+
+    plt.show()
