@@ -56,11 +56,7 @@ class Node(object):
         return np.array([self.x, self.y, self.z])
 
     def GetReferenceLocation(self):
-        return np.array([
-            self.reference_x,
-            self.reference_y,
-            self.reference_z
-        ])
+        """FIXME"""
 
         return np.array([self.reference_x, self.reference_y, self.reference_z])
 
@@ -86,6 +82,7 @@ class Truss(ElementBase):
 
     def __init__(self, id, node_a, node_b, youngs_modulus, area):
         """FIXME"""
+
         self.id = id
         self.node_a = node_a
         self.node_b = node_b
