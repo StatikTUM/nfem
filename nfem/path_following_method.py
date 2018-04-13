@@ -1,4 +1,5 @@
 import numpy as np
+from .assembler import Assembler
 
 class PathFollowingMethod():
     def __init__(self):
@@ -48,31 +49,59 @@ class LoadControl(PathFollowingMethod):
         self.ScaleDeltaUandLambda(model, factor)
         return model
 
-    def CalculateConstraint(self, previous_u, previous_Lambda, current_u, current_Lambda):
-        c = Lambda - self.Lambda_hat
+    def CalculateConstraint(self, model):
+        c = model.lam - self.Lambda_hat
         return c
 
-    def CalculateDerivatives(self, previous_u, previous_Lambda, current_u, current_Lambda):
-        dc_du = 0
-        dc_dLambda = 1
-        return dc_du, dc_dLambda
+    def CalculateDerivatives(self, model, dc):
+        dc.fill(0.0)
+        dc[-1] = 1.0
+        return dc
 
-class ArcLengthControl(PathFollowingMethod):
-    def __init__(self, l_hat):
-        super(ArcLengthControl, self).__init__()
-        self.l_hat = l_hat
+class DisplacementControl(PathFollowingMethod):
+    def __init__(self, u_hat):
+        super(DisplacementControl, self).__init__()
+        self.u_hat = u_hat
+        self.dof = (2,'v')
 
-    def Predict(self, previous_u, previous_Lambda, current_u, current_Lambda):
+    def ScalePredictor(self, model):
         #returns new_u, new_Lambda
-        predicted_u = u
-        predicted_Lambda = self.Lambda_hat
-        return predicted_u, predicted_Lambda
+        previous_model = model.previous_model
+        node = model.nodes[self.dof[0]]
+        previous_node = previous_model.nodes[self.dof[0]]
+        delta_u = node.y - previous_node.y # TODO get according to dof
+        factor = self.u_hat/delta_u
+        self.ScaleDeltaUandLambda(model, factor)
+        return model
 
-    def CalculateConstraint(self, previous_u, previous_Lambda, current_u, current_Lambda):
-        c = Lambda - self.Lambda_hat
+    def CalculateConstraint(self, model):
+        node = model.nodes[self.dof[0]]
+        c = node.y - self.u_hat  # TODO get according to dof
         return c
 
-    def CalculateDerivatives(self, previous_u, previous_Lambda, current_u, current_Lambda):
-        dc_du = 0
-        dc_dLambda = 1
-        return dc_du, dc_dLambda
+    def CalculateDerivatives(self, model, dc):
+        dc.fill(0.0)
+        assembler = Assembler(model)
+        index = assembler.IndexOfDof(self.dof)
+        dc[index] = 1.0
+        return dc
+
+# class ArcLengthControl(PathFollowingMethod):
+#     def __init__(self, l_hat):
+#         super(ArcLengthControl, self).__init__()
+#         self.l_hat = l_hat
+
+#     def Predict(self, previous_u, previous_Lambda, current_u, current_Lambda):
+#         #returns new_u, new_Lambda
+#         predicted_u = u
+#         predicted_Lambda = self.Lambda_hat
+#         return predicted_u, predicted_Lambda
+
+#     def CalculateConstraint(self, previous_u, previous_Lambda, current_u, current_Lambda):
+#         c = Lambda - self.Lambda_hat
+#         return c
+
+#     def CalculateDerivatives(self, previous_u, previous_Lambda, current_u, current_Lambda):
+#         dc_du = 0
+#         dc_dLambda = 1
+#         return dc_du, dc_dLambda

@@ -10,7 +10,7 @@ from nfem import Model, PlotAnimation
 n_models = 1
 
 # Number of two bar steps
-n_steps = 10
+n_steps = 1
 
 # Creating two bar trusses in a loop
 model = Model('Initial Model')
@@ -27,14 +27,14 @@ for i in range(n_models):
     node_c = id_offset + 3
 
     model.AddNode(id=node_a, x=0, y=0, z=z)
-    model.AddNode(id=node_b, x=5, y=2, z=z)
-    model.AddNode(id=node_c, x=10, y=0, z=z)
+    model.AddNode(id=node_b, x=1, y=1, z=z)
+    model.AddNode(id=node_c, x=2, y=0, z=z)
 
     truss_1 = id_offset + 11
     truss_2 = id_offset + 12
 
-    model.AddTrussElement(id=truss_1, node_a=node_a, node_b=node_b, youngs_modulus=10, area=2)
-    model.AddTrussElement(id=truss_2, node_a=node_b, node_b=node_c, youngs_modulus=10, area=2)
+    model.AddTrussElement(id=truss_1, node_a=node_a, node_b=node_b, youngs_modulus=1, area=1)
+    model.AddTrussElement(id=truss_2, node_a=node_b, node_b=node_c, youngs_modulus=1, area=1)
 
     load_b = id_offset + 21
 
@@ -45,8 +45,8 @@ for i in range(n_models):
     model.AddDirichletCondition(node_id=node_c, dof_types='uvw', value=0)
 
 # solving a linear system in each step
-for lam in np.linspace(0, 10, n_steps+1):
-    model = model.PerformNonLinearSolutionStep(prescribed_value=lam)
+model = model.PerformNonLinearSolutionStep(prescribed_value=0.1)
+exit()
 
 history = model.GetModelHistory()
 

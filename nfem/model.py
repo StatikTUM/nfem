@@ -9,7 +9,9 @@ from .assembler import Assembler
 from .newton_raphson import NewtonRaphson
 
 from .path_following_method import LoadControl
+from .path_following_method import DisplacementControl
 from .predictor import LoadIncrementPredictor
+from .predictor import DisplacementIncrementPredictor
 
 class ElementBase(object):
     """FIXME"""
@@ -140,7 +142,7 @@ class Truss(ElementBase):
 
         prestress = 0
 
-        du, dv, dw = u[3:] - u[3:]
+        du, dv, dw = u[3:] - u[:3]
         dx, dy, dz = location_b - location_a
 
         L = la.norm([dx, dy, dz])
@@ -230,7 +232,7 @@ class SingleLoad(ElementBase):
         element_k_e = None
         element_k_u = None
         element_k_g = None
-        element_f = lam * np.array([self.fu, self.fv, self.fw])
+        element_f = np.array([self.fu, self.fv, self.fw])
 
         return element_k_e, element_k_u, element_k_g, element_f
 
@@ -354,6 +356,8 @@ class Model(object):
 
         assembler.Calculate(u, lam, k, k, k, f)
 
+        f *= lam
+
         free_count = assembler.free_dof_count
 
         a = k[:free_count, :free_count]
@@ -373,11 +377,10 @@ class Model(object):
     def PerformNonLinearSolutionStep(self, 
                                      path_following_class=LoadControl, 
                                      predictor_class=LoadIncrementPredictor, 
+                                     #path_following_class=DisplacementControl, 
+                                     #predictor_class=DisplacementIncrementPredictor,
                                      prescribed_value=1.0 ):
         """Currently hardcoded for LoadControl"""
-
-        print(LoadControl)
-        print(path_following_class)
 
         path_following_method = path_following_class(prescribed_value)
 
@@ -397,30 +400,59 @@ class Model(object):
         model = predictor_model
         assembler = Assembler(model)
         dof_count = assembler.dof_count
-        LHS = np.zeros((dof_count+1,dof_count+1))
-        RHS = np.zeros(dof_count+1)
-        x = np.zeros(dof_count+1) # TODO assemble from model: u = x-reference_x
-        def UpdateModel(x):
-            pass # store a updated model if necessary
-        def Compute_LHS(x):
-            k = LHS[:-1]
-            u = x[:-1]
+        free_count = assembler.free_dof_count
+
+        k = np.zeros((dof_count,dof_count))
+        f = np.zeros(dof_count)
+
+        LHS = np.zeros((free_count+1, free_count+1))
+        RHS = np.zeros(free_count+1)
+
+        x = np.zeros(free_count+1) # TODO assemble from model: u = x-reference_x
+        for i in range(free_count):
+            print(i)
+            dof = assembler.dofs[i]
+            node = model.nodes[dof[0]]
+            if dof[1] == 'u':
+                x[i] = node.x - node.reference_x
+            elif dof[1] == 'v':
+                x[i] = node.y - node.reference_y
+            elif dof[1] == 'w':
+                x[i] = node.z - node.reference_z
+        x[-1] = model.lam
+        
+        u = np.zeros(dof_count)
+
+        # NOTE stiffness seems to be correct, problem with RHS or update?
+        def CalculateSystem(x):
+            print("x:", x)
+            u[:free_count] = x[:-1]
             lam = x[-1]
+
+            #initialize (set to zero)
+            ke = np.zeros((dof_count,dof_count))
+            ku = np.zeros((dof_count,dof_count))
+            kg = np.zeros((dof_count,dof_count))
             f = np.zeros(dof_count)
-            assembler.Calculate(u, lam, k, k, k , f)
-            return LHS
-        def Compute_RHS(x):
-            k = LHS[:-1]
-            u = x[:-1]
-            lam = x[-1]
-            f = np.zeros(dof_count)
-            assembler.Calculate(u, lam, k, k, k, f)
-            print (k,u,f)
-            RHS = (k*u)-f
-            return RHS 
+
+            # assemble stiffness and force
+            assembler.Calculate(u, lam, ke, ku, kg, f)
+            k = ke + ku + kg
+
+            # assemble left and right hand side for newton raphson
+            LHS[:free_count, :free_count] = k[:free_count, :free_count]
+            RHS[:free_count] = f[:free_count] - k[:free_count, free_count:] @ u[free_count:]
+
+            LHS[:free_count,-1] = -f[:free_count]
+            LHS[-1,:] = path_following_method.CalculateDerivatives(model, LHS[-1,:])
+            RHS[:-1] = (k[:free_count, :free_count] @ u[:free_count] - f[:free_count]*lam)
+            RHS[-1] = path_following_method.CalculateConstraint(model)
+            print(LHS)
+            print(RHS)
+            return LHS, RHS 
 
         # solve newton raphson
-        x = NewtonRaphson().Solve(UpdateModel, Compute_LHS, Compute_RHS, x_initial=x)
+        x = NewtonRaphson().Solve(CalculateSystem, x_initial=x)
 
         # update model (maybe this should happen already in newton raphson)
         # TODO
@@ -428,5 +460,5 @@ class Model(object):
         # remove iterations from history
         # TODO
 
-        model.name = f'Non linear solution step (lambda={lam:.3})'
+        #model.name = f'Non linear solution step (lambda={lam:.3})'
         return model
