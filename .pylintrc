@@ -175,18 +175,18 @@ never-returning-functions=optparse.Values,sys.exit
 [BASIC]
 
 # Naming style matching correct argument names
-argument-naming-style=snake_case
+#argument-naming-style=snake_case
 
 # Regular expression matching correct argument names. Overrides argument-
 # naming-style
-#argument-rgx=
+argument-rgx=^[a-z][a-z0-9_]*$
 
 # Naming style matching correct attribute names
-attr-naming-style=snake_case
+#attr-naming-style=snake_case
 
 # Regular expression matching correct attribute names. Overrides attr-naming-
 # style
-#attr-rgx=
+attr-rgx=^[a-z][a-z0-9_]*$
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,
@@ -210,11 +210,11 @@ class-naming-style=PascalCase
 #class-rgx=
 
 # Naming style matching correct constant names
-const-naming-style=UPPER_CASE
+#const-naming-style=UPPER_CASE
 
 # Regular expression matching correct constant names. Overrides const-naming-
 # style
-#const-rgx=
+const-rgx=^(_?[A-Z][A-Z0-9_]*|__[a-z0-9_]+__|_?[a-z][a-z0-9_]*)$
 
 # Minimum line length for functions/classes that require docstrings, shorter
 # ones are exempt.
@@ -272,11 +272,11 @@ no-docstring-rgx=^_
 property-classes=abc.abstractproperty
 
 # Naming style matching correct variable names
-variable-naming-style=snake_case
+#variable-naming-style=snake_case
 
 # Regular expression matching correct variable names. Overrides variable-
 # naming-style
-#variable-rgx=
+variable-rgx=^[a-z][a-z0-9_]*$
 
 
 [FORMAT]
