@@ -2,7 +2,7 @@ import numpy as np
 
 class NewtonRaphson(object):
 
-    def __init__(self, max_iterations=10, tolerance=1e-9):
+    def __init__(self, max_iterations=100, tolerance=1e-9):
         self.max_iterations = max_iterations
         self.tolerance = tolerance
 

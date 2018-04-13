@@ -42,5 +42,4 @@ history = model.GetModelHistory()
     print(deformed.nodes['B'].y)
     print(deformed.nodes['B'].z) '''
 
-PlotGraph(history)
-#PlotAnimation(history)
+PlotAnimation(history, 200)

@@ -59,7 +59,7 @@ def PlotGraph(history, switch_x_axis=True):
     # Data for plotting
     for i, model in enumerate(history):
         y_data[i] = model.lam
-        x_data[i] = model.nodes['B'].y
+        x_data[i] = model.nodes[2].y
 
     # Note that using plt.subplots below is equivalent to using
     # fig = plt.figure() and then ax = fig.add_subplot(111)

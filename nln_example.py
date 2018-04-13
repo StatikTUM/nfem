@@ -4,7 +4,7 @@ Here, multiple two bar trusses are simulated at the same time to test efficiency
 
 import numpy as np
 
-from nfem import Model, PlotAnimation
+from nfem import Model, PlotAnimation, PlotGraph
 
 # Number of two bar trusses
 n_models = 1
@@ -45,8 +45,10 @@ for i in range(n_models):
     model.AddDirichletCondition(node_id=node_c, dof_types='uvw', value=0)
 
 # solving a linear system in each step
-model.PerformNonLinearSolutionStep(prescribed_value=0.1)
-exit()
+load_curve = np.linspace(0.1, 0.40, 10)
+for lam in load_curve:
+    model = model.GetDuplicate()
+    model.PerformNonLinearSolutionStep(prescribed_value=lam)
 
 history = model.GetModelHistory()
 
@@ -58,4 +60,5 @@ print(deformed.nodes[2].y)
 print(deformed.nodes[2].z)
 
 # animated plot
-PlotAnimation(history)
+PlotGraph(history)
+PlotAnimation(history, 200)

@@ -32,7 +32,11 @@ class ElementBase(object):
         """FIXME"""
         return None
 
-    def CalculateLoadVector(self):
+    def CalculateExternalForces(self):
+        """FIXME"""
+        return None
+
+    def CalculateInternalForces(self):
         """FIXME"""
         return None
 
@@ -233,13 +237,10 @@ class Truss(ElementBase):
 
         return element_k_e + element_k_g
 
-    def CreateTransformationMatrix(self,u):
+    def CreateTransformationMatrix(self):
         
-        location_a = self.node_a.GetReferenceLocation()
-        location_b = self.node_b.GetReferenceLocation()
-
-        location_a = location_a+u[:3]
-        location_b = location_b+u[3:]
+        location_a = self.node_a.GetActualLocation()
+        location_b = self.node_b.GetActualLocation()
 
         direction_longitudinal = location_b-location_a
         norm_direction_longitudinal = la.norm(direction_longitudinal)
@@ -251,12 +252,17 @@ class Truss(ElementBase):
         
         return transformation_matrix
 
-    def CalculateGreenLagrangeStrain(self,u):
-        location_a = self.node_a.GetReferenceLocation()
-        location_b = self.node_b.GetReferenceLocation()
+    def CalculateGreenLagrangeStrain(self):
+        reference_a = self.node_a.GetReferenceLocation()
+        reference_b = self.node_b.GetReferenceLocation()
+        reference_ab = reference_b - reference_a
 
-        du, dv, dw = u[3:] - u[:3]
-        dx, dy, dz = location_b - location_a
+        actual_a = self.node_a.GetActualLocation()
+        actual_b = self.node_b.GetActualLocation()
+        actual_ab = actual_b - actual_a
+
+        dx, dy, dz = reference_ab
+        du, dv, dw = actual_ab - reference_ab
 
         L = la.norm([dx, dy, dz])
         l = la.norm([dx + du, dy + dv, dz + dw])
@@ -264,18 +270,25 @@ class Truss(ElementBase):
         e_gl = (l**2 - L**2) / (2.00 * L**2)
         return e_gl
 
-    def UpdateInternalForces(self,u):
-        transformation_matrix = self.CreateTransformationMatrix(u)
-        e_gl = self.CalculateGreenLagrangeStrain(u)
+    def CalculateInternalForces(self):
+        transformation_matrix = self.CreateTransformationMatrix()
+        e_gl = self.CalculateGreenLagrangeStrain()
 
         E = self.youngs_modulus
         A = self.area
         prestress = 0
 
-        location_a = self.node_a.GetReferenceLocation()
-        location_b = self.node_b.GetReferenceLocation()
-        du, dv, dw = u[3:] - u[:3]
-        dx, dy, dz = location_b - location_a
+        reference_a = self.node_a.GetReferenceLocation()
+        reference_b = self.node_b.GetReferenceLocation()
+        reference_ab = reference_b - reference_a
+
+        actual_a = self.node_a.GetActualLocation()
+        actual_b = self.node_b.GetActualLocation()
+        actual_ab = actual_b - actual_a
+
+        dx, dy, dz = reference_ab
+        du, dv, dw = actual_ab - reference_ab
+
         L = la.norm([dx, dy, dz])
         l = la.norm([dx + du, dy + dv, dz + dw])
 
@@ -290,9 +303,6 @@ class Truss(ElementBase):
         global_internal_forces = transformation_matrix @ local_internal_forces
         return global_internal_forces
 
-
-
-        
 
 class SingleLoad(ElementBase):
     """FIXME"""
@@ -312,7 +322,7 @@ class SingleLoad(ElementBase):
 
         return [(node_id, 'u'), (node_id, 'v'), (node_id, 'w')]
 
-    def CalculateLoadVector(self):
+    def CalculateExternalForces(self):
         """FIXME"""
 
         return np.array([self.fu, self.fv, self.fw])
@@ -328,7 +338,7 @@ class Model(object):
         self.elements = dict()
         self.dirichlet_conditions = dict()
         self.neumann_conditions = dict()
-        self.lam = 1.0
+        self.lam = 0.0
         self.previous_model = None
 
     def AddNode(self, id, x, y, z):
@@ -418,12 +428,12 @@ class Model(object):
 
         return duplicate
 
-    def PerformLinearSolutionStep(self):
+    def PerformLinearSolutionStep(self, lam=1.0):
         """Just for testing"""
 
         assembler = Assembler(self)
 
-        model.lam = lam
+        self.lam = lam
         dof_count = assembler.dof_count
 
         u = np.zeros(dof_count)
@@ -436,7 +446,7 @@ class Model(object):
         f = np.zeros(dof_count)
 
         assembler.AssembleMatrix(k, lambda element: element.CalculateStiffnessMatrix())
-        assembler.AssembleVector(f, lambda element: element.CalculateLoadVector())
+        assembler.AssembleVector(f, lambda element: element.CalculateExternalForces())
 
         f *= self.lam
 
@@ -465,7 +475,7 @@ class Model(object):
         path_following_method = path_following_class(prescribed_value)
 
         # create a model for the predictor
-        predictor_model = self.GetDuplicate()
+        predictor_model = self
         predictor_model.internal_flag = True
 
         # calculate the direction of the predictor
@@ -507,30 +517,41 @@ class Model(object):
         def CalculateSystem(x):
             print("x:", x)
             u[:free_count] = x[:-1]
-            lam = x[-1]
+            model.lam = x[-1]
+            
+            for index, dof in enumerate(assembler.dofs):
+                node_id, dof_type = dof
+
+                value = u[index]
+
+                model.nodes[node_id].Update(dof_type, value)
 
             #initialize (set to zero)
             ke = np.zeros((dof_count,dof_count))
             ku = np.zeros((dof_count,dof_count))
             kg = np.zeros((dof_count,dof_count))
             f = np.zeros(dof_count)
+            internal_f = np.zeros(dof_count)
 
             # assemble stiffness and force
             assembler.AssembleMatrix(ke, lambda element: element.CalculateElasticStiffnessMatrix())
             assembler.AssembleMatrix(ku, lambda element: element.CalculateGeometricStiffnessMatrix())
-            assembler.AssembleVector(f, lambda element: element.CalculateLoadVector())
             k = ke + ku + kg
+            assembler.AssembleVector(f, lambda element: element.CalculateExternalForces())
+            assembler.AssembleVector(internal_f, lambda element: element.CalculateInternalForces())
 
             # assemble left and right hand side for newton raphson
-            LHS[:free_count, :free_count] = k[:free_count, :free_count]
-            RHS[:free_count] = f[:free_count] - k[:free_count, free_count:] @ u[free_count:]
 
-            LHS[:free_count,-1] = -f[:free_count]
+            # mechanical system
+            LHS[:free_count, :free_count] = k[:free_count, :free_count]
+            LHS[-1,:free_count] = -f[:free_count]
+            RHS[:free_count] = internal_f[:free_count]-f[:free_count]*model.lam
+
+            # constraint
             LHS[-1,:] = path_following_method.CalculateDerivatives(model, LHS[-1,:])
-            RHS[:-1] = (k[:free_count, :free_count] @ u[:free_count] - f[:free_count]*lam)
             RHS[-1] = path_following_method.CalculateConstraint(model)
-            print(LHS)
-            print(RHS)
+            print('LHS', LHS)
+            print('RHS', RHS)
             return LHS, RHS 
 
         # solve newton raphson
