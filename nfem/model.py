@@ -136,7 +136,7 @@ class Model(object):
         k = np.zeros((dof_count, dof_count))
         f = np.zeros(dof_count)
 
-        assembler.AssembleMatrix(k, lambda element: element.CalculateStiffnessMatrix())
+        assembler.AssembleMatrix(k, lambda element: element.CalculateElasticStiffnessMatrix())
         assembler.AssembleVector(f, lambda element: element.CalculateExternalForces())
 
         f *= self.lam
