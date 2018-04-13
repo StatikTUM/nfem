@@ -73,11 +73,11 @@ class Node(object):
         """FIXME"""
 
         if dof_type == 'u':
-            self.x += value
+            self.x = self.reference_x + value
         elif dof_type == 'v':
-            self.y += value
+            self.y = self.reference_y + value
         elif dof_type == 'w':
-            self.z += value
+            self.z = self.reference_z + value
         else:
             raise RuntimeError('Node has no Dof of type {}'.format(dof_type))
 
