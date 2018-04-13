@@ -233,6 +233,67 @@ class Truss(ElementBase):
 
         return element_k_e + element_k_g
 
+    def CreateTransformationMatrix(self,u):
+        
+        location_a = self.node_a.GetReferenceLocation()
+        location_b = self.node_b.GetReferenceLocation()
+
+        location_a = location_a+u[:3]
+        location_b = location_b+u[3:]
+
+        direction_longitudinal = location_b-location_a
+        norm_direction_longitudinal = la.norm(direction_longitudinal)
+        direction_longitudinal = direction_longitudinal/norm_direction_longitudinal
+
+        transformation_matrix = np.zeros((6,6))
+        transformation_matrix[0:3,0] = direction_longitudinal
+        transformation_matrix[3:6,3] = direction_longitudinal
+        
+        return transformation_matrix
+
+    def CalculateGreenLagrangeStrain(self,u):
+        location_a = self.node_a.GetReferenceLocation()
+        location_b = self.node_b.GetReferenceLocation()
+
+        du, dv, dw = u[3:] - u[:3]
+        dx, dy, dz = location_b - location_a
+
+        L = la.norm([dx, dy, dz])
+        l = la.norm([dx + du, dy + dv, dz + dw])
+
+        e_gl = (l**2 - L**2) / (2.00 * L**2)
+        return e_gl
+
+    def UpdateInternalForces(self,u):
+        transformation_matrix = self.CreateTransformationMatrix(u)
+        e_gl = self.CalculateGreenLagrangeStrain(u)
+
+        E = self.youngs_modulus
+        A = self.area
+        prestress = 0
+
+        location_a = self.node_a.GetReferenceLocation()
+        location_b = self.node_b.GetReferenceLocation()
+        du, dv, dw = u[3:] - u[:3]
+        dx, dy, dz = location_b - location_a
+        L = la.norm([dx, dy, dz])
+        l = la.norm([dx + du, dy + dv, dz + dw])
+
+        deformation_gradient = l/L
+        normal_force = (E*e_gl + prestress) * A
+        normal_force *= deformation_gradient 
+
+        local_internal_forces = np.zeros(6)
+        local_internal_forces[0] = -normal_force
+        local_internal_forces[3] = normal_force
+
+        global_internal_forces = transformation_matrix @ local_internal_forces
+        return global_internal_forces
+
+
+
+        
+
 class SingleLoad(ElementBase):
     """FIXME"""
 
