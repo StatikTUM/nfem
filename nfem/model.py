@@ -103,14 +103,16 @@ class Truss(ElementBase):
     def CalculateElasticStiffnessMatrix(self):
         """FIXME"""
 
-        location_a = self.node_a.GetReferenceLocation()
-        location_b = self.node_b.GetReferenceLocation()
+        reference_a = self.node_a.GetReferenceLocation()
+        reference_b = self.node_b.GetReferenceLocation()
+
+        reference_length = la.norm(reference_b - reference_a)
+
+        (dx, dy, dz) = reference_b - reference_a
+
         EA = self.youngs_modulus * self.area
 
-        dx, dy, dz = location_b - location_a
-
-        L = la.norm([dx, dy, dz])
-        L3 = L**3
+        L3 = reference_length**3
 
         k_e = np.empty((6, 6))
 
@@ -164,17 +166,23 @@ class Truss(ElementBase):
 
         prestress = 0
 
-        du, dv, dw = u[3:] - u[:3]
-        dx, dy, dz = location_b - location_a
+        reference_a = self.node_a.GetReferenceLocation()
+        reference_b = self.node_b.GetReferenceLocation()
+        reference_ab = reference_b - reference_a
+        reference_length = la.norm(reference_ab)
 
-        L = la.norm([dx, dy, dz])
-        l = la.norm([dx + du, dy + dv, dz + dw])
+        actual_a = self.node_a.GetActualLocation()
+        actual_b = self.node_b.GetActualLocation()
+        actual_ab = actual_b - actual_a
+        actual_length = la.norm(actual_ab)
 
-        e_gl = (l**2 - L**2) / (2.00 * L**2)
-        L3 = L**3
+        dx, dy, dz = reference_ab
+        du, dv, dw = actual_ab - reference_ab
 
-        K_sigma = ((E * A * e_gl) / L) + ((prestress * A) / L)
-        K_uij = (E * A) / L3
+        e_gl = (actual_length**2 - reference_length**2) / (2.00 * reference_length**2)
+
+        K_sigma = ((E * A * e_gl) / reference_length) + ((prestress * A) / reference_length)
+        K_uij = (E * A) / reference_length**3
 
         k_g = np.empty((6, 6))
 
