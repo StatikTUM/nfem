@@ -46,7 +46,10 @@ for i in range(n_models):
 
 # solving a linear system in each step
 for lam in np.linspace(0, 10, n_steps+1):
-    model = model.PerformLinearSolutionStep(lam)
+    model = model.GetDuplicate()
+    model.name = 'lambda = ' + str(lam)
+    model.lam = lam
+    model.PerformLinearSolutionStep()
 
 history = model.GetModelHistory()
 

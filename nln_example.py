@@ -45,7 +45,7 @@ for i in range(n_models):
     model.AddDirichletCondition(node_id=node_c, dof_types='uvw', value=0)
 
 # solving a linear system in each step
-model = model.PerformNonLinearSolutionStep(prescribed_value=0.1)
+model.PerformNonLinearSolutionStep(prescribed_value=0.1)
 exit()
 
 history = model.GetModelHistory()
