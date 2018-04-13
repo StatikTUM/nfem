@@ -24,19 +24,24 @@ for lam in np.linspace(0, 10, n_steps+1):
 
 initial = model.GetInitialModel()
 
-print(initial)
+''' print(initial)
 
 print('Initial:')
 print(initial.nodes['B'].x)
 print(initial.nodes['B'].y)
-print(initial.nodes['B'].z)
+print(initial.nodes['B'].z) '''
 
 history = model.GetModelHistory()
 
-for step, deformed in enumerate(history):
+''' for step, deformed in enumerate(history):
     print('Deformed step {}:'.format(step))
     print(deformed.nodes['B'].x)
     print(deformed.nodes['B'].y)
-    print(deformed.nodes['B'].z)
+    print(deformed.nodes['B'].z) '''
 
-PlotAnimation(history)
+#PlotAnimation(history)
+
+u = np.zeros(6)
+test_ele = history[0].elements[1]
+print(test_ele.CreateTransformationMatrix(u))
+print(test_ele.UpdateInternalForces(u))
