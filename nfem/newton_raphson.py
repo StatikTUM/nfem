@@ -16,10 +16,11 @@ class NewtonRaphson(object):
 
             # check residual
             residual_norm = np.linalg.norm(RHS)
-            print('Residual norm:', residual_norm)
+            #print('Residual norm:', residual_norm)
             if residual_norm < self.tolerance:
-                print('Newthon-Rapshon converged in step {}.'.format(i))
-                return x
+                print(' Newthon-Raphson converged in step {}.'.format(i))
+                print(' Residual norm: {}.'.format(residual_norm))
+                return x, i
 
             # compute delta_x
             delta_x = np.linalg.solve(LHS, RHS)
@@ -27,18 +28,5 @@ class NewtonRaphson(object):
             # update x
             x -= delta_x
 
-        raise RuntimeError('Newthon-Rapshon did not converge after {} steps. Residual norm: {}'.format(self.max_iterations, residual_norm))
-        return x
-
-# def CalculateSystem(x):
-#     print("X:",x)
-#     RHS = np.zeros(1)
-#     RHS[0] = np.power(x[0],7) - 1000.
-# 
-#     LHS = np.zeros((1,1))
-#     LHS[0,0] = 7*np.power(x[0],6)
-#     return LHS, RHS
-# 
-# x_start = np.zeros(1)
-# x_start[0] = 3.0
-# NewtonRaphson().Solve(CalculateSystem, x_start)
+        raise RuntimeError('Newthon-Raphson did not converge after {} steps. Residual norm: {}'.format(self.max_iterations, residual_norm))
+        

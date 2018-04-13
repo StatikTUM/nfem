@@ -14,6 +14,7 @@ from .newton_raphson import NewtonRaphson
 
 from .path_following_method import LoadControl
 from .path_following_method import DisplacementControl
+from .path_following_method import ArcLengthControl
 from .predictor import LoadIncrementPredictor
 from .predictor import DisplacementIncrementPredictor
 
@@ -155,102 +156,86 @@ class Model(object):
             self.nodes[node_id].Update(dof_type, value)
 
     def PerformNonLinearSolutionStep(self, 
-                                     path_following_class=LoadControl, 
-                                     predictor_class=LoadIncrementPredictor, 
-                                     #path_following_class=DisplacementControl, 
-                                     #predictor_class=DisplacementIncrementPredictor,
-                                     prescribed_value=1.0 ):
-        """Currently hardcoded for LoadControl"""
-
-        path_following_method = path_following_class(prescribed_value)
-
-        # create a model for the predictor
-        predictor_model = self
-        predictor_model.internal_flag = True
-
+                                     predictor_method=LoadIncrementPredictor,
+                                     path_following_method=ArcLengthControl):
+                                     
+        print("=================================")
+        print("Start non linear solution step...")
         # calculate the direction of the predictor
-        predictor_model = predictor_class().Predict(predictor_model)
+        predictor_method.Predict(self)
 
         # rotate the predictor if necessary (e.g. for branch switching)
+        # TODO for branch switching
 
         # scale the predictor so it fulfills the path following constraint
-        predictor_model = path_following_method.ScalePredictor(predictor_model)
+        path_following_method.ScalePredictor(self)
 
         # initialize working matrices and functions for newton raphson
-        model = predictor_model
-        assembler = Assembler(model)
+        assembler = Assembler(self)
         dof_count = assembler.dof_count
         free_count = assembler.free_dof_count
-
-        k = np.zeros((dof_count,dof_count))
-        f = np.zeros(dof_count)
-
-        LHS = np.zeros((free_count+1, free_count+1))
-        RHS = np.zeros(free_count+1)
-
-        x = np.zeros(free_count+1) # TODO assemble from model: u = x-reference_x
-        for i in range(free_count):
-            dof = assembler.dofs[i]
-            node = model.nodes[dof[0]]
-            if dof[1] == 'u':
-                x[i] = node.x - node.reference_x
-            elif dof[1] == 'v':
-                x[i] = node.y - node.reference_y
-            elif dof[1] == 'w':
-                x[i] = node.z - node.reference_z
-        x[-1] = model.lam
         
-        u = np.zeros(dof_count)
-
-        # NOTE stiffness seems to be correct, problem with RHS or update?
         def CalculateSystem(x):
-            print("x:", x)
-            u[:free_count] = x[:-1]
-            model.lam = x[-1]
-            
+            global residuum, constraint
+            # update reference coordinates
             for index, dof in enumerate(assembler.dofs):
-                node_id, dof_type = dof
-
-                value = u[index]
-
-                model.nodes[node_id].Update(dof_type, value)
+                if index < free_count:
+                    node_id, dof_type = dof
+                    value = x[index]
+                    self.nodes[node_id].Update(dof_type, value)
+            # update lambda
+            self.lam = x[-1]
 
             #initialize (set to zero)
+            k = np.zeros((dof_count,dof_count))
+            f = np.zeros(dof_count)
             ke = np.zeros((dof_count,dof_count))
             ku = np.zeros((dof_count,dof_count))
             kg = np.zeros((dof_count,dof_count))
             f = np.zeros(dof_count)
             internal_f = np.zeros(dof_count)
 
-            # assemble stiffness and force
+            # assemble stiffness
             assembler.AssembleMatrix(ke, lambda element: element.CalculateElasticStiffnessMatrix())
+            # TODO separate ku and ke
             assembler.AssembleMatrix(ku, lambda element: element.CalculateGeometricStiffnessMatrix())
             k = ke + ku + kg
+            # assemble force
             assembler.AssembleVector(f, lambda element: element.CalculateExternalForces())
             assembler.AssembleVector(internal_f, lambda element: element.CalculateInternalForces())
 
             # assemble left and right hand side for newton raphson
+            LHS = np.zeros((free_count+1, free_count+1))
+            RHS = np.zeros(free_count+1)
 
             # mechanical system
             LHS[:free_count, :free_count] = k[:free_count, :free_count]
-            LHS[-1,:free_count] = -f[:free_count]
-            RHS[:free_count] = internal_f[:free_count]-f[:free_count]*model.lam
+            LHS[:free_count,-1] = -f[:free_count]
+            RHS[:free_count] = internal_f[:free_count]-f[:free_count]*self.lam
 
             # constraint
-            LHS[-1,:] = path_following_method.CalculateDerivatives(model, LHS[-1,:])
-            RHS[-1] = path_following_method.CalculateConstraint(model)
-            print('LHS', LHS)
-            print('RHS', RHS)
+            path_following_method.CalculateDerivatives(self, LHS[-1,:])
+            RHS[-1] = path_following_method.CalculateConstraint(self)
+
             return LHS, RHS 
 
+        # prediction as vector for newton raphson
+        x = np.zeros(free_count+1)
+        for i in range(free_count):
+            dof = assembler.dofs[i]
+            node = self.nodes[dof[0]]
+            if dof[1] == 'u':
+                x[i] = node.x - node.reference_x
+            elif dof[1] == 'v':
+                x[i] = node.y - node.reference_y
+            elif dof[1] == 'w':
+                x[i] = node.z - node.reference_z
+        x[-1] = self.lam
+
         # solve newton raphson
-        x = NewtonRaphson().Solve(CalculateSystem, x_initial=x)
+        x, n_iter = NewtonRaphson().Solve(CalculateSystem, x_initial=x)
 
-        # update model (maybe this should happen already in newton raphson)
-        # TODO
+        print("Solution found after {} iteration steps.".format(n_iter))
 
-        # remove iterations from history
-        # TODO
-
-        #model.name = f'Non linear solution step (lambda={lam:.3})'
-        return model
+        # TODO solve attendant eigenvalue problem
+        return

@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from .assembler import Assembler
 
 class PathFollowingMethod():
@@ -38,45 +39,67 @@ class PathFollowingMethod():
 
 
 class LoadControl(PathFollowingMethod):
-    def __init__(self, Lambda_hat):
+    def __init__(self, lam_hat):
         super(LoadControl, self).__init__()
-        self.Lambda_hat = Lambda_hat
+        self.lam_hat = lam_hat
 
     def ScalePredictor(self, model):
         previous_model = model.previous_model
-        delta_lambda = model.lam - previous_model.lam
-        factor = self.Lambda_hat/delta_lambda
+        desired_delta_lam = self.lam_hat - previous_model.lam
+        current_delta_lam = model.lam - previous_model.lam
+        factor = desired_delta_lam/current_delta_lam
         self.ScaleDeltaUandLambda(model, factor)
-        return model
-
+        return
+        
     def CalculateConstraint(self, model):
-        c = model.lam - self.Lambda_hat
+        c = model.lam - self.lam_hat
         return c
 
     def CalculateDerivatives(self, model, dc):
         dc.fill(0.0)
         dc[-1] = 1.0
-        return dc
+        return
 
 class DisplacementControl(PathFollowingMethod):
-    def __init__(self, u_hat):
+    def __init__(self, node_id, dof_type, displacement_hat):
         super(DisplacementControl, self).__init__()
-        self.u_hat = u_hat
-        self.dof = (2,'v')
+        self.displacement_hat = displacement_hat
+        self.dof = (node_id, dof_type)
 
     def ScalePredictor(self, model):
-        #returns new_u, new_Lambda
+        initial_model = model.GetInitialModel()
         previous_model = model.previous_model
-        node = model.nodes[self.dof[0]]
-        previous_node = previous_model.nodes[self.dof[0]]
-        delta_u = node.y - previous_node.y # TODO get according to dof
-        factor = self.u_hat/delta_u
+        node_id, dof_type = self.dof
+        node = model.nodes[node_id]
+        initial_node = initial_model.nodes[node_id]
+        previous_node = previous_model.nodes[node_id]
+        if dof_type == "u":
+            displacement = node.x - initial_node.x
+            prev_displacement = previous_node.x - initial_node.x
+        elif dof_type == "v":
+            displacement = node.y - initial_node.y
+            prev_displacement = previous_node.x - initial_node.x
+        elif dof_type == "w":
+            displacement = node.z - initial_node.z
+            prev_displacement = previous_node.x - initial_node.x
+        
+        desired_delta = self.displacement_hat - prev_displacement
+        current_delta = displacement - prev_displacement
+        factor = desired_delta/current_delta
         self.ScaleDeltaUandLambda(model, factor)
-        return model
+        return
 
     def CalculateConstraint(self, model):
-        node = model.nodes[self.dof[0]]
-        c = node.y - self.u_hat  # TODO get according to dof
+        node_id, dof_type = self.dof
+        initial_node = model.GetInitialModel().nodes[node_id]
+        node = model.nodes[node_id]
+        if dof_type == "u":
+            displacement = node.x - initial_node.x
+        elif dof_type == "v":
+            displacement = node.y - initial_node.y
+        elif dof_type == "w":
+            displacement = node.z - initial_node.z
+        c =  displacement - self.displacement_hat
         return c
 
     def CalculateDerivatives(self, model, dc):
@@ -84,7 +107,7 @@ class DisplacementControl(PathFollowingMethod):
         assembler = Assembler(model)
         index = assembler.IndexOfDof(self.dof)
         dc[index] = 1.0
-        return dc
+        return
 
 class ArcLengthControl(PathFollowingMethod):
     def __init__(self, l_hat):
@@ -94,28 +117,33 @@ class ArcLengthControl(PathFollowingMethod):
     def ScalePredictor(self, model):
         squared_l = self.__CalculateSquaredPredictorLength(model)
         factor = self.squared_l_hat/squared_l
+        factor = math.sqrt(factor)
         self.ScaleDeltaUandLambda(model, factor)
-        return model
+        return
 
     def CalculateConstraint(self, model):
         squared_l = self.__CalculateSquaredPredictorLength(model)
         c = squared_l - self.squared_l_hat
         return c
 
-    def CalculateDerivatives(self, model, dc):   
+    def CalculateDerivatives(self, model, dc): 
+        dc.fill(0.0)  
         assembler = Assembler(model)
         free_count = assembler.free_dof_count
+        previous_model = model.previous_model 
         for i in range(free_count):
             dof = assembler.dofs[i]
-            node = model.nodes[dof[0]]
-            if dof[1] == 'u':
-                dc[i] = node.x - node.reference_x
-            elif dof[1] == 'v':
-                dc[i] = node.y - node.reference_y
-            elif dof[1] == 'w':
-                dc[i] = node.z - node.reference_z
-        dc[-1] = model.lam
-        return dc
+            node_id, dof_type = dof
+            node = model.nodes[node_id]
+            previous_node = previous_model.nodes[node_id]
+            if dof_type == 'u':
+                dc[i] = 2*node.x - 2*previous_node.x
+            elif dof_type == 'v':
+                dc[i] = 2*node.y - 2*previous_node.y
+            elif dof_type == 'w':
+                dc[i] = 2*node.z - 2*previous_node.z
+        dc[-1] = 2*model.lam - 2*model.previous_model.lam
+        return
 
     def __CalculateSquaredPredictorLength(self, model):
         previous_model = model.previous_model       
@@ -123,4 +151,6 @@ class ArcLengthControl(PathFollowingMethod):
         for (node, previous_node) in zip(model.nodes.values(), previous_model.nodes.values()):
             dx, dy, dz = node.GetActualLocation() - previous_node.GetActualLocation()
             squared_l += dx*dx + dy*dy + dz*dz
+        delta_lam = model.lam - previous_model.lam
+        squared_l += delta_lam*delta_lam
         return squared_l

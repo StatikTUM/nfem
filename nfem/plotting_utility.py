@@ -5,7 +5,7 @@ import numpy as np
 
 from .model import Truss
 
-def PlotAnimation(history, speed=1):
+def PlotAnimation(history, speed=200):
     history_size = len(history)
 
     max_x, max_y, min_x, min_y, max_z, min_z = FindLimits(history)
@@ -52,21 +52,27 @@ def FindLimits(history):
 
     return max_x, max_y, min_x, min_y, max_z, min_z
 
-def PlotGraph(history, switch_x_axis=True):
+def PlotLoadDisplacementCurve(history, node_id, dof_type, switch_x_axis=True):
     x_data = np.zeros(len(history))
     y_data = np.zeros(len(history))
 
     # Data for plotting
+    initial_model = history[0]
     for i, model in enumerate(history):
+        if dof_type == "u":
+            x_data[i] = model.nodes[node_id].x - initial_model.nodes[node_id].x
+        elif dof_type == "v":
+            x_data[i] = model.nodes[node_id].y - initial_model.nodes[node_id].y
+        elif dof_type == "w":
+            x_data[i] = model.nodes[node_id].z - initial_model.nodes[node_id].z
         y_data[i] = model.lam
-        x_data[i] = model.nodes[2].y
 
     # Note that using plt.subplots below is equivalent to using
     # fig = plt.figure() and then ax = fig.add_subplot(111)
     fig, ax = plt.subplots()
-    plotted_line = ax.plot(x_data, y_data, 'bo')
+    plotted_line = ax.plot(x_data, y_data, '-o')
 
-    ax.legend(plotted_line, 'B.y', loc='upper right')
+    ax.legend((plotted_line), ('Node '+ str(node_id)+' - Dof '+dof_type,), loc='upper left')
 
     ax.set(xlabel='u', ylabel='lambda',
         title='Load displacement diagram')

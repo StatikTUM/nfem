@@ -3,64 +3,38 @@ from .assembler import Assembler
 
 class Predictor():
 
-    def __init__(self):
-        pass
-
     def Predict(self, model):
         """Returns a normalized predictor"""
         raise NotImplementedError
 
 class LoadIncrementPredictor(Predictor):
 
-    def __init__(self):
-        pass
+    def __init__(self, value=1.0):
+        self.value = value
 
     def Predict(self, model):
-        model.lam += 1.0
-        return model
+        model.lam += self.value
+        return
         
 class DisplacementIncrementPredictor(Predictor):
 
-    def __init__(self, node_id=2, dof_type='u'):
+    def __init__(self, node_id=2, dof_type='v', value=1.0):
         if len(dof_type) != 1:
             raise RuntimeError('Only single dof can be incremented by this predictor')
         self.dof = (node_id, dof_type)
+        self.value = value
 
     def Predict(self, model):
-        model.nodes[self.dof[0]].y += 1.0 # TODO according to dof
-        return model
+        node_id, dof_type = self.dof
+        node = model.nodes[node_id]
+        if dof_type == "u":
+            node.x += self.value
+        elif dof_type == "v":
+            node.y += self.value
+        elif dof_type == "w":
+            node.z += self.value
+        return
 
-# class LastDeltaPredictor(Predictor):
-
-#     def __init__(self, history):
-#         self.history = history
-
-#     def Predict(self, model):
-#         assembler = Assembler(model)
-#         dof_count = assembler.dof_count
-#         predictor = np.zeros(dof_count+1)
-
-#         previous_model = self.history.GetModel(-2)
-
-#         # TODO loop dofs from assembler
-#         # Node.Get
-
-#         for node in model.nodes:
-#             previous_node = previous_model.nodes[node.id]
-
-#             index = assembler.IndexOfDof((node.id, 'u'))
-#             delta = node.x - previous_node.x
-#             predictor[index] = delta
-            
-#             index = assembler.IndexOfDof((node.id, 'v'))
-#             delta = node.y - previous_node.y
-#             predictor[index] = delta
-            
-#             index = assembler.IndexOfDof((node.id, 'w'))
-#             delta = node.x - previous_node.x
-#             predictor[index] = delta
-
-#         predictor[-1] = model.lam - previous_model.lam
 
 # class TangentVectorPredictor(Predictor):
 
@@ -92,10 +66,4 @@ class DisplacementIncrementPredictor(Predictor):
 #         predictor[-1] = 1
 
 
-    
-# TODO different methods to predict the solution:
-# 1. load increment, u remains same
-# 2. displacement imcrement, lambda remains same
-# 3. [delta_u, delta_lambda] -> requires a previous solution
-# 4. use tangent stiffness at current equilibrium point
-# 5. some manual values
+
