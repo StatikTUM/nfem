@@ -360,20 +360,16 @@ class Model(object):
 
         return duplicate
 
-    def PerformLinearSolutionStep(self, lam=1.0):
+    def PerformLinearSolutionStep(self):
         """Just for testing"""
 
-        model = self.Duplicate()
-
-        model.name = 'Linear solution step (lambda={:.3f})'.format(lam)
-
-        assembler = Assembler(model)
+        assembler = Assembler(self)
 
         dof_count = assembler.dof_count
 
         u = np.zeros(dof_count)
 
-        for dof, value in model.dirichlet_conditions.items():
+        for dof, value in self.dirichlet_conditions.items():
             index = assembler.IndexOfDof(dof)
             u[index] = value
 
@@ -383,7 +379,7 @@ class Model(object):
         assembler.AssembleMatrix(k, lambda element: element.CalculateElasticStiffnessMatrix())
         assembler.AssembleVector(f, lambda element: element.CalculateLoadVector())
 
-        f *= lam
+        f *= self.lam
 
         free_count = assembler.free_dof_count
 
@@ -397,9 +393,7 @@ class Model(object):
 
             value = u[index]
 
-            model.nodes[node_id].Update(dof_type, value)
-
-        return model
+            self.nodes[node_id].Update(dof_type, value)
 
     def PerformNonLinearSolutionStep(self, 
                                      path_following_class=LoadControl, 
