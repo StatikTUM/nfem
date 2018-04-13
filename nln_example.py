@@ -10,43 +10,22 @@ from nfem import LoadControl, DisplacementControl, ArcLengthControl
 # predictor methods
 from nfem import LoadIncrementPredictor, DisplacementIncrementPredictor
 
-# Number of two bar trusses
-n_models = 1
 
-# Number of two bar steps
-n_steps = 1
+# Creation of the model
+model = Model('Two-Bar Truss')
 
-# Creating two bar trusses in a loop
-model = Model('Initial Model')
-node_count = 0
-element_count = 0
+model.AddNode(id='A', x=0, y=0, z=0)
+model.AddNode(id='B', x=1, y=1, z=0)
+model.AddNode(id='C', x=2, y=0, z=0)
 
-for i in range(n_models):
-    id_offset = 100 * i
+model.AddTrussElement(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
+model.AddTrussElement(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
 
-    z = i * 0.1
+model.AddSingleLoad(id='load 1', node_id='B', fv=-1)
 
-    node_a = id_offset + 1
-    node_b = id_offset + 2
-    node_c = id_offset + 3
-
-    model.AddNode(id=node_a, x=0, y=0, z=z)
-    model.AddNode(id=node_b, x=1, y=1, z=z)
-    model.AddNode(id=node_c, x=2, y=0, z=z)
-
-    truss_1 = id_offset + 11
-    truss_2 = id_offset + 12
-
-    model.AddTrussElement(id=truss_1, node_a=node_a, node_b=node_b, youngs_modulus=1, area=1)
-    model.AddTrussElement(id=truss_2, node_a=node_b, node_b=node_c, youngs_modulus=1, area=1)
-
-    load_b = id_offset + 21
-
-    model.AddSingleLoad(id=load_b, node_id=node_b, fv=-1)
-
-    model.AddDirichletCondition(node_id=node_a, dof_types='uvw', value=0)
-    model.AddDirichletCondition(node_id=node_b, dof_types='w', value=0)
-    model.AddDirichletCondition(node_id=node_c, dof_types='uvw', value=0)
+model.AddDirichletCondition(node_id='A', dof_types='uvw', value=0)
+model.AddDirichletCondition(node_id='B', dof_types='w', value=0)
+model.AddDirichletCondition(node_id='C', dof_types='uvw', value=0)
 
 # 1:load control 
 # 2:displacement control
@@ -74,9 +53,9 @@ elif method == 2: #displacement control
         # create a new model for each solution step
         model = model.GetDuplicate()
 
-        predictor_method = DisplacementIncrementPredictor(node_id=2, dof_type='v')
+        predictor_method = DisplacementIncrementPredictor(node_id='B', dof_type='v')
 
-        path_following_method = DisplacementControl(node_id=2, dof_type='v', displacement_hat=displacement)
+        path_following_method = DisplacementControl(node_id='B', dof_type='v', displacement_hat=displacement)
         
         model.PerformNonLinearSolutionStep(predictor_method=predictor_method,
                                            path_following_method=path_following_method)
@@ -89,7 +68,7 @@ elif method == 3: #arclength control
         # create a new model for each solution step
         model = model.GetDuplicate()
 
-        predictor_method = DisplacementIncrementPredictor(node_id=2, dof_type='v', value=-1.0)
+        predictor_method = DisplacementIncrementPredictor(node_id='B', dof_type='v', value=-1.0)
 
         path_following_method = ArcLengthControl(l_hat=arclength)
         
@@ -101,6 +80,6 @@ elif method == 3: #arclength control
 history = model.GetModelHistory()
 
 # plot the load displacement curve
-PlotLoadDisplacementCurve(history, node_id=2, dof_type='v')
+PlotLoadDisplacementCurve(history, node_id='B', dof_type='v')
 # animated plot
 PlotAnimation(history)
