@@ -270,7 +270,7 @@ class Model(object):
         self.elements = dict()
         self.dirichlet_conditions = dict()
         self.neumann_conditions = dict()
-        self.lam = 0.0
+        self.lam = 1.0
         self.previous_model = None
 
     def AddNode(self, id, x, y, z):
