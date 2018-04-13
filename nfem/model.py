@@ -339,6 +339,8 @@ class Model(object):
 
         model = self.Duplicate()
 
+        model.lam = lam
+
         model.name = 'Linear solution step (lambda={:.3f})'.format(lam)
 
         assembler = Assembler(model)

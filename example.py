@@ -4,7 +4,7 @@ A basic example for Tutorial 1
 
 import numpy as np
 
-from nfem import Model, PlotAnimation
+from nfem import Model, PlotAnimation, PlotGraph
 
 model = Model('Initial Model')
 model.AddNode(id='A', x=0, y=0, z=0)
@@ -39,4 +39,5 @@ for step, deformed in enumerate(history):
     print(deformed.nodes['B'].y)
     print(deformed.nodes['B'].z)
 
-PlotAnimation(history)
+PlotGraph(history)
+#PlotAnimation(history)
