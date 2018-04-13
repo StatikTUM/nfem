@@ -8,7 +8,7 @@ from .element_base import ElementBase
 class Truss(ElementBase):
     """FIXME"""
 
-    def __init__(self, id, node_a, node_b, youngs_modulus, area):
+    def __init__(self, id, node_a, node_b, youngs_modulus, area, prestress=0):
         """FIXME"""
 
         self.id = id
@@ -16,6 +16,7 @@ class Truss(ElementBase):
         self.node_b = node_b
         self.youngs_modulus = youngs_modulus
         self.area = area
+        self.prestress = prestress
 
     def Dofs(self):
         """FIXME"""
@@ -121,7 +122,7 @@ class Truss(ElementBase):
         E = self.youngs_modulus
         A = self.area
 
-        prestress = 0
+        prestress = self.prestress
 
         reference_a = self.node_a.GetReferenceLocation()
         reference_b = self.node_b.GetReferenceLocation()
@@ -232,15 +233,7 @@ class Truss(ElementBase):
 
         E = self.youngs_modulus
         A = self.area
-        prestress = 0
-
-        reference_a = self.node_a.GetReferenceLocation()
-        reference_b = self.node_b.GetReferenceLocation()
-        reference_ab = reference_b - reference_a
-
-        actual_a = self.node_a.GetActualLocation()
-        actual_b = self.node_b.GetActualLocation()
-        actual_ab = actual_b - actual_a
+        prestress = self.prestress
 
         dx, dy, dz = reference_ab
         du, dv, dw = actual_ab - reference_ab
@@ -248,9 +241,7 @@ class Truss(ElementBase):
         L = la.norm([dx, dy, dz])
         l = la.norm([dx + du, dy + dv, dz + dw])
 
-        deformation_gradient = l/L
-        normal_force = (E*e_gl + prestress) * A
-        normal_force *= deformation_gradient 
+        normal_force = (E * e_gl + prestress) * A * deformation_gradient 
 
         local_internal_forces = np.zeros(6)
         local_internal_forces[0] = -normal_force
