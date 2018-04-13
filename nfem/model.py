@@ -344,18 +344,21 @@ class Model(object):
 
         return history
 
-    def Duplicate(self):
+    def GetDuplicate(self, name=None):
         """FIXME"""
 
-        self_previous_model = self.previous_model
+        temp_previous_model = self.previous_model
         self.previous_model = None
 
-        clone = deepcopy(self)
+        duplicate = deepcopy(self)
 
-        self.previous_model = self_previous_model
-        clone.previous_model = self
+        self.previous_model = temp_previous_model
+        duplicate.previous_model = self
 
-        return clone
+        if name is not None:
+            duplicate.name = name
+
+        return duplicate
 
     def PerformLinearSolutionStep(self, lam=1.0):
         """Just for testing"""
@@ -409,7 +412,7 @@ class Model(object):
         path_following_method = path_following_class(prescribed_value)
 
         # create a model for the predictor
-        predictor_model = self.Duplicate()
+        predictor_model = self.GetDuplicate()
         predictor_model.internal_flag = True
 
         # calculate the direction of the predictor
