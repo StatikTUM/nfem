@@ -1,6 +1,17 @@
 """
-Here, multiple two bar trusses are simulated at the same time to test efficiency
+Non linear example of the two bar truss
+
+It can be run with different path following methods:
+1:load control 
+2:displacement control
+3:arclength control
+
+This can be set right below
 """
+# 1:load control 
+# 2:displacement control
+# 3:arclength control
+method = 3
 
 import numpy as np
 
@@ -9,7 +20,6 @@ from nfem import Model, PlotAnimation, PlotLoadDisplacementCurve
 from nfem import LoadControl, DisplacementControl, ArcLengthControl
 # predictor methods
 from nfem import LoadIncrementPredictor, DisplacementIncrementPredictor
-
 
 # Creation of the model
 model = Model('Two-Bar Truss')
@@ -27,11 +37,7 @@ model.AddDirichletCondition(node_id='A', dof_types='uvw', value=0)
 model.AddDirichletCondition(node_id='B', dof_types='w', value=0)
 model.AddDirichletCondition(node_id='C', dof_types='uvw', value=0)
 
-# 1:load control 
-# 2:displacement control
-# 3:arclength control
-method = 3
-
+# Solve with the chosen method
 if method == 1: #load control
     # define a load curve with the lambda values that should be used
     load_curve = np.linspace(0.025, 0.5, 20)
@@ -81,5 +87,6 @@ history = model.GetModelHistory()
 
 # plot the load displacement curve
 PlotLoadDisplacementCurve(history, node_id='B', dof_type='v')
+
 # animated plot
 PlotAnimation(history)
