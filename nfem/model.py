@@ -50,12 +50,24 @@ class Node(object):
         self.reference_y = y
         self.reference_z = z
 
+    def GetActualLocation(self):
+        """FIXME"""
+
+        return np.array([self.x, self.y, self.z])
+
     def GetReferenceLocation(self):
         return np.array([
             self.reference_x,
             self.reference_y,
             self.reference_z
         ])
+
+        return np.array([self.reference_x, self.reference_y, self.reference_z])
+
+    def GetDisplacement(self):
+        """FIXME"""
+
+        return self.GetReferenceLocation() - self.GetActualLocation()
 
     def Update(self, dof_type, value):
         """FIXME"""
