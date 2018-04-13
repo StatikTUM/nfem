@@ -124,20 +124,12 @@ class Truss(ElementBase):
 
         prestress = self.prestress
 
-        reference_a = self.node_a.GetReferenceLocation()
-        reference_b = self.node_b.GetReferenceLocation()
-        reference_ab = reference_b - reference_a
-        reference_length = la.norm(reference_ab)
+        reference_length = self.GetReferenceLength()
 
-        actual_a = self.node_a.GetActualLocation()
-        actual_b = self.node_b.GetActualLocation()
-        actual_ab = actual_b - actual_a
-        actual_length = la.norm(actual_ab)
+        dx, dy, dz = self.GetReferenceVector()
+        du, dv, dw = self.GetActualVector() - self.GetReferenceVector()
 
-        dx, dy, dz = reference_ab
-        du, dv, dw = actual_ab - reference_ab
-
-        e_gl = (actual_length**2 - reference_length**2) / (2.00 * reference_length**2)
+        e_gl = self.CalculateGreenLagrangeStrain()
 
         K_sigma = ((E * A * e_gl) / reference_length) + ((prestress * A) / reference_length)
         K_uij = (E * A) / reference_length**3
@@ -194,52 +186,43 @@ class Truss(ElementBase):
 
         return element_k_e + element_k_g
 
-    def CreateTransformationMatrix(self):
-        
-        location_a = self.node_a.GetActualLocation()
-        location_b = self.node_b.GetActualLocation()
+    def CalculateTransformationMatrix(self):
+        """FIXME"""
 
-        direction_longitudinal = location_b-location_a
-        norm_direction_longitudinal = la.norm(direction_longitudinal)
-        direction_longitudinal = direction_longitudinal/norm_direction_longitudinal
+        direction = self.GetActualVector()
+        direction /= la.norm(direction)
 
         transformation_matrix = np.zeros((6,6))
-        transformation_matrix[0:3,0] = direction_longitudinal
-        transformation_matrix[3:6,3] = direction_longitudinal
+        transformation_matrix[:3, 0] = direction
+        transformation_matrix[3:, 3] = direction
         
         return transformation_matrix
 
     def CalculateGreenLagrangeStrain(self):
-        reference_a = self.node_a.GetReferenceLocation()
-        reference_b = self.node_b.GetReferenceLocation()
-        reference_ab = reference_b - reference_a
+        """FIXME"""
 
-        actual_a = self.node_a.GetActualLocation()
-        actual_b = self.node_b.GetActualLocation()
-        actual_ab = actual_b - actual_a
+        reference_length = self.GetReferenceLength()
+        actual_length = self.GetActualLength()
 
-        dx, dy, dz = reference_ab
-        du, dv, dw = actual_ab - reference_ab
+        e_gl = (actual_length**2 - reference_length**2) / (2 * reference_length**2)
 
-        L = la.norm([dx, dy, dz])
-        l = la.norm([dx + du, dy + dv, dz + dw])
-
-        e_gl = (l**2 - L**2) / (2.00 * L**2)
         return e_gl
 
     def CalculateInternalForces(self):
-        transformation_matrix = self.CreateTransformationMatrix()
+        """FIXME"""
+
+        transformation_matrix = self.CalculateTransformationMatrix()
+
         e_gl = self.CalculateGreenLagrangeStrain()
 
         E = self.youngs_modulus
         A = self.area
         prestress = self.prestress
 
-        dx, dy, dz = reference_ab
-        du, dv, dw = actual_ab - reference_ab
+        reference_length = self.GetReferenceLength()
+        actual_length = self.GetActualLength()
 
-        L = la.norm([dx, dy, dz])
-        l = la.norm([dx + du, dy + dv, dz + dw])
+        deformation_gradient = actual_length / reference_length
 
         normal_force = (E * e_gl + prestress) * A * deformation_gradient 
 
@@ -248,5 +231,6 @@ class Truss(ElementBase):
         local_internal_forces[3] = normal_force
 
         global_internal_forces = transformation_matrix @ local_internal_forces
+
         return global_internal_forces
 
