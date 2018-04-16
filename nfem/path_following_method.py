@@ -28,8 +28,6 @@ class PathFollowingMethod():
 
             delta = factor * (current_value - previous_value)
 
-            print(delta)
-
             model.SetDofState(dof, previous_value + delta)
 
         delta_lambda = factor * (model.lam - previous_model.lam)
