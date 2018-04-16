@@ -21,7 +21,7 @@ from nfem import Model, PlotAnimation, PlotLoadDisplacementCurve
 # path following methods
 from nfem import LoadControl, DisplacementControl, ArcLengthControl
 # predictor methods
-from nfem import LoadIncrementPredictor, DisplacementIncrementPredictor, LastDeltaPredictor
+from nfem import LoadIncrementPredictor, DisplacementIncrementPredictor, LastIncrementPredictor
 
 # Creation of the model
 model = Model('Two-Bar Truss')
@@ -94,7 +94,7 @@ elif method == 4: #arclength control with delta predictor
         if i == 0:
             predictor_method = DisplacementIncrementPredictor(node_id='B', dof_type='v', value=-1.0)
         else:            
-            predictor_method = LastDeltaPredictor()
+            predictor_method = LastIncrementPredictor()
 
         path_following_method = ArcLengthControl(l_hat=arclength)
         
