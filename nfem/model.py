@@ -227,7 +227,7 @@ class Model(object):
         x[-1] = self.lam
 
         # solve newton raphson
-        x, n_iter = NewtonRaphson().solve(CalculateSystem, x_initial=x)
+        x, n_iter = NewtonRaphson().solve(calculate_system, x_initial=x)
 
         print("Solution found after {} iteration steps.".format(n_iter))
 

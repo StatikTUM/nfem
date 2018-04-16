@@ -1,2 +1,2 @@
-from .plot import ShowLoadDisplacementCurve, ShowHistoryAnimation, Plot2D
-from .interactive import Interact
+from .plot import show_load_displacement_curve, show_history_animation, Plot2D
+from .interactive import interact

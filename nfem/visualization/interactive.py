@@ -33,22 +33,22 @@ class InteractiveWindow(Tk):
         sidebar.pack(expand=False, fill='both', side='left', anchor='nw')
         self.sidebar = sidebar
 
-        button = tk.Button(sidebar, text='Load controlled step', command=self.LoadControlButtonClick)
+        button = tk.Button(sidebar, text='Load controlled step', command=self.load_control_button_click)
         button.pack(fill='x', padx=4, pady=(4, 2))
 
-        button = tk.Button(sidebar, text='Displacement controlled step', command=self.DisplacementControlButtonClick)
+        button = tk.Button(sidebar, text='Displacement controlled step', command=self.displacement_control_button_click)
         button.pack(fill='x', padx=4, pady=2)
 
-        button = tk.Button(sidebar, text='Arc-length controlled step', command=self.ArcLengthControlButtonClick)
+        button = tk.Button(sidebar, text='Arc-length controlled step', command=self.arc_length_control_button_click)
         button.pack(fill='x', padx=4, pady=2)
 
-        button = tk.Button(sidebar, text='Reset', command=self.ResetButtonClick)
+        button = tk.Button(sidebar, text='Reset', command=self.reset_button_click)
         button.pack(fill='x', side='bottom', padx=4, pady=(2, 4))
 
-        button = tk.Button(sidebar, text='Go back', command=self.GoBackButtonClick)
+        button = tk.Button(sidebar, text='Go back', command=self.go_back_button_click)
         button.pack(fill='x', side='bottom', padx=4, pady=2)
 
-        button = tk.Button(sidebar, text='New branch', command=self.NewBranchButtonClick)
+        button = tk.Button(sidebar, text='New branch', command=self.new_branch_button_click)
         button.pack(fill='x', side='bottom', padx=4, pady=2)
 
         # --- plot_canvas

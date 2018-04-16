@@ -127,6 +127,6 @@ def show_history_animation(model, speed=200):
         plot_model(ax, step_model, 'gray', True)
         plot_model(ax, step_model, 'red', False)
 
-    a = anim.FuncAnimation(fig, Update, frames=len(history), repeat=True, interval=speed)
+    a = anim.FuncAnimation(fig, update, frames=len(history), repeat=True, interval=speed)
 
     plt.show()
