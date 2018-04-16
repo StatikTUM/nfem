@@ -29,9 +29,9 @@ sys.path.append('..')
 # import necessary modules
 from nfem import *
 
-###########################################
-# Create the FEM model
-###########################################
+#======================================
+# Preprocessing
+#======================================
 
 # Creation of the model
 model = Model('Two-Bar Truss')
@@ -49,9 +49,9 @@ model.add_dirichlet_condition(node_id='A', dof_types='uvw', value=0)
 model.add_dirichlet_condition(node_id='B', dof_types='w', value=0)
 model.add_dirichlet_condition(node_id='C', dof_types='uvw', value=0)
 
-###########################################
+#======================================
 # 1:Linear analysis
-###########################################
+#======================================
 
 linear_model = model
 
@@ -70,9 +70,9 @@ linear_model.lam = 0.2
 linear_model.perform_linear_solution_step()
 
 
-###########################################
+#======================================
 # 2:Non-Linear analysis
-###########################################
+#======================================
 
 non_linear_model = model
 
@@ -80,6 +80,11 @@ non_linear_model = model
 TODO : Add the Non linear model following the instructions in the Tutorial 
         And plot the PlotLoadDisplacementCurve for Nonlinear model
 """
+
+
+#======================================
+# Postprocessing
+#======================================
 
 plot = Plot2D()
 plot.add_load_displacement_curve(linear_model, dof=('B', 'v'))
