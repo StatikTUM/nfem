@@ -67,7 +67,7 @@ class Truss(ElementBase):
         reference_transform = np.zeros((2, 6))
         reference_transform[0, :3] = direction
         reference_transform[1, 3:] = direction
-        
+
         return reference_transform
 
     def GetActualTransformMatrix(self):
@@ -79,7 +79,7 @@ class Truss(ElementBase):
         actual_transform = np.zeros((2, 6))
         actual_transform[0, :3] = direction
         actual_transform[1, 3:] = direction
-        
+
         return actual_transform
 
     def CalculateElasticStiffnessMatrix(self):
@@ -90,74 +90,49 @@ class Truss(ElementBase):
         reference_length = self.GetReferenceLength()
         reference_transform = self.GetReferenceTransformMatrix()
 
-        k = e * a / reference_length
+        k_e = e * a / reference_length
 
-        k_e = reference_transform.T @ [[ k, -k],
-                                       [-k,  k]] @ reference_transform
+        return reference_transform.T @ [[ k_e, -k_e],
+                                        [-k_e,  k_e]] @ reference_transform
 
-        return k_e
-
-    def CalculateGeometricStiffnessMatrix(self):
+    def CalculateMaterialStiffnessMatrix(self):
         """FIXME"""
 
-        E = self.youngs_modulus
-        A = self.area
-
-        prestress = self.prestress
-
+        e = self.youngs_modulus
+        a = self.area
+        actual_length = self.GetReferenceLength() 
         reference_length = self.GetReferenceLength()
+        actual_transform = self.GetActualTransformMatrix()
 
-        dx, dy, dz = self.GetReferenceVector()
-        du, dv, dw = self.GetActualVector() - self.GetReferenceVector()
+        k_m = e * a / reference_length * (actual_length / reference_length)**2
+
+        return actual_transform.T @ [[ k_m, -k_m],
+                                     [-k_m,  k_m]] @ actual_transform
+
+    def CalculateInitialDisplacementStiffnessMatrix(self):
+        """FIXME"""
+
+        k_m = self.CalculateMaterialStiffnessMatrix()
+        k_e = self.CalculateElasticStiffnessMatrix()
+
+        return k_m - k_e
+
+    def CalculateGeometricStiffnessMatrix(self):
+        e = self.youngs_modulus
+        a = self.area
+        prestress = self.prestress
+        reference_length = self.GetReferenceLength()
 
         e_gl = self.CalculateGreenLagrangeStrain()
 
-        K_sigma = ((E * A * e_gl) / reference_length) + ((prestress * A) / reference_length)
-        K_uij = (E * A) / reference_length**3
+        k_g = e * a / reference_length * e_gl + prestress * a / reference_length
 
-        k_g = np.empty((6, 6))
-
-        k_g[0, 0] = K_sigma + K_uij * (2 * du * dx + du * du)
-        k_g[0, 1] = K_uij * (dx * dv + dy * du + du * dv)
-        k_g[0, 2] = K_uij * (dx * dw + dz * du + du * dw)
-        k_g[0, 3] = -k_g[0, 0]
-        k_g[0, 4] = -k_g[0, 1]
-        k_g[0, 5] = -k_g[0, 2]
-        k_g[1, 1] = K_sigma + K_uij * (2 * dv * dy + dv * dv)
-        k_g[1, 2] = K_uij * (dy * dw + dz * dv + dv * dw)
-        k_g[1, 3] = k_g[0, 4]
-        k_g[1, 4] = -k_g[1, 1]
-        k_g[1, 5] = -k_g[1, 2]
-        k_g[2, 2] = K_sigma + K_uij * (2 * dw * dz + dw * dw)
-        k_g[2, 3] = -k_g[0, 2]
-        k_g[2, 4] = -k_g[1, 2]
-        k_g[2, 5] = -k_g[2, 2]
-        k_g[3, 3] = k_g[0, 0]
-        k_g[3, 4] = k_g[0, 1]
-        k_g[3, 5] = k_g[0, 2]
-        k_g[4, 4] = k_g[1, 1]
-        k_g[4, 5] = k_g[1, 2]
-        k_g[5, 5] = k_g[2, 2]
-
-        # symmetry
-
-        k_g[1, 0] = k_g[0, 1]
-        k_g[2, 0] = k_g[0, 2]
-        k_g[2, 1] = k_g[1, 2]
-        k_g[3, 0] = k_g[0, 3]
-        k_g[3, 1] = k_g[1, 3]
-        k_g[3, 2] = k_g[2, 3]
-        k_g[4, 0] = k_g[0, 4]
-        k_g[4, 1] = k_g[1, 4]
-        k_g[4, 2] = k_g[2, 4]
-        k_g[4, 3] = k_g[3, 4]
-        k_g[5, 0] = k_g[0, 5]
-        k_g[5, 1] = k_g[1, 5]
-        k_g[5, 2] = k_g[2, 5]
-        k_g[5, 3] = k_g[3, 5]
-        k_g[5, 4] = k_g[4, 5]
-
-        return k_g
+        return np.array([[ k_g,    0,    0, -k_g,    0,    0],
+                         [   0,  k_g,    0,    0, -k_g,    0],
+                         [   0,    0,  k_g,    0,    0, -k_g],
+                         [-k_g,    0,    0,  k_g,    0,    0],
+                         [   0, -k_g,    0,    0,  k_g,    0],
+                         [   0,    0, -k_g,    0,    0,  k_g]])
 
     def CalculateStiffnessMatrix(self):
         """FIXME"""
