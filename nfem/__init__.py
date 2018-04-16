@@ -1,4 +1,21 @@
-"""FIXME"""
+print("""
+
+--------------------------------------------------------------------------------
+
+                       _   ________________  ___
+                      / | / / ____/ ____/  |/  /
+                     /  |/ / /_  / __/ / /|_/ / 
+                    / /|  / __/ / /___/ /  / /  
+                   /_/ |_/_/   /_____/_/  /_/  Teaching Tool              
+
+  Authors:   Armin Geiser, Aditya Ghantasala, Thomas Oberbichler, Klaus Sautter
+  Copyright: © 2018 TUM Statik
+  Version:   1.0
+
+  This is a teaching tool! All results without warranty.
+
+--------------------------------------------------------------------------------  
+""")
 
 from .model import Model
 from .assembler import Assembler
