@@ -67,12 +67,10 @@ class DisplacementControl(PathFollowingMethod):
         self.dof = (node_id, dof_type)
 
     def ScalePredictor(self, model):
+        displacement = model.GetDofState(self.dof)
+
         previous_model = model.previous_model
-        node_id, dof_type = self.dof
-        node = model.nodes[node_id]
-        previous_node = previous_model.nodes[node_id]
-        displacement = node.GetDofValue(dof_type)
-        prev_displacement = previous_node.GetDofValue(dof_type)
+        prev_displacement = previous_model.GetDofState(self.dof)
                 
         desired_delta = self.displacement_hat - prev_displacement
         current_delta = displacement - prev_displacement
@@ -81,9 +79,7 @@ class DisplacementControl(PathFollowingMethod):
         return
 
     def CalculateConstraint(self, model):
-        node_id, dof_type = self.dof
-        node = model.nodes[node_id]
-        displacement = node.GetDofValue(dof_type)
+        displacement = model.GetDofState(self.dof)
         c =  displacement - self.displacement_hat
         return c
 
@@ -118,10 +114,7 @@ class ArcLengthControl(PathFollowingMethod):
         previous_model = model.previous_model 
         for i in range(free_count):
             dof = assembler.dofs[i]
-            node_id, dof_type = dof
-            node = model.nodes[node_id]
-            previous_node = previous_model.nodes[node_id]
-            dc[i] = 2*node.GetDofValue(dof_type) - 2*previous_node.GetDofValue(dof_type)
+            dc[i] = 2*model.GetDofState(dof) - 2*previous_model.GetDofState(dof)
         dc[-1] = 2*model.lam - 2*model.previous_model.lam
         return
 

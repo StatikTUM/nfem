@@ -56,10 +56,11 @@ def PlotLoadDisplacementCurve(history, node_id, dof_type, switch_x_axis=True):
     x_data = np.zeros(len(history))
     y_data = np.zeros(len(history))
 
+    dof = (node_id, dof_type)
     # Data for plotting
     initial_model = history[0]
     for i, model in enumerate(history):
-        x_data[i] = model.nodes[node_id].GetDofValue(dof_type)
+        x_data[i] = model.GetDofState(dof)
         y_data[i] = model.lam
 
     # Note that using plt.subplots below is equivalent to using

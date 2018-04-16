@@ -79,6 +79,16 @@ class Model(object):
 
         self.elements[id] = SingleLoad(id, self.nodes[node_id], fu, fv, fw)
 
+    def SetDofState(self, dof, value):
+        """FIXME"""
+        node_id, dof_type = dof
+        self.nodes[node_id].SetDofState(dof_type, value)
+
+    def GetDofState(self, dof):
+        """FIXME"""
+        node_id, dof_type = dof
+        return self.nodes[node_id].GetDofState(dof_type)
+
     def GetInitialModel(self):
         """FIXME"""
 
@@ -149,11 +159,10 @@ class Model(object):
         u[:free_count] = la.solve(a, b)
 
         for index, dof in enumerate(assembler.dofs):
-            node_id, dof_type = dof
 
             value = u[index]
 
-            self.nodes[node_id].SetDofValue(dof_type, value)
+            self.SetDofState(dof, value)
 
     def PerformNonLinearSolutionStep(self, 
                                      predictor_method=LoadIncrementPredictor,
@@ -180,9 +189,8 @@ class Model(object):
             # update reference coordinates
             for index, dof in enumerate(assembler.dofs):
                 if index < free_count:
-                    node_id, dof_type = dof
                     value = x[index]
-                    self.nodes[node_id].SetDofValue(dof_type, value)
+                    self.SetDofState(dof, value)
             # update lambda
             self.lam = x[-1]
 
@@ -222,9 +230,7 @@ class Model(object):
         # prediction as vector for newton raphson
         x = np.zeros(free_count+1)
         for i in range(free_count):
-            node_id, dof_type = assembler.dofs[i]
-            node = self.nodes[node_id]
-            x[i] = node.GetDofValue(dof_type)
+            x[i] = self.GetDofState(assembler.dofs[i])
         x[-1] = self.lam
 
         # solve newton raphson

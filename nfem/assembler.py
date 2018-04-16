@@ -1,12 +1,34 @@
-"""FIXME"""
-
-import numpy as np
+"""This module only contains the Assembler class
+"""
 
 class Assembler(object):
-    """FIXME"""
+    """An Assembler helps to generate system matrices/vectors from elements.
+
+    Attributes:
+    -----------
+    dofs : list
+        List of all dofs in the system. The Dofs with dirichlet constraints are at the end.
+    dof_indices : dict
+        Dictionary containing the index of each dof. The index is equal to the position of the dof
+        in the dofs-list.
+    dof_count : int
+        Total number of dofs.
+    free_dof_count : int
+        Number of dofs without dirichlet constraints.
+    fixed_dof_count : int
+        Number of dofs with dirichlet constraints.
+    element_freedom_table : list
+        List with tuples containing the elements and the coresponding dof indices.
+    """
 
     def __init__(self, model):
-        """FIXME"""
+        """Create a new Assembler
+
+        Parameters:
+        -----------
+        model : Model
+            Model to assemble.
+        """
 
         # --- dof indices
 
@@ -52,18 +74,45 @@ class Assembler(object):
         self.element_freedom_table = element_freedom_table
 
     def IndexOfDof(self, dof):
-        """FIXME"""
+        """Get the index of the given dof.
 
+        Parameters:
+        -----------
+        dof : object
+            Dof at the index.
+
+        Returns:
+        --------
+        index : int
+            Index of the given dof.
+        """
         return self.dof_indices[dof]
 
     def DofAtIndex(self, index):
-        """FIXME"""
+        """Get the dof at the given index.
 
+        Parameters:
+        -----------
+        index : int
+            Index of the dof.
+
+        Returns:
+        --------
+        dof : object
+            Dof at the given index.
+        """
         return self.dofs[index]
 
     def AssembleMatrix(self, system_matrix, calculate_element_matrix):
-        """FIXME"""
+        """Assemble element matrices into a system matrix.
 
+        Parameters:
+        -----------
+        system_matrix : ndarray
+            System matrix to store the results. The results are added to the existing values.
+        calculate_element_matrix : function Element -> ndarray
+            Function to calculate the element matrix.
+        """
         for element, indices in self.element_freedom_table:
             element_matrix = calculate_element_matrix(element)
 
@@ -72,11 +121,19 @@ class Assembler(object):
 
             for element_row, system_row in enumerate(indices):
                 for element_col, system_col in enumerate(indices):
-                    system_matrix[system_row, system_col] += element_matrix[element_row, element_col]
+                    value = element_matrix[element_row, element_col]
+                    system_matrix[system_row, system_col] += value
 
     def AssembleVector(self, system_vector, calculate_element_vector):
-        """FIXME"""
+        """Assemble element vectors into a system vector.
 
+        Parameters:
+        -----------
+        system_vector : ndarray
+            System vector to store the results. The results are added to the existing values.
+        calculate_element_vector : function Element -> ndarray
+            Function to calculate the element vector.
+        """
         for element, indices in self.element_freedom_table:
             element_vector = calculate_element_vector(element)
 

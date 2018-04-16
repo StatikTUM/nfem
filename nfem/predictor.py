@@ -25,10 +25,8 @@ class DisplacementIncrementPredictor(Predictor):
         self.value = value
 
     def Predict(self, model):
-        node_id, dof_type = self.dof
-        node = model.nodes[node_id]
-        dof_value = node.GetDofValue(dof_type)
-        node.SetDofValue(dof_type, dof_value + self.value)
+        dof_value = model.GetDofState(self.dof)
+        model.SetDofState(self.dof, dof_value + self.value)
         return
 
 
