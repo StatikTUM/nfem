@@ -28,7 +28,7 @@ x = np.zeros(free_count+1)
 x[0] = -0.080071057
 x[-1] = lam_hat
 
-def CalculateSystem(x):
+def calculate_system(x):
     print("x:", x)
     u = x[0]
     lam = x[1]
@@ -55,5 +55,5 @@ def CalculateSystem(x):
     return LHS, RHS 
 
 # solve newton raphson
-x = NewtonRaphson().Solve(CalculateSystem, x_initial=x)
+x = NewtonRaphson().solve(calculate_system, x_initial=x)
 

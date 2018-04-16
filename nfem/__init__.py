@@ -28,4 +28,4 @@ from .predictor import LoadIncrementPredictor
 from .predictor import DisplacementIncrementPredictor
 from .predictor import LastIncrementPredictor
 
-from .visualization import Interact, ShowLoadDisplacementCurve, ShowHistoryAnimation, Plot2D
+from .visualization import interact, show_load_displacement_curve, show_history_animation, Plot2D

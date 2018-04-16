@@ -76,7 +76,7 @@ class Node(object):
     def w(self, value):
         self.z = self.reference_z + value
 
-    def GetReferenceLocation(self):
+    def get_reference_location(self):
         """Location of the node in the reference configuration.
 
         Returns
@@ -90,7 +90,7 @@ class Node(object):
 
         return np.array([x, y, z], dtype=float)
 
-    def GetActualLocation(self):
+    def get_actual_location(self):
         """Location of the node in the actual configuration.
 
         Returns
@@ -104,7 +104,7 @@ class Node(object):
 
         return np.array([x, y, z], dtype=float)
 
-    def GetDisplacement(self):
+    def get_displacement(self):
         """Displacement of the node in the actual configuration.
 
         Returns
@@ -112,9 +112,9 @@ class Node(object):
         displacement : ndarray
             A numpy array containing the displacements u, v and w.
         """
-        return self.GetReferenceLocation() - self.GetActualLocation()
+        return self.get_reference_location() - self.get_actual_location()
 
-    def Update(self, dof_type, value):
+    def update(self, dof_type, value):
         """
         .. note:: Deprecated
                   Use `SetDofState` instead
@@ -129,7 +129,7 @@ class Node(object):
         else:
             raise RuntimeError('Node has no Dof of type {}'.format(dof_type))
 
-    def GetDofState(self, dof_type):
+    def get_dof_state(self, dof_type):
         """Get the current value of the given dof type.
 
         Parameters
@@ -156,7 +156,7 @@ class Node(object):
 
         raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
 
-    def SetDofState(self, dof_type, value):
+    def set_dof_state(self, dof_type, value):
         """Update the node according to the value of the given dof type.
 
         Parameters

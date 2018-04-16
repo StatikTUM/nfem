@@ -68,7 +68,7 @@ class InteractiveWindow(Tk):
         plot_2d = figure.add_subplot(1, 2, 2)
         self.plot_2d = plot_2d
 
-        self.Redraw()
+        self.redraw()
 
     @property
     def model(self):
@@ -78,8 +78,8 @@ class InteractiveWindow(Tk):
     def model(self, value):
         self.branches[-1] = value
 
-    def LoadControlButtonClick(self):
-        model = self.model.GetDuplicate()
+    def load_control_button_click(self):
+        model = self.model.get_duplicate()
 
         model.lam += 0.1
 
@@ -87,15 +87,15 @@ class InteractiveWindow(Tk):
 
         method = LoadControl(model.lam)
         
-        model.PerformNonLinearSolutionStep(predictor_method=predictor,
+        model.perform_non_linear_solution_step(predictor_method=predictor,
                                            path_following_method=method)
 
         self.model = model
 
-        self.Redraw()
+        self.redraw()
 
-    def DisplacementControlButtonClick(self):
-        model = self.model.GetDuplicate()
+    def displacement_control_button_click(self):
+        model = self.model.get_duplicate()
 
         displacement = -0.1
 
@@ -103,19 +103,19 @@ class InteractiveWindow(Tk):
 
         predictor_method = DisplacementIncrementPredictor(dof=dof, value=displacement)
 
-        displacement_hat = model.GetDofState(dof) + displacement
+        displacement_hat = model.get_dof_state(dof) + displacement
 
         path_following_method = DisplacementControl(dof=dof, displacement_hat=displacement_hat)
 
-        model.PerformNonLinearSolutionStep(predictor_method=predictor_method,
+        model.perform_non_linear_solution_step(predictor_method=predictor_method,
                                            path_following_method=path_following_method)
 
         self.model = model
 
-        self.Redraw()
+        self.redraw()
 
-    def ArcLengthControlButtonClick(self):
-        model = self.model.GetDuplicate()
+    def arc_length_control_button_click(self):
+        model = self.model.get_duplicate()
 
         dof = self.dof
 
@@ -123,38 +123,38 @@ class InteractiveWindow(Tk):
         predictor_method = DisplacementIncrementPredictor(dof=dof, value=-1.0)
         path_following_method = ArcLengthControl(l_hat=arclength)
         
-        model.PerformNonLinearSolutionStep(predictor_method=predictor_method,
+        model.perform_non_linear_solution_step(predictor_method=predictor_method,
                                            path_following_method=path_following_method)
 
         self.model = model
 
-        self.Redraw()
+        self.redraw()
 
-    def NewBranchButtonClick(self):
-        new_model = self.model.GetDuplicate()
+    def new_branch_button_click(self):
+        new_model = self.model.get_duplicate()
 
         new_model.previous_model = self.model.previous_model
 
         self.branches.append(new_model)
 
-        self.Redraw()
+        self.redraw()
 
-    def GoBackButtonClick(self):
+    def go_back_button_click(self):
         if self.model.previous_model is None:
             return
 
         self.model = self.model.previous_model
 
-        self.Redraw()
+        self.redraw()
 
-    def ResetButtonClick(self):        
-        model = self.model.GetInitialModel()
+    def reset_button_click(self):        
+        model = self.model.get_initial_model()
 
         self.branches = [model]
 
-        self.Redraw()
+        self.redraw()
 
-    def Redraw(self):
+    def redraw(self):
         model = self.model
         node_id, dof_type = self.dof
 
@@ -164,15 +164,15 @@ class InteractiveWindow(Tk):
         plot_3d.clear()
         plot_3d.grid()
 
-        min_x, max_x, min_y, max_y, min_z, max_z = BoundingBox(model)
+        min_x, max_x, min_y, max_y, min_z, max_z = bounding_box(model)
         
         plot_3d.set_xlim(min_x, max_x)
         plot_3d.set_ylim(min_y, max_y)
         plot_3d.set_zlim(min_z, max_z)
 
-        PlotModel(plot_3d, model, 'gray', True)
+        plot_model(plot_3d, model, 'gray', True)
 
-        PlotModel(plot_3d, model, 'red', False)
+        plot_model(plot_3d, model, 'red', False)
 
         plot_2d.clear()
         plot_2d.set(xlabel='{} at node {}'.format(dof_type, node_id), ylabel='Load factor ($\lambda$)', title='Load-displacement diagram')
@@ -182,11 +182,11 @@ class InteractiveWindow(Tk):
         plot_2d.grid()
 
         for model in self.branches:
-            PlotLoadDisplacementCurve(plot_2d, model, self.dof)
+            plot_load_displacement_curve(plot_2d, model, self.dof)
 
         self.plot_canvas.draw()
 
-def Interact(model, dof):
+def interact(model, dof):
     window = InteractiveWindow(model, dof=('B', 'v'))
     window.mainloop()
 

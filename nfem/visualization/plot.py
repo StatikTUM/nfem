@@ -25,15 +25,15 @@ class Plot2D(object):
 
         self.legend = []
 
-    def AddLoadDisplacementCurve(self, model, dof):
-        PlotLoadDisplacementCurve(self.ax, model, dof)
+    def add_load_displacement_curve(self, model, dof):
+        plot_load_displacement_curve(self.ax, model, dof)
 
-    def Show(self):
+    def show(self):
         self.ax.legend(loc='upper left') 
         plt.show()
 
-def BoundingBox(model):
-    nodes = [node for model in model.GetModelHistory() for node in model.nodes.values()]
+def bounding_box(model):
+    nodes = [node for model in model.get_model_history() for node in model.nodes.values()]
 
     min_x = min(node.x for node in nodes)
     max_x = max(node.x for node in nodes)
@@ -46,7 +46,7 @@ def BoundingBox(model):
 
     return min_x, max_x, min_y, max_y, min_z, max_z
 
-def PlotModel(ax, model, color, initial):
+def plot_model(ax, model, color, initial):
     xys = list()
     zs = list()
 
@@ -66,8 +66,8 @@ def PlotModel(ax, model, color, initial):
 
     ax.add_collection3d(lc, zs=zs)
 
-def PlotLoadDisplacementCurve(ax, model, dof):
-    history = model.GetModelHistory()
+def plot_load_displacement_curve(ax, model, dof):
+    history = model.get_model_history()
 
     x_data = np.zeros(len(history))
     y_data = np.zeros(len(history))
@@ -75,13 +75,13 @@ def PlotLoadDisplacementCurve(ax, model, dof):
     node_id, dof_type = dof
 
     for i, model in enumerate(history):
-        x_data[i] = model.GetDofState(dof)
+        x_data[i] = model.get_dof_state(dof)
         y_data[i] = model.lam
 
     label = '{} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
 
-def ShowLoadDisplacementCurve(model, dof, switch_x_axis=True):
+def show_load_displacement_curve(model, dof, switch_x_axis=True):
     dof_type, node_id = dof
 
     fig, ax = plt.subplots()
@@ -92,22 +92,22 @@ def ShowLoadDisplacementCurve(model, dof, switch_x_axis=True):
     ax.set_facecolor('white')
     ax.grid()
 
-    PlotLoadDisplacementCurve(ax, model, dof)
+    plot_load_displacement_curve(ax, model, dof)
 
     if switch_x_axis:
         plt.gca().invert_xaxis()
 
     plt.show()
 
-def ShowHistoryAnimation(model, speed=200):
-    history = model.GetModelHistory()
+def show_history_animation(model, speed=200):
+    history = model.get_model_history()
 
-    min_x, max_x, min_y, max_y, min_z, max_z = BoundingBox(model)
+    min_x, max_x, min_y, max_y, min_z, max_z = bounding_box(model)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    def Update(step):
+    def update(step):
         step_model = history[step]
 
         ax.clear()
@@ -124,8 +124,8 @@ def ShowHistoryAnimation(model, speed=200):
 
         plt.title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
 
-        PlotModel(ax, step_model, 'gray', True)
-        PlotModel(ax, step_model, 'red', False)
+        plot_model(ax, step_model, 'gray', True)
+        plot_model(ax, step_model, 'red', False)
 
     a = anim.FuncAnimation(fig, Update, frames=len(history), repeat=True, interval=speed)
 
