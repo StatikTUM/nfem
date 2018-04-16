@@ -6,8 +6,11 @@ import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.figure import Figure
 from matplotlib.collections import LineCollection
+import matplotlib.pyplot as plt
+import matplotlib.animation as anim
 
 from .model import Model
 from .truss import Truss
@@ -145,13 +148,13 @@ class InteractiveWindow(Tk):
 
         displacement = -0.1
 
-        node_id, dof_type = self.dof
+        dof = self.dof
 
-        predictor_method = DisplacementIncrementPredictor(node_id=node_id, dof_type=dof_type, value=displacement)
+        predictor_method = DisplacementIncrementPredictor(dof=dof, value=displacement)
 
-        displacement_hat = model.GetDofState(self.dof) + displacement
+        displacement_hat = model.GetDofState(dof) + displacement
 
-        path_following_method = DisplacementControl(node_id=node_id, dof_type=dof_type, displacement_hat=displacement_hat)
+        path_following_method = DisplacementControl(dof=dof, displacement_hat=displacement_hat)
 
         model.PerformNonLinearSolutionStep(predictor_method=predictor_method,
                                            path_following_method=path_following_method)
@@ -163,10 +166,10 @@ class InteractiveWindow(Tk):
     def ArcLengthControlButtonClick(self):
         model = self.model.GetDuplicate()
 
-        node_id, dof_type = self.dof
+        dof = self.dof
 
         arclength = 0.12
-        predictor_method = DisplacementIncrementPredictor(node_id=node_id, dof_type=dof_type, value=-1.0)
+        predictor_method = DisplacementIncrementPredictor(dof=dof, value=-1.0)
         path_following_method = ArcLengthControl(l_hat=arclength)
         
         model.PerformNonLinearSolutionStep(predictor_method=predictor_method,
@@ -237,3 +240,53 @@ def Interact(model, dof):
     window.mainloop()
 
     return window.model
+
+def ShowLoadDisplacementCurve(model, dof, switch_x_axis=True):
+    dof_type, node_id = dof
+
+    fig, ax = plt.subplots()
+
+    ax.set(xlabel='{} at node {}'.format(dof_type, node_id),
+           ylabel='Load factor ($\lambda$)',
+           title='Load-displacement diagram')
+    ax.set_facecolor('white')
+    ax.grid()
+
+    _PlotLoadDisplacementCurve(ax, model, dof)
+
+    if switch_x_axis:
+        plt.gca().invert_xaxis()
+
+    plt.show()
+
+def ShowHistoryAnimation(model, speed=200):
+    history = model.GetModelHistory()
+
+    min_x, max_x, min_y, max_y, min_z, max_z = _BoundingBox(model)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    def Update(step):
+        step_model = history[step]
+
+        ax.clear()
+
+        ax.grid()
+
+        ax.set_xlim(min_x, max_x)
+        ax.set_ylim(min_y, max_y)
+        ax.set_zlim(min_z, max_z)
+
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+
+        plt.title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
+
+        _PlotModel(ax, step_model, 'gray', True)
+        _PlotModel(ax, step_model, 'red', False)
+
+    a = anim.FuncAnimation(fig, Update, frames=len(history), repeat=True, interval=speed)
+
+    plt.show()

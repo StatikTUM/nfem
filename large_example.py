@@ -1,10 +1,9 @@
 """
 Here, multiple two bar trusses are simulated at the same time to test efficiency
 """
-
 import numpy as np
 
-from nfem import Model, PlotAnimation
+from nfem import *
 
 # Number of two bar trusses
 n_models = 100
@@ -61,4 +60,4 @@ print(deformed.nodes[2].y)
 print(deformed.nodes[2].z)
 
 # animated plot
-PlotAnimation(history)
+ShowHistoryAnimation(model)

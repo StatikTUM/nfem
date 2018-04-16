@@ -4,7 +4,7 @@ A basic example for Tutorial 1
 
 import numpy as np
 
-from nfem import Model, PlotAnimation, PlotGraph
+from nfem import *
 
 model = Model('Initial Model')
 model.AddNode(id='A', x=0, y=0, z=0)
@@ -19,7 +19,7 @@ model.AddSingleLoad(id='F', node_id='B', fv=-1)
 
 n_steps = 10
 
-for lam in np.linspace(0, 10, n_steps+1):
+for lam in np.linspace(0, 10, n_steps + 1):
     model = model.GetDuplicate()
     model.name = 'lambda = ' + str(lam)
     model.lam = lam
@@ -36,10 +36,10 @@ print(initial.nodes['B'].z) '''
 
 history = model.GetModelHistory()
 
-''' for step, deformed in enumerate(history):
+for step, deformed in enumerate(history):
     print('Deformed step {}:'.format(step))
     print(deformed.nodes['B'].x)
     print(deformed.nodes['B'].y)
-    print(deformed.nodes['B'].z) '''
+    print(deformed.nodes['B'].z)
 
-PlotAnimation(history, 200)
+ShowHistoryAnimation(model, 200)
