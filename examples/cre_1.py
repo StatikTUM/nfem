@@ -1,14 +1,16 @@
 
-
+# add the path to the nfem tool to the PATH.
+import sys
+sys.path.append('..') 
+# import necessary modules
 import numpy as np
 import numpy.linalg as la
-import math
 
 from nfem import NewtonRaphson
 
 EA = 1.0
 a = 1.0 
-L = math.sqrt(2.0)
+L = np.sqrt(2.0)
 F = -1.0
 
 
