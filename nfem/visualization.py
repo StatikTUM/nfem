@@ -268,7 +268,6 @@ def ShowHistoryAnimation(model, speed=200):
     ax = fig.add_subplot(111, projection='3d')
 
     def Update(step):
-        print(step)
         step_model = history[step]
 
         ax.clear()
