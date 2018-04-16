@@ -21,17 +21,17 @@ class PathFollowingMethod():
     def ScaleDeltaUandLambda(self, model, factor):
         previous_model = model.previous_model
         for (node, previous_node) in zip(model.nodes.values(), previous_model.nodes.values()):
-            delta_x = node.x - previous_node.x
-            delta_x *= factor
-            node.x = previous_node.x + delta_x
+            delta_u = node.u - previous_node.u
+            delta_u *= factor
+            node.u = previous_node.u + delta_u
 
-            delta_y = node.y - previous_node.y
-            delta_y *= factor
-            node.y = previous_node.y + delta_y
+            delta_v = node.v - previous_node.v
+            delta_v *= factor
+            node.v = previous_node.v + delta_v
 
-            delta_z = node.z - previous_node.z
-            delta_z *= factor
-            node.z = previous_node.z + delta_z
+            delta_w = node.w - previous_node.w
+            delta_w *= factor
+            node.w = previous_node.w + delta_w
         
         delta_lambda = model.lam - previous_model.lam
         delta_lambda *= factor
@@ -67,22 +67,13 @@ class DisplacementControl(PathFollowingMethod):
         self.dof = (node_id, dof_type)
 
     def ScalePredictor(self, model):
-        initial_model = model.GetInitialModel()
         previous_model = model.previous_model
         node_id, dof_type = self.dof
         node = model.nodes[node_id]
-        initial_node = initial_model.nodes[node_id]
         previous_node = previous_model.nodes[node_id]
-        if dof_type == "u":
-            displacement = node.x - initial_node.x
-            prev_displacement = previous_node.x - initial_node.x
-        elif dof_type == "v":
-            displacement = node.y - initial_node.y
-            prev_displacement = previous_node.x - initial_node.x
-        elif dof_type == "w":
-            displacement = node.z - initial_node.z
-            prev_displacement = previous_node.x - initial_node.x
-        
+        displacement = node.GetDofValue(dof_type)
+        prev_displacement = previous_node.GetDofValue(dof_type)
+                
         desired_delta = self.displacement_hat - prev_displacement
         current_delta = displacement - prev_displacement
         factor = desired_delta/current_delta
@@ -91,14 +82,8 @@ class DisplacementControl(PathFollowingMethod):
 
     def CalculateConstraint(self, model):
         node_id, dof_type = self.dof
-        initial_node = model.GetInitialModel().nodes[node_id]
         node = model.nodes[node_id]
-        if dof_type == "u":
-            displacement = node.x - initial_node.x
-        elif dof_type == "v":
-            displacement = node.y - initial_node.y
-        elif dof_type == "w":
-            displacement = node.z - initial_node.z
+        displacement = node.GetDofValue(dof_type)
         c =  displacement - self.displacement_hat
         return c
 
@@ -136,12 +121,7 @@ class ArcLengthControl(PathFollowingMethod):
             node_id, dof_type = dof
             node = model.nodes[node_id]
             previous_node = previous_model.nodes[node_id]
-            if dof_type == 'u':
-                dc[i] = 2*node.x - 2*previous_node.x
-            elif dof_type == 'v':
-                dc[i] = 2*node.y - 2*previous_node.y
-            elif dof_type == 'w':
-                dc[i] = 2*node.z - 2*previous_node.z
+            dc[i] = 2*node.GetDofValue(dof_type) - 2*previous_node.GetDofValue(dof_type)
         dc[-1] = 2*model.lam - 2*model.previous_model.lam
         return
 
