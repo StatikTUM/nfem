@@ -12,11 +12,11 @@ from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 
-from .model import Model
-from .truss import Truss
+from ..model import Model
+from ..truss import Truss
 
-from .path_following_method import LoadControl, DisplacementControl, ArcLengthControl
-from .predictor import LoadIncrementPredictor, DisplacementIncrementPredictor
+from ..path_following_method import LoadControl, DisplacementControl, ArcLengthControl
+from ..predictor import LoadIncrementPredictor, DisplacementIncrementPredictor
 
 def _BoundingBox(model):
     nodes = [node for model in model.GetModelHistory() for node in model.nodes.values()]

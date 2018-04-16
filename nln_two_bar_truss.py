@@ -88,7 +88,7 @@ elif method == 4: #arclength control with delta predictor
         model = model.GetDuplicate()
 
         if i == 0:
-            predictor_method = DisplacementIncrementPredictor(node_id='B', dof_type='v', value=-1.0)
+            predictor_method = DisplacementIncrementPredictor(dof=('B', 'v'), value=-1.0)
         else:
             predictor_method = LastIncrementPredictor()
 
