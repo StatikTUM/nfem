@@ -11,5 +11,6 @@ from .path_following_method import DisplacementControl
 from .path_following_method import ArcLengthControl
 from .predictor import LoadIncrementPredictor
 from .predictor import DisplacementIncrementPredictor
+from .predictor import LastIncrementPredictor
 
 from .interactive import Interact

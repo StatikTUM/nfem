@@ -152,7 +152,7 @@ class Node(object):
         if dof_type == 'v':
             return self.v
         if dof_type == 'w':
-            return self.y
+            return self.w
 
         raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
 
