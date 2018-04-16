@@ -102,7 +102,10 @@ elif method == 4: #arclength control with delta predictor
 history = model.GetModelHistory()
 
 # plot the load displacement curve
-ShowLoadDisplacementCurve(model, dof=('B', 'v'))
+plot = Plot2D()
+plot.AddLoadDisplacementCurve(model, dof=('B', 'v'))
+plot.AddLoadDisplacementCurve(model, dof=('B', 'u'))
+plot.Show()
 
 # animated plot
 ShowHistoryAnimation(model)

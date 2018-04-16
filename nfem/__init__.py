@@ -11,4 +11,4 @@ from .predictor import LoadIncrementPredictor
 from .predictor import DisplacementIncrementPredictor
 from .predictor import LastIncrementPredictor
 
-from .visualization import Interact, ShowLoadDisplacementCurve, ShowHistoryAnimation
+from .visualization import Interact, ShowLoadDisplacementCurve, ShowHistoryAnimation, Plot2D

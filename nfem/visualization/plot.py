@@ -11,6 +11,27 @@ import matplotlib.animation as anim
 
 from ..truss import Truss
 
+class Plot2D(object):
+
+    def __init__(self, x_label='Displacement', y_label='Load factor ($\lambda$)',
+                 title='Load-displacement diagram'):
+        self.fig, self.ax = plt.subplots()
+
+        self.ax.set(xlabel=x_label,
+            ylabel=y_label,
+            title=title)
+        self.ax.set_facecolor('white')
+        self.ax.grid()
+
+        self.legend = []
+
+    def AddLoadDisplacementCurve(self, model, dof):
+        PlotLoadDisplacementCurve(self.ax, model, dof)
+
+    def Show(self):
+        self.ax.legend(loc='upper left') 
+        plt.show()
+
 def BoundingBox(model):
     nodes = [node for model in model.GetModelHistory() for node in model.nodes.values()]
 
@@ -57,7 +78,8 @@ def PlotLoadDisplacementCurve(ax, model, dof):
         x_data[i] = model.GetDofState(dof)
         y_data[i] = model.lam
 
-    ax.plot(x_data, y_data, '-o')
+    label = '{} at node {}'.format(dof_type, node_id)
+    ax.plot(x_data, y_data, '-o', label=label)
 
 def ShowLoadDisplacementCurve(model, dof, switch_x_axis=True):
     dof_type, node_id = dof
