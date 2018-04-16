@@ -12,7 +12,7 @@ from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 
-from .visualization import *
+from .plot import *
 
 from ..path_following_method import LoadControl, DisplacementControl, ArcLengthControl
 from ..predictor import LoadIncrementPredictor, DisplacementIncrementPredictor
