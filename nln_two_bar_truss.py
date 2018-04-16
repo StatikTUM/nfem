@@ -61,9 +61,9 @@ elif method == 2: #displacement control
         # create a new model for each solution step
         model = model.GetDuplicate()
 
-        predictor_method = DisplacementIncrementPredictor(node_id='B', dof_type='v')
+        predictor_method = DisplacementIncrementPredictor(dof=('B', 'v'))
 
-        path_following_method = DisplacementControl(node_id='B', dof_type='v', displacement_hat=displacement)
+        path_following_method = DisplacementControl(dof=('B', 'v'), displacement_hat=displacement)
         
         model.PerformNonLinearSolutionStep(predictor_method=predictor_method,
                                            path_following_method=path_following_method)
@@ -76,7 +76,7 @@ elif method == 3: #arclength control
         # create a new model for each solution step
         model = model.GetDuplicate()
 
-        predictor_method = DisplacementIncrementPredictor(node_id='B', dof_type='v', value=-1.0)
+        predictor_method = DisplacementIncrementPredictor(dof=('B', 'v'), value=-1.0)
 
         path_following_method = ArcLengthControl(l_hat=arclength)
         

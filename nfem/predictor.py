@@ -15,13 +15,11 @@ class LoadIncrementPredictor(Predictor):
     def Predict(self, model):
         model.lam += self.value
         return
-        
+
 class DisplacementIncrementPredictor(Predictor):
 
-    def __init__(self, node_id, dof_type, value=1.0):
-        if len(dof_type) != 1:
-            raise RuntimeError('Only single dof can be incremented by this predictor')
-        self.dof = (node_id, dof_type)
+    def __init__(self, dof, value=1.0):
+        self.dof = dof
         self.value = value
 
     def Predict(self, model):
