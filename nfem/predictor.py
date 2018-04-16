@@ -3,7 +3,7 @@ from .assembler import Assembler
 
 class Predictor():
 
-    def Predict(self, model):
+    def predict(self, model):
         """Returns a normalized predictor"""
         raise NotImplementedError
 
@@ -12,7 +12,7 @@ class LoadIncrementPredictor(Predictor):
     def __init__(self, value=1.0):
         self.value = value
 
-    def Predict(self, model):
+    def predict(self, model):
         model.lam += self.value
         return
 
@@ -22,14 +22,14 @@ class DisplacementIncrementPredictor(Predictor):
         self.dof = dof
         self.value = value
 
-    def Predict(self, model):
-        dof_value = model.GetDofState(self.dof)
-        model.SetDofState(self.dof, dof_value + self.value)
+    def predict(self, model):
+        dof_value = model.get_dof_state(self.dof)
+        model.set_dof_state(self.dof, dof_value + self.value)
         return
 
 class LastIncrementPredictor(Predictor): 
  
-    def Predict(self, model):  
+    def predict(self, model):  
         previous_model = model.previous_model
         second_previous_model = previous_model.previous_model
 
@@ -54,14 +54,14 @@ class LastIncrementPredictor(Predictor):
 
 # class TangentVectorPredictor(Predictor):
 
-#     def Predict(self, model):        
+#     def predict(self, model):        
 #         assembler = Assembler(self)
 #         dof_count = assembler.dof_count
 
 #         u = np.zeros(dof_count)
 
 #         for dof, value in self.dirichlet_conditions.items():
-#             index = assembler.IndexOfDof(dof)
+#             index = assembler.index_of_dof(dof)
 #             u[index] = value
 
 #         k = np.zeros((dof_count, dof_count))

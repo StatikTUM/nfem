@@ -3,26 +3,26 @@
 class ElementBase(object):
     """FIXME"""
 
-    def Dofs(self):
+    def dofs(self):
         """FIXME"""
         raise NotImplementedError
 
-    def CalculateElasticStiffnessMatrix(self):
+    def calculate_elastic_stiffness_matrix(self):
         """FIXME"""
         return None
 
-    def CalculateGeometricStiffnessMatrix(self):
+    def calculate_geometric_stiffness_matrix(self):
         """FIXME"""
         return None
 
-    def CalculateStiffnessMatrix(self):
+    def calculate_stiffness_matrix(self):
         """FIXME"""
         return None
 
-    def CalculateExternalForces(self):
+    def calculate_external_forces(self):
         """FIXME"""
         return None
 
-    def CalculateInternalForces(self):
+    def calculate_internal_forces(self):
         """FIXME"""
         return None

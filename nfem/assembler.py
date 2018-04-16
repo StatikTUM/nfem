@@ -38,7 +38,7 @@ class Assembler(object):
         fixed_dofs = list()
 
         for element in model.elements.values():
-            for dof in element.Dofs():
+            for dof in element.dofs():
                 if dof in processed_dofs:
                     continue
                 else:
@@ -59,7 +59,7 @@ class Assembler(object):
         element_freedom_table = list()
 
         for element in model.elements.values():
-            indices = [dof_indices[dof] for dof in element.Dofs()]
+            indices = [dof_indices[dof] for dof in element.dofs()]
 
             element_freedom_table.append((element, indices))
 
@@ -73,7 +73,7 @@ class Assembler(object):
         self.fixed_dof_count = len(fixed_dofs)
         self.element_freedom_table = element_freedom_table
 
-    def IndexOfDof(self, dof):
+    def index_of_dof(self, dof):
         """Get the index of the given dof.
 
         Parameters
@@ -88,7 +88,7 @@ class Assembler(object):
         """
         return self.dof_indices[dof]
 
-    def DofAtIndex(self, index):
+    def dof_at_index(self, index):
         """Get the dof at the given index.
 
         Parameters
@@ -103,7 +103,7 @@ class Assembler(object):
         """
         return self.dofs[index]
 
-    def AssembleMatrix(self, system_matrix, calculate_element_matrix):
+    def assemble_matrix(self, system_matrix, calculate_element_matrix):
         """Assemble element matrices into a system matrix.
 
         Parameters
@@ -124,7 +124,7 @@ class Assembler(object):
                     value = element_matrix[element_row, element_col]
                     system_matrix[system_row, system_col] += value
 
-    def AssembleVector(self, system_vector, calculate_element_vector):
+    def assemble_vector(self, system_vector, calculate_element_vector):
         """Assemble element vectors into a system vector.
 
         Parameters

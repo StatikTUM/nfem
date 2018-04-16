@@ -15,14 +15,14 @@ class SingleLoad(ElementBase):
         self.fv = fv
         self.fw = fw
 
-    def Dofs(self):
+    def dofs(self):
         """FIXME"""
 
         node_id = self.node.id
 
         return [(node_id, 'u'), (node_id, 'v'), (node_id, 'w')]
 
-    def CalculateExternalForces(self):
+    def calculate_external_forces(self):
         """FIXME"""
 
         return np.array([self.fu, self.fv, self.fw])
