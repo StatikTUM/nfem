@@ -145,13 +145,13 @@ class InteractiveWindow(Tk):
 
         displacement = -0.1
 
-        node_id, dof_type = self.dof
+        dof = self.dof
 
-        predictor_method = DisplacementIncrementPredictor(node_id=node_id, dof_type=dof_type, value=displacement)
+        predictor_method = DisplacementIncrementPredictor(dof=dof, value=displacement)
 
-        displacement_hat = model.GetDofState(self.dof) + displacement
+        displacement_hat = model.GetDofState(dof) + displacement
 
-        path_following_method = DisplacementControl(node_id=node_id, dof_type=dof_type, displacement_hat=displacement_hat)
+        path_following_method = DisplacementControl(dof=dof, displacement_hat=displacement_hat)
 
         model.PerformNonLinearSolutionStep(predictor_method=predictor_method,
                                            path_following_method=path_following_method)
@@ -163,10 +163,10 @@ class InteractiveWindow(Tk):
     def ArcLengthControlButtonClick(self):
         model = self.model.GetDuplicate()
 
-        node_id, dof_type = self.dof
+        dof = self.dof
 
         arclength = 0.12
-        predictor_method = DisplacementIncrementPredictor(node_id=node_id, dof_type=dof_type, value=-1.0)
+        predictor_method = DisplacementIncrementPredictor(dof=dof, value=-1.0)
         path_following_method = ArcLengthControl(l_hat=arclength)
         
         model.PerformNonLinearSolutionStep(predictor_method=predictor_method,
