@@ -35,5 +35,5 @@ class NewtonRaphson(object):
             # update x
             x -= delta_x
 
-        raise RuntimeError('Newthon-Raphson did not converge after {} steps. Residual norm: {}' \
+        raise RuntimeError('Newthon-Raphson did not converge after {} steps. Residual norm: {}'
                            .format(self.max_iterations, residual_norm))
