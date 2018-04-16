@@ -1,1 +1,2 @@
-from .visualization import Interact, ShowLoadDisplacementCurve, ShowHistoryAnimation
+from .visualization import ShowLoadDisplacementCurve, ShowHistoryAnimation
+from .interactive import Interact
