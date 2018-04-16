@@ -2,10 +2,10 @@
 Non linear example of the two bar truss
 
 It can be run with different path following methods:
-1:load control 
-2:displacement control
-3:arclength control
-4:arclength control with delta predictor
+1: load control 
+2: displacement control
+3: arclength control
+4: arclength control with delta predictor
 
 This can be set right below
 """
@@ -23,7 +23,9 @@ from nfem import *
 # 4:arclength control with delta predictor
 method = 4
 
-# Creation of the model
+#======================================
+# Preprocessing
+#======================================
 model = Model('Two-Bar Truss')
 
 model.AddNode(id='A', x=0, y=0, z=0)
@@ -39,11 +41,21 @@ model.AddDirichletCondition(node_id='A', dof_types='uvw', value=0)
 model.AddDirichletCondition(node_id='B', dof_types='w', value=0)
 model.AddDirichletCondition(node_id='C', dof_types='uvw', value=0)
 
-# Solve with the chosen method
+#======================================
+# Solve (with the chosen method)
+# 1: load control 
+# 2: displacement control
+# 3: arclength control
+# 4: arclength control with delta predictor
+#======================================
+method = 4
+
 if method == 1: #load control
+
     # define a load curve with the lambda values that should be used
     load_curve = np.linspace(0.025, 0.5, 20)
     for lam in load_curve:
+
         # create a new model for each solution step
         model = model.GetDuplicate()
 
@@ -55,9 +67,11 @@ if method == 1: #load control
                                            path_following_method=path_following_method)
 
 elif method == 2: #displacement control
+
     # define a list of displacement values that should be used
     displacement_curve = np.linspace(-0.1, -2.0, 20)
     for displacement in displacement_curve:
+
         # create a new model for each solution step
         model = model.GetDuplicate()
 
@@ -69,10 +83,12 @@ elif method == 2: #displacement control
                                            path_following_method=path_following_method)
 
 elif method == 3: #arclength control
+
     # define a list of displacement values that should be used
-    arclength = 0.12
+    arclength = 0.1
     n_steps = 20
     for i in range(n_steps):
+
         # create a new model for each solution step
         model = model.GetDuplicate()
 
@@ -84,10 +100,12 @@ elif method == 3: #arclength control
                                            path_following_method=path_following_method)
 
 elif method == 4: #arclength control with delta predictor
+
     # define a list of displacement values that should be used
-    arclength = 0.12
+    arclength = 0.1
     n_steps = 20
     for i in range(n_steps):
+        
         # create a new model for each solution step
         model = model.GetDuplicate()
 
@@ -101,9 +119,9 @@ elif method == 4: #arclength control with delta predictor
         model.PerformNonLinearSolutionStep(predictor_method=predictor_method,
                                            path_following_method=path_following_method)
 
-
-# get the model history
-history = model.GetModelHistory()
+#======================================
+# Postprocessing
+#======================================
 
 # plot the load displacement curve
 plot = Plot2D()
