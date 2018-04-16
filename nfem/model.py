@@ -129,12 +129,11 @@ class Model(object):
 
         return duplicate
 
-    def PerformLinearSolutionStep(self, lam=1.0):
+    def PerformLinearSolutionStep(self):
         """Just for testing"""
 
         assembler = Assembler(self)
 
-        self.lam = lam
         dof_count = assembler.dof_count
 
         u = np.zeros(dof_count)
