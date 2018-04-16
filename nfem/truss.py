@@ -58,6 +58,18 @@ class Truss(ElementBase):
         
         return la.norm(actual_b - actual_a)
 
+    def GetReferenceTransformMatrix(self):
+        """ Transformation matrix for the reference configuration.
+        """
+        direction = self.GetReferenceVector()
+        direction = direction / la.norm(direction)
+
+        reference_transform = np.zeros((2, 6))
+        reference_transform[0, :3] = direction
+        reference_transform[1, 3:] = direction
+        
+        return reference_transform
+
     def GetActualTransformMatrix(self):
         """ Transformation matrix for the actual configuration.
         """
