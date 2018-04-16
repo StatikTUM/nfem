@@ -12,11 +12,8 @@ from .truss import Truss
 from .assembler import Assembler
 from .newton_raphson import NewtonRaphson
 
-from .path_following_method import LoadControl
-from .path_following_method import DisplacementControl
 from .path_following_method import ArcLengthControl
 from .predictor import LoadIncrementPredictor
-from .predictor import DisplacementIncrementPredictor
 
 class Model(object):
     """FIXME"""
@@ -64,7 +61,8 @@ class Model(object):
             dof = (node_id, dof_type)
 
             if dof in self.dirichlet_conditions:
-                raise RuntimeError('The model already contains a dirichlet condition for {}'.format(dof))
+                raise RuntimeError('The model already contains a dirichlet condition for {}'
+                                   .format(dof))
 
             self.dirichlet_conditions[dof] = value
 
@@ -163,10 +161,11 @@ class Model(object):
 
             self.SetDofState(dof, value)
 
-    def PerformNonLinearSolutionStep(self, 
+    def PerformNonLinearSolutionStep(self,
                                      predictor_method=LoadIncrementPredictor,
                                      path_following_method=ArcLengthControl):
-                                     
+        """FIXME"""
+
         print("=================================")
         print("Start non linear solution step...")
         # calculate the direction of the predictor
@@ -182,54 +181,49 @@ class Model(object):
         assembler = Assembler(self)
         dof_count = assembler.dof_count
         free_count = assembler.free_dof_count
-        
+
         def CalculateSystem(x):
-            global residuum, constraint
-            # update reference coordinates
-            for index, dof in enumerate(assembler.dofs):
-                if index < free_count:
-                    value = x[index]
-                    self.SetDofState(dof, value)
+            """FIXME"""
+            # update actual coordinates
+            for index, dof in enumerate(assembler.dofs[:free_count]):
+                value = x[index]
+                self.SetDofState(dof, value)
+
             # update lambda
             self.lam = x[-1]
 
-            #initialize (set to zero)
-            k = np.zeros((dof_count,dof_count))
-            f = np.zeros(dof_count)
-            ke = np.zeros((dof_count,dof_count))
-            ku = np.zeros((dof_count,dof_count))
-            kg = np.zeros((dof_count,dof_count))
-            f = np.zeros(dof_count)
+            # initialize with zeros
+            k = np.zeros((dof_count, dof_count))
+            external_f = np.zeros(dof_count)
             internal_f = np.zeros(dof_count)
 
             # assemble stiffness
-            assembler.AssembleMatrix(ke, lambda element: element.CalculateElasticStiffnessMatrix())
-            # TODO separate ku and ke
-            assembler.AssembleMatrix(ku, lambda element: element.CalculateGeometricStiffnessMatrix())
-            k = ke + ku + kg
+            assembler.AssembleMatrix(k, lambda element: element.CalculateStiffnessMatrix())
+
             # assemble force
-            assembler.AssembleVector(f, lambda element: element.CalculateExternalForces())
+            assembler.AssembleVector(external_f, lambda element: element.CalculateExternalForces())
             assembler.AssembleVector(internal_f, lambda element: element.CalculateInternalForces())
 
             # assemble left and right hand side for newton raphson
-            LHS = np.zeros((free_count+1, free_count+1))
-            RHS = np.zeros(free_count+1)
+            lhs = np.zeros((free_count + 1, free_count + 1))
+            rhs = np.zeros(free_count + 1)
 
             # mechanical system
-            LHS[:free_count, :free_count] = k[:free_count, :free_count]
-            LHS[:free_count,-1] = -f[:free_count]
-            RHS[:free_count] = internal_f[:free_count]-f[:free_count]*self.lam
+            lhs[:free_count, :free_count] = k[:free_count, :free_count]
+            lhs[:free_count, -1] = -external_f[:free_count]
+            rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
 
             # constraint
-            path_following_method.CalculateDerivatives(self, LHS[-1,:])
-            RHS[-1] = path_following_method.CalculateConstraint(self)
+            path_following_method.CalculateDerivatives(self, lhs[-1, :])
+            rhs[-1] = path_following_method.CalculateConstraint(self)
 
-            return LHS, RHS 
+            return lhs, rhs
 
         # prediction as vector for newton raphson
         x = np.zeros(free_count+1)
         for i in range(free_count):
             x[i] = self.GetDofState(assembler.dofs[i])
+
         x[-1] = self.lam
 
         # solve newton raphson
@@ -238,4 +232,3 @@ class Model(object):
         print("Solution found after {} iteration steps.".format(n_iter))
 
         # TODO solve attendant eigenvalue problem
-        return
