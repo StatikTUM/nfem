@@ -58,6 +58,18 @@ class Truss(ElementBase):
         
         return la.norm(actual_b - actual_a)
 
+    def GetActualTransformMatrix(self):
+        """ Transformation matrix for the actual configuration.
+        """
+        direction = self.GetActualVector()
+        direction = direction / la.norm(direction)
+
+        actual_transform = np.zeros((2, 6))
+        actual_transform[0, :3] = direction
+        actual_transform[1, 3:] = direction
+        
+        return actual_transform
+
     def CalculateElasticStiffnessMatrix(self):
         """FIXME"""
 
@@ -186,18 +198,6 @@ class Truss(ElementBase):
 
         return element_k_e + element_k_g
 
-    def CalculateTransformationMatrix(self):
-        """FIXME"""
-
-        direction = self.GetActualVector()
-        direction /= la.norm(direction)
-
-        transformation_matrix = np.zeros((6,6))
-        transformation_matrix[:3, 0] = direction
-        transformation_matrix[3:, 3] = direction
-        
-        return transformation_matrix
-
     def CalculateGreenLagrangeStrain(self):
         """FIXME"""
 
@@ -210,8 +210,6 @@ class Truss(ElementBase):
 
     def CalculateInternalForces(self):
         """FIXME"""
-
-        transformation_matrix = self.CalculateTransformationMatrix()
 
         e_gl = self.CalculateGreenLagrangeStrain()
 
@@ -226,11 +224,10 @@ class Truss(ElementBase):
 
         normal_force = (E * e_gl + prestress) * A * deformation_gradient 
 
-        local_internal_forces = np.zeros(6)
-        local_internal_forces[0] = -normal_force
-        local_internal_forces[3] = normal_force
+        local_internal_forces = [-normal_force, normal_force]
 
-        global_internal_forces = transformation_matrix @ local_internal_forces
+        actual_transform = self.GetActualTransformMatrix()
+
+        global_internal_forces = actual_transform.T @ local_internal_forces
 
         return global_internal_forces
-
