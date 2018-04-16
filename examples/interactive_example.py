@@ -1,3 +1,7 @@
+# add the path to the nfem tool to the PATH.
+import sys
+sys.path.append('..') 
+# import necessary modules
 from nfem import *
 
 model = Model('Initial Model')
