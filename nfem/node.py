@@ -85,7 +85,10 @@ class Node(object):
         return self.GetReferenceLocation() - self.GetActualLocation()
 
     def Update(self, dof_type, value):
-        """FIXME"""
+        """
+        .. note:: Deprecated
+                  Use `SetDofState` instead
+        """
 
         if dof_type == 'u':
             self.x = self.reference_x + value
@@ -95,3 +98,54 @@ class Node(object):
             self.z = self.reference_z + value
         else:
             raise RuntimeError('Node has no Dof of type {}'.format(dof_type))
+
+    def GetDofState(self, dof_type):
+        """Get the current value of the given dof type.
+
+        Parameters
+        ----------
+        dof_type : string
+            Type of the dof.
+
+        Returns
+        -------
+        value : float
+            The current value of the dof type
+
+        Raises
+        ------
+        AttributeError
+            If `dof_type` does not exist.
+        """
+        if dof_type == 'u':
+            return self.x - self.reference_x
+        if dof_type == 'v':
+            return self.y - self.reference_y
+        if dof_type == 'w':
+            return self.z - self.reference_z
+
+        raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
+
+    def SetDofState(self, dof_type, value):
+        """Update the node according to the value of the given dof type.
+
+        Parameters
+        ----------
+        dof_type : string
+            Type of the Dof.
+        value : float
+            The value of the given dof.
+
+        Raises
+        ------
+        AttributeError
+            If `dof_type` does not exist.
+        """
+        if dof_type == 'u':
+            self.x = self.reference_x + value
+        elif dof_type == 'v':
+            self.y = self.reference_y + value
+        elif dof_type == 'w':
+            self.z = self.reference_z + value
+        else:
+            raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
