@@ -9,6 +9,10 @@ It can be run with different path following methods:
 
 This can be set right below
 """
+# add the path to the nfem tool to the PATH.
+import sys
+sys.path.append('..') 
+# import necessary modules
 import numpy as np
 
 from nfem import *
