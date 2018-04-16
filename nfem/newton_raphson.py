@@ -10,7 +10,7 @@ class NewtonRaphson(object):
         self.max_iterations = max_iterations
         self.tolerance = tolerance
 
-    def Solve(self, calculate_system, x_initial):
+    def solve(self, calculate_system, x_initial):
         """FIXME"""
         x = x_initial
         residual_norm = None

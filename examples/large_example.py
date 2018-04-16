@@ -29,32 +29,32 @@ for i in range(n_models):
     node_b = id_offset + 2
     node_c = id_offset + 3
 
-    model.AddNode(id=node_a, x=0, y=0, z=z)
-    model.AddNode(id=node_b, x=5, y=2, z=z)
-    model.AddNode(id=node_c, x=10, y=0, z=z)
+    model.add_node(id=node_a, x=0, y=0, z=z)
+    model.add_node(id=node_b, x=5, y=2, z=z)
+    model.add_node(id=node_c, x=10, y=0, z=z)
 
     truss_1 = id_offset + 11
     truss_2 = id_offset + 12
 
-    model.AddTrussElement(id=truss_1, node_a=node_a, node_b=node_b, youngs_modulus=10, area=2)
-    model.AddTrussElement(id=truss_2, node_a=node_b, node_b=node_c, youngs_modulus=10, area=2)
+    model.add_truss_element(id=truss_1, node_a=node_a, node_b=node_b, youngs_modulus=10, area=2)
+    model.add_truss_element(id=truss_2, node_a=node_b, node_b=node_c, youngs_modulus=10, area=2)
 
     load_b = id_offset + 21
 
-    model.AddSingleLoad(id=load_b, node_id=node_b, fv=-1)
+    model.add_single_load(id=load_b, node_id=node_b, fv=-1)
 
-    model.AddDirichletCondition(node_id=node_a, dof_types='uvw', value=0)
-    model.AddDirichletCondition(node_id=node_b, dof_types='w', value=0)
-    model.AddDirichletCondition(node_id=node_c, dof_types='uvw', value=0)
+    model.add_dirichlet_condition(node_id=node_a, dof_types='uvw', value=0)
+    model.add_dirichlet_condition(node_id=node_b, dof_types='w', value=0)
+    model.add_dirichlet_condition(node_id=node_c, dof_types='uvw', value=0)
 
 # solving a linear system in each step
 for lam in np.linspace(0, 10, n_steps+1):
-    model = model.GetDuplicate()
+    model = model.get_duplicate()
     model.name = 'lambda = ' + str(lam)
     model.lam = lam
-    model.PerformLinearSolutionStep()
+    model.perform_linear_solution_step()
 
-history = model.GetModelHistory()
+history = model.get_model_history()
 
 # print the result of last step
 deformed = history[-1]
@@ -64,4 +64,4 @@ print(deformed.nodes[2].y)
 print(deformed.nodes[2].z)
 
 # animated plot
-ShowHistoryAnimation(model)
+show_history_animation(model)

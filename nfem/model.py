@@ -29,7 +29,7 @@ class Model(object):
         self.lam = 0.0
         self.previous_model = None
 
-    def AddNode(self, id, x, y, z):
+    def add_node(self, id, x, y, z):
         """FIXME"""
 
         if id in self.nodes:
@@ -37,7 +37,7 @@ class Model(object):
 
         self.nodes[id] = Node(id, x, y, z)
 
-    def AddTrussElement(self, id, node_a, node_b, youngs_modulus, area):
+    def add_truss_element(self, id, node_a, node_b, youngs_modulus, area):
         """FIXME"""
 
         if id in self.elements:
@@ -51,7 +51,7 @@ class Model(object):
 
         self.elements[id] = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area)
 
-    def AddDirichletCondition(self, node_id, dof_types, value):
+    def add_dirichlet_condition(self, node_id, dof_types, value):
         """FIXME"""
 
         if node_id not in self.nodes:
@@ -66,7 +66,7 @@ class Model(object):
 
             self.dirichlet_conditions[dof] = value
 
-    def AddSingleLoad(self, id, node_id, fu=0, fv=0, fw=0):
+    def add_single_load(self, id, node_id, fu=0, fv=0, fw=0):
         """FIXME"""
 
         if id in self.elements:
@@ -77,17 +77,17 @@ class Model(object):
 
         self.elements[id] = SingleLoad(id, self.nodes[node_id], fu, fv, fw)
 
-    def SetDofState(self, dof, value):
+    def set_dof_state(self, dof, value):
         """FIXME"""
         node_id, dof_type = dof
-        self.nodes[node_id].SetDofState(dof_type, value)
+        self.nodes[node_id].set_dof_state(dof_type, value)
 
-    def GetDofState(self, dof):
+    def get_dof_state(self, dof):
         """FIXME"""
         node_id, dof_type = dof
-        return self.nodes[node_id].GetDofState(dof_type)
+        return self.nodes[node_id].get_dof_state(dof_type)
 
-    def GetInitialModel(self):
+    def get_initial_model(self):
         """FIXME"""
 
         current_model = self
@@ -97,7 +97,7 @@ class Model(object):
 
         return current_model
 
-    def GetModelHistory(self):
+    def get_model_history(self):
         """FIXME"""
 
         history = [self]
@@ -111,7 +111,7 @@ class Model(object):
 
         return history
 
-    def GetDuplicate(self, name=None):
+    def get_duplicate(self, name=None):
         """FIXME"""
 
         temp_previous_model = self.previous_model
@@ -127,7 +127,7 @@ class Model(object):
 
         return duplicate
 
-    def PerformLinearSolutionStep(self):
+    def perform_linear_solution_step(self):
         """Just for testing"""
 
         assembler = Assembler(self)
@@ -137,14 +137,14 @@ class Model(object):
         u = np.zeros(dof_count)
 
         for dof, value in self.dirichlet_conditions.items():
-            index = assembler.IndexOfDof(dof)
+            index = assembler.index_of_dof(dof)
             u[index] = value
 
         k = np.zeros((dof_count, dof_count))
         f = np.zeros(dof_count)
 
-        assembler.AssembleMatrix(k, lambda element: element.CalculateElasticStiffnessMatrix())
-        assembler.AssembleVector(f, lambda element: element.CalculateExternalForces())
+        assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
+        assembler.assemble_vector(f, lambda element: element.calculate_external_forces())
 
         f *= self.lam
 
@@ -159,9 +159,9 @@ class Model(object):
 
             value = u[index]
 
-            self.SetDofState(dof, value)
+            self.set_dof_state(dof, value)
 
-    def PerformNonLinearSolutionStep(self,
+    def perform_non_linear_solution_step(self,
                                      predictor_method=LoadIncrementPredictor,
                                      path_following_method=ArcLengthControl):
         """FIXME"""
@@ -169,25 +169,25 @@ class Model(object):
         print("=================================")
         print("Start non linear solution step...")
         # calculate the direction of the predictor
-        predictor_method.Predict(self)
+        predictor_method.predict(self)
 
         # rotate the predictor if necessary (e.g. for branch switching)
         # TODO for branch switching
 
         # scale the predictor so it fulfills the path following constraint
-        path_following_method.ScalePredictor(self)
+        path_following_method.scale_predictor(self)
 
         # initialize working matrices and functions for newton raphson
         assembler = Assembler(self)
         dof_count = assembler.dof_count
         free_count = assembler.free_dof_count
 
-        def CalculateSystem(x):
+        def calculate_system(x):
             """FIXME"""
             # update actual coordinates
             for index, dof in enumerate(assembler.dofs[:free_count]):
                 value = x[index]
-                self.SetDofState(dof, value)
+                self.set_dof_state(dof, value)
 
             # update lambda
             self.lam = x[-1]
@@ -198,11 +198,11 @@ class Model(object):
             internal_f = np.zeros(dof_count)
 
             # assemble stiffness
-            assembler.AssembleMatrix(k, lambda element: element.CalculateStiffnessMatrix())
+            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
 
             # assemble force
-            assembler.AssembleVector(external_f, lambda element: element.CalculateExternalForces())
-            assembler.AssembleVector(internal_f, lambda element: element.CalculateInternalForces())
+            assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
+            assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
 
             # assemble left and right hand side for newton raphson
             lhs = np.zeros((free_count + 1, free_count + 1))
@@ -214,20 +214,20 @@ class Model(object):
             rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
 
             # constraint
-            path_following_method.CalculateDerivatives(self, lhs[-1, :])
-            rhs[-1] = path_following_method.CalculateConstraint(self)
+            path_following_method.calculate_derivatives(self, lhs[-1, :])
+            rhs[-1] = path_following_method.calculate_constraint(self)
 
             return lhs, rhs
 
         # prediction as vector for newton raphson
         x = np.zeros(free_count+1)
         for i in range(free_count):
-            x[i] = self.GetDofState(assembler.dofs[i])
+            x[i] = self.get_dof_state(assembler.dofs[i])
 
         x[-1] = self.lam
 
         # solve newton raphson
-        x, n_iter = NewtonRaphson().Solve(CalculateSystem, x_initial=x)
+        x, n_iter = NewtonRaphson().solve(calculate_system, x_initial=x)
 
         print("Solution found after {} iteration steps.".format(n_iter))
 
