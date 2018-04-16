@@ -37,13 +37,14 @@ load_curve = np.linspace(0.025, 0.5, 20)
 for lam in load_curve:
     # create a new model for each solution step
     model = model.GetDuplicate()    
-    model.PerformLinearSolutionStep(lam)
+    model.lam = lam
+    model.PerformLinearSolutionStep()
 
 # get the model history
 history = model.GetModelHistory()
 
 # plot the load displacement curve
-ShowLoadDisplacementCurve(model, node_id='B', dof_type='v')
+ShowLoadDisplacementCurve(model, dof = ('B', 'v'))
 
 # animated plot
 ShowHistoryAnimation(model)

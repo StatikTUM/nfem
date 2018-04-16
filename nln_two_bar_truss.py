@@ -88,7 +88,7 @@ elif method == 4: #arclength control with delta predictor
         model = model.GetDuplicate()
 
         if i == 0:
-            predictor_method = DisplacementIncrementPredictor(node_id='B', dof_type='v', value=-1.0)
+            predictor_method = DisplacementIncrementPredictor(dof=('B', 'v'), value=-1.0)
         else:
             predictor_method = LastIncrementPredictor()
 
@@ -102,7 +102,10 @@ elif method == 4: #arclength control with delta predictor
 history = model.GetModelHistory()
 
 # plot the load displacement curve
-ShowLoadDisplacementCurve(model, dof=('B', 'v'))
+plot = Plot2D()
+plot.AddLoadDisplacementCurve(model, dof=('B', 'v'))
+plot.AddLoadDisplacementCurve(model, dof=('B', 'u'))
+plot.Show()
 
 # animated plot
 ShowHistoryAnimation(model)
