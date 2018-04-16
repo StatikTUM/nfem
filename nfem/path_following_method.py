@@ -121,7 +121,7 @@ class ArcLengthControl(PathFollowingMethod):
 
             dc[index] = 2 * (current_value - previous_value)
 
-        dc[-1] = 2*model.lam - 2*model.previous_model.lam
+        dc[-1] = 2 * (model.lam - model.previous_model.lam)
 
     def _CalculateSquaredPredictorLength(self, model):
         previous_model = model.previous_model
