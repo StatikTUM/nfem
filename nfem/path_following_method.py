@@ -16,22 +16,18 @@ class PathFollowingMethod():
         raise NotImplementedError
 
     def ScaleDeltaUandLambda(self, model, factor):
+        assembler = Assembler(model)
         previous_model = model.previous_model
-        for (node, previous_node) in zip(model.nodes.values(), previous_model.nodes.values()):
-            delta_u = node.u - previous_node.u
-            delta_u *= factor
-            node.u = previous_node.u + delta_u
 
-            delta_v = node.v - previous_node.v
-            delta_v *= factor
-            node.v = previous_node.v + delta_v
+        for dof in assembler.dofs:
+            current_value = model.GetDofState(dof)
+            previous_value = previous_model.GetDofState(dof)
 
-            delta_w = node.w - previous_node.w
-            delta_w *= factor
-            node.w = previous_node.w + delta_w
+            delta = factor * (current_value - previous_value)
 
-        delta_lambda = model.lam - previous_model.lam
-        delta_lambda *= factor
+            model.SetDofState(dof, previous_value + delta)
+
+        delta_lambda = factor * (model.lam - previous_model.lam)
         model.lam = previous_model.lam + delta_lambda
 
 

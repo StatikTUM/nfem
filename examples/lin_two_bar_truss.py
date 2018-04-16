@@ -1,21 +1,13 @@
 """
-Non linear example of the two bar truss
-
-It can be run with different path following methods:
-1:load control 
-2:displacement control
-3:arclength control
-
-This can be set right below
+Linear example of the two bar truss
 """
+# add the path to the nfem tool to the PATH.
+import sys
+sys.path.append('..') 
+# import necessary modules
 import numpy as np
 
 from nfem import *
-
-# 1:load control 
-# 2:displacement control
-# 3:arclength control
-method = 3
 
 # Creation of the model
 model = Model('Two-Bar Truss')
@@ -37,13 +29,14 @@ load_curve = np.linspace(0.025, 0.5, 20)
 for lam in load_curve:
     # create a new model for each solution step
     model = model.GetDuplicate()    
-    model.PerformLinearSolutionStep(lam)
+    model.lam = lam
+    model.PerformLinearSolutionStep()
 
 # get the model history
 history = model.GetModelHistory()
 
 # plot the load displacement curve
-ShowLoadDisplacementCurve(model, node_id='B', dof_type='v')
+ShowLoadDisplacementCurve(model, dof = ('B', 'v'))
 
 # animated plot
 ShowHistoryAnimation(model)
