@@ -85,58 +85,15 @@ class Truss(ElementBase):
     def CalculateElasticStiffnessMatrix(self):
         """FIXME"""
 
-        reference_a = self.node_a.GetReferenceLocation()
-        reference_b = self.node_b.GetReferenceLocation()
+        e = self.youngs_modulus
+        a = self.area
+        reference_length = self.GetReferenceLength()
+        reference_transform = self.GetReferenceTransformMatrix()
 
-        reference_length = la.norm(reference_b - reference_a)
+        k = e * a / reference_length
 
-        (dx, dy, dz) = reference_b - reference_a
-
-        EA = self.youngs_modulus * self.area
-
-        L3 = reference_length**3
-
-        k_e = np.empty((6, 6))
-
-        k_e[0, 0] = (EA * dx * dx) / L3
-        k_e[0, 1] = (EA * dx * dy) / L3
-        k_e[0, 2] = (EA * dx * dz) / L3
-        k_e[0, 3] = -k_e[0, 0]
-        k_e[0, 4] = -k_e[0, 1]
-        k_e[0, 5] = -k_e[0, 2]
-        k_e[1, 1] = (EA * dy * dy) / L3
-        k_e[1, 2] = (EA * dy * dz) / L3
-        k_e[1, 3] = k_e[0, 4]
-        k_e[1, 4] = -k_e[1, 1]
-        k_e[1, 5] = -k_e[1, 2]
-        k_e[2, 2] = (EA * dz * dz) / L3
-        k_e[2, 3] = -k_e[0, 2]
-        k_e[2, 4] = -k_e[1, 2]
-        k_e[2, 5] = -k_e[2, 2]
-        k_e[3, 3] = k_e[0, 0]
-        k_e[3, 4] = k_e[0, 1]
-        k_e[3, 5] = k_e[0, 2]
-        k_e[4, 4] = k_e[1, 1]
-        k_e[4, 5] = k_e[1, 2]
-        k_e[5, 5] = k_e[2, 2]
-
-        # symmetry
-
-        k_e[1, 0] = k_e[0, 1]
-        k_e[2, 0] = k_e[0, 2]
-        k_e[2, 1] = k_e[1, 2]
-        k_e[3, 0] = k_e[0, 3]
-        k_e[3, 1] = k_e[1, 3]
-        k_e[3, 2] = k_e[2, 3]
-        k_e[4, 0] = k_e[0, 4]
-        k_e[4, 1] = k_e[1, 4]
-        k_e[4, 2] = k_e[2, 4]
-        k_e[4, 3] = k_e[3, 4]
-        k_e[5, 0] = k_e[0, 5]
-        k_e[5, 1] = k_e[1, 5]
-        k_e[5, 2] = k_e[2, 5]
-        k_e[5, 3] = k_e[3, 5]
-        k_e[5, 4] = k_e[4, 5]
+        k_e = reference_transform.T @ [[ k, -k],
+                                       [-k,  k]] @ reference_transform
 
         return k_e
 
