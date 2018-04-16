@@ -8,18 +8,14 @@ It can be run with different path following methods:
 
 This can be set right below
 """
+import numpy as np
+
+from nfem import *
+
 # 1:load control 
 # 2:displacement control
 # 3:arclength control
 method = 3
-
-import numpy as np
-
-from nfem import Model, PlotAnimation, PlotLoadDisplacementCurve
-# path following methods
-from nfem import LoadControl, DisplacementControl, ArcLengthControl
-# predictor methods
-from nfem import LoadIncrementPredictor, DisplacementIncrementPredictor
 
 # Creation of the model
 model = Model('Two-Bar Truss')
@@ -47,7 +43,7 @@ for lam in load_curve:
 history = model.GetModelHistory()
 
 # plot the load displacement curve
-PlotLoadDisplacementCurve(history, node_id='B', dof_type='v')
+ShowLoadDisplacementCurve(model, node_id='B', dof_type='v')
 
 # animated plot
-PlotAnimation(history)
+ShowHistoryAnimation(model)

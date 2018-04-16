@@ -9,19 +9,15 @@ It can be run with different path following methods:
 
 This can be set right below
 """
+import numpy as np
+
+from nfem import *
+
 # 1:load control 
 # 2:displacement control
 # 3:arclength control
 # 4:arclength control with delta predictor
 method = 4
-
-import numpy as np
-
-from nfem import Model, PlotAnimation, PlotLoadDisplacementCurve
-# path following methods
-from nfem import LoadControl, DisplacementControl, ArcLengthControl
-# predictor methods
-from nfem import LoadIncrementPredictor, DisplacementIncrementPredictor, LastIncrementPredictor
 
 # Creation of the model
 model = Model('Two-Bar Truss')
@@ -93,7 +89,7 @@ elif method == 4: #arclength control with delta predictor
 
         if i == 0:
             predictor_method = DisplacementIncrementPredictor(node_id='B', dof_type='v', value=-1.0)
-        else:            
+        else:
             predictor_method = LastIncrementPredictor()
 
         path_following_method = ArcLengthControl(l_hat=arclength)
@@ -106,7 +102,7 @@ elif method == 4: #arclength control with delta predictor
 history = model.GetModelHistory()
 
 # plot the load displacement curve
-PlotLoadDisplacementCurve(history, node_id='B', dof_type='v')
+ShowLoadDisplacementCurve(model, dof=('B', 'v'))
 
 # animated plot
-PlotAnimation(history)
+ShowHistoryAnimation(model)
