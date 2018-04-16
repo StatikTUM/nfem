@@ -79,6 +79,16 @@ class Model(object):
 
         self.elements[id] = SingleLoad(id, self.nodes[node_id], fu, fv, fw)
 
+    def SetDofState(self, dof, value):
+        """FIXME"""
+        node_id, dof_type = dof
+        self.nodes[node_id].SetDofState(dof_type, value)
+
+    def GetDofState(self, dof):
+        """FIXME"""
+        node_id, dof_type = dof
+        return self.nodes[node_id].GetDofState(dof_type)
+
     def GetInitialModel(self):
         """FIXME"""
 
