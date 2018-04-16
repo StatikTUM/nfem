@@ -18,21 +18,15 @@ class LoadIncrementPredictor(Predictor):
         
 class DisplacementIncrementPredictor(Predictor):
 
-    def __init__(self, node_id=2, dof_type='v', value=1.0):
+    def __init__(self, node_id, dof_type, value=1.0):
         if len(dof_type) != 1:
             raise RuntimeError('Only single dof can be incremented by this predictor')
         self.dof = (node_id, dof_type)
         self.value = value
 
     def Predict(self, model):
-        node_id, dof_type = self.dof
-        node = model.nodes[node_id]
-        if dof_type == "u":
-            node.x += self.value
-        elif dof_type == "v":
-            node.y += self.value
-        elif dof_type == "w":
-            node.z += self.value
+        dof_value = model.GetDofState(self.dof)
+        model.SetDofState(self.dof, dof_value + self.value)
         return
 
 

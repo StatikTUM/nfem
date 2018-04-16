@@ -22,6 +22,12 @@ class Node(object):
         Actual Y coordinate.
     z : float
         Actual Z coordinate.
+    u : float
+        Displacement in x direction.
+    v : float
+        Displacement in y direction.
+    w : float
+        Displacement in z direction.
     """
 
     def __init__(self, id, x, y, z):
@@ -45,6 +51,30 @@ class Node(object):
         self.reference_x = x
         self.reference_y = y
         self.reference_z = z
+
+    @property
+    def u(self):
+        return self.x - self.reference_x
+
+    @u.setter
+    def u(self, value):
+        self.x = self.reference_x + value
+
+    @property
+    def v(self):
+        return self.y - self.reference_y
+
+    @v.setter
+    def v(self, value):
+        self.y = self.reference_y + value
+    
+    @property
+    def w(self):
+        return self.z - self.reference_z
+
+    @w.setter
+    def w(self, value):
+        self.z = self.reference_z + value
 
     def GetReferenceLocation(self):
         """Location of the node in the reference configuration.
@@ -89,13 +119,13 @@ class Node(object):
         .. note:: Deprecated
                   Use `SetDofState` instead
         """
-
+        raise DeprecationWarning('Use `SetDofState` instead')
         if dof_type == 'u':
-            self.x = self.reference_x + value
+            self.u = value
         elif dof_type == 'v':
-            self.y = self.reference_y + value
+            self.v =  value
         elif dof_type == 'w':
-            self.z = self.reference_z + value
+            self.w = value
         else:
             raise RuntimeError('Node has no Dof of type {}'.format(dof_type))
 
@@ -118,11 +148,11 @@ class Node(object):
             If `dof_type` does not exist.
         """
         if dof_type == 'u':
-            return self.x - self.reference_x
+            return self.u
         if dof_type == 'v':
-            return self.y - self.reference_y
+            return self.v
         if dof_type == 'w':
-            return self.z - self.reference_z
+            return self.y
 
         raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
 
@@ -142,10 +172,10 @@ class Node(object):
             If `dof_type` does not exist.
         """
         if dof_type == 'u':
-            self.x = self.reference_x + value
+            self.u = value
         elif dof_type == 'v':
-            self.y = self.reference_y + value
+            self.v = value
         elif dof_type == 'w':
-            self.z = self.reference_z + value
+            self.w = value
         else:
             raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))

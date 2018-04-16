@@ -159,11 +159,10 @@ class Model(object):
         u[:free_count] = la.solve(a, b)
 
         for index, dof in enumerate(assembler.dofs):
-            node_id, dof_type = dof
 
             value = u[index]
 
-            self.nodes[node_id].Update(dof_type, value)
+            self.SetDofState(dof, value)
 
     def PerformNonLinearSolutionStep(self, 
                                      predictor_method=LoadIncrementPredictor,
@@ -190,9 +189,8 @@ class Model(object):
             # update reference coordinates
             for index, dof in enumerate(assembler.dofs):
                 if index < free_count:
-                    node_id, dof_type = dof
                     value = x[index]
-                    self.nodes[node_id].Update(dof_type, value)
+                    self.SetDofState(dof, value)
             # update lambda
             self.lam = x[-1]
 
@@ -232,14 +230,7 @@ class Model(object):
         # prediction as vector for newton raphson
         x = np.zeros(free_count+1)
         for i in range(free_count):
-            dof = assembler.dofs[i]
-            node = self.nodes[dof[0]]
-            if dof[1] == 'u':
-                x[i] = node.x - node.reference_x
-            elif dof[1] == 'v':
-                x[i] = node.y - node.reference_y
-            elif dof[1] == 'w':
-                x[i] = node.z - node.reference_z
+            x[i] = self.GetDofState(assembler.dofs[i])
         x[-1] = self.lam
 
         # solve newton raphson
