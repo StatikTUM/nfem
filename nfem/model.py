@@ -19,7 +19,13 @@ class Model(object):
     """FIXME"""
 
     def __init__(self, name):
-        """FIXME"""
+        """Create a new model.
+
+        Attributes
+        ----------
+        name : str
+            Name of the model.
+        """
 
         self.name = name
         self.nodes = dict()
@@ -30,16 +36,52 @@ class Model(object):
         self.previous_model = None
 
     def add_node(self, id, x, y, z):
-        """FIXME"""
+        """Add a three dimensional node to the model.
 
+        Attributes
+        ----------
+        id : int or str
+            Unique ID of the node.
+        x : float
+            X coordinate.
+        y : float
+            Y coordinate.
+        z : float
+            Z coordinate.
+
+        Examples
+        --------
+        Add a node with ID `B`:
+
+        >>> model.add_node(id='B', x=5, y=2, z=0)
+        """
         if id in self.nodes:
             raise RuntimeError('The model already contains a node with id {}'.format(id))
 
         self.nodes[id] = Node(id, x, y, z)
 
     def add_truss_element(self, id, node_a, node_b, youngs_modulus, area):
-        """FIXME"""
+        """Add a three dimensional truss element to the model.
 
+        Attributes
+        ----------
+        id : int or str
+            Unique ID of the element.
+        node_a : int or str
+            ID of the first node.
+        node_b : int or str
+            ID of the second node.
+        youngs_modulus : float
+            Youngs modulus of the material for the truss.
+        area : float
+            Area of the cross section for the truss.
+
+        Examples
+        --------
+        Add a truss element from node `A` to node `B`:
+
+        >>> model.add_truss_element(node_a='A', node_a='B', youngs_modulus=20, area=1)
+        """
         if id in self.elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))
 
@@ -52,8 +94,29 @@ class Model(object):
         self.elements[id] = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area)
 
     def add_dirichlet_condition(self, node_id, dof_types, value):
-        """FIXME"""
+        """Apply a dirichlet condition to the given dof types of a node.
 
+        Attributes
+        ----------
+        id : int or str
+            Unique ID of the element.
+        node_id : int or str
+            ID of the node.
+        dof_types : list or str
+            List with the dof types
+        value : float
+            Value of the boundary condition.
+
+        Examples
+        --------
+        Add a support for the vertical displacement `v` at node `A`:
+
+        >>> model.add_dirichlet_condition(node_id='A', dof_types='v', value=0)
+
+        Lock all displacements (`u`, `v` and `w`) for a fixed support:
+
+        >>> model.add_dirichlet_condition(node_id='B', dof_types='uvw', value=0)
+        """
         if node_id not in self.nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
 
@@ -111,8 +174,29 @@ class Model(object):
 
         return history
 
-    def get_duplicate(self, name=None):
-        """FIXME"""
+    def get_duplicate(self, name=None, branch=False):
+        """Get a duplicate of the model.
+
+        Attributes
+        ----------
+        name : str, optional
+            Name of the new model.
+        branch : bool, optional
+            If `branch` is `False` the duplicate will be a successor of the current model::
+
+                previous ----> current ----> duplicate
+
+            If `branch` is `True` the duplicate will be a successor of the previous model::
+
+                previous ----> current
+                          \ 
+                           \-> duplicate
+
+        Returns
+        -------
+        model : Model
+            Duplicate of the current model.
+        """
 
         temp_previous_model = self.previous_model
         self.previous_model = None
@@ -120,7 +204,11 @@ class Model(object):
         duplicate = deepcopy(self)
 
         self.previous_model = temp_previous_model
-        duplicate.previous_model = self
+
+        if branch:
+            duplicate.previous_model = self.previous_model
+        else:
+            duplicate.previous_model = self
 
         if name is not None:
             duplicate.name = name
