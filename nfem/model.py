@@ -1,4 +1,4 @@
-"""FIXME"""
+"""This module contains the Model class"""
 
 from copy import deepcopy
 
@@ -16,31 +16,31 @@ from .path_following_method import ArcLengthControl
 from .predictor import LoadIncrementPredictor
 
 class Model(object):
-        """A Model contains all the objects that build the finite element model.
-            Nodes, elements, loads, dirichlet conditions... 
+    """A Model contains all the objects that build the finite element model.
+        Nodes, elements, loads, dirichlet conditions... 
 
-        Attributes
-        ----------
-        name : str
-            Name of the model.
-        nodes : dict
-            Dictionary that stores node_id : node object
-        elements : str
-            Dictionary that stores element_id : element object
-        dirichlet_conditions : str
-            Dictionary that stores dc_id : dirichlet condition object
-        neumann_conditions : str
-            Dictionary that stores nc_id : load object
-        lam : float
-            load factor
-        previous_model : Model
-            Previous state of this model
-        """
+    Attributes
+    ----------
+    name : str
+        Name of the model.
+    nodes : dict
+        Dictionary that stores node_id : node object
+    elements : str
+        Dictionary that stores element_id : element object
+    dirichlet_conditions : str
+        Dictionary that stores dc_id : dirichlet condition object
+    neumann_conditions : str
+        Dictionary that stores nc_id : load object
+    lam : float
+        load factor
+    previous_model : Model
+        Previous state of this model
+    """
 
     def __init__(self, name):
         """Create a new model.
 
-        Attributes
+        Parameters
         ----------
         name : str
             Name of the model.
@@ -57,7 +57,7 @@ class Model(object):
     def add_node(self, id, x, y, z):
         """Add a three dimensional node to the model.
 
-        Attributes
+        Parameters
         ----------
         id : int or str
             Unique ID of the node.
@@ -82,7 +82,7 @@ class Model(object):
     def add_truss_element(self, id, node_a, node_b, youngs_modulus, area):
         """Add a three dimensional truss element to the model.
 
-        Attributes
+        Parameters
         ----------
         id : int or str
             Unique ID of the element.
@@ -115,7 +115,7 @@ class Model(object):
     def add_dirichlet_condition(self, node_id, dof_types, value):
         """Apply a dirichlet condition to the given dof types of a node.
 
-        Attributes
+        Parameters
         ----------
         id : int or str
             Unique ID of the element.
@@ -151,7 +151,7 @@ class Model(object):
     def add_single_load(self, id, node_id, fu=0, fv=0, fw=0):
         """Add a single force element to the model.
 
-        Attributes
+        Parameters
         ----------
         id : int or str
             Unique ID of the force element.
@@ -182,7 +182,7 @@ class Model(object):
     def set_dof_state(self, dof, value):
         """Sets the state of the dof
 
-        Attributes
+        Parameters
         ----------
         dof : tuple(node_id, dof_type)
             Dof that is modified
@@ -195,7 +195,7 @@ class Model(object):
     def get_dof_state(self, dof):
         """Sets the state of the dof
 
-        Attributes
+        Parameters
         ----------
         dof : tuple(node_id, dof_type)
             Dof that is asked
@@ -246,7 +246,7 @@ class Model(object):
     def get_duplicate(self, name=None, branch=False):
         """Get a duplicate of the model.
 
-        Attributes
+        Parameters
         ----------
         name : str, optional
             Name of the new model.
