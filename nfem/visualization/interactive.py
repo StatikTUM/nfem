@@ -6,11 +6,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.figure import Figure
-from matplotlib.collections import LineCollection
-import matplotlib.pyplot as plt
-import matplotlib.animation as anim
 
 from .plot import *
 
