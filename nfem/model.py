@@ -16,7 +16,26 @@ from .path_following_method import ArcLengthControl
 from .predictor import LoadIncrementPredictor
 
 class Model(object):
-    """FIXME"""
+        """A Model contains all the objects that build the finite element model.
+            Nodes, elements, loads, dirichlet conditions... 
+
+        Attributes
+        ----------
+        name : str
+            Name of the model.
+        nodes : dict
+            Dictionary that stores node_id : node object
+        elements : str
+            Dictionary that stores element_id : element object
+        dirichlet_conditions : str
+            Dictionary that stores dc_id : dirichlet condition object
+        neumann_conditions : str
+            Dictionary that stores nc_id : load object
+        lam : float
+            load factor
+        previous_model : Model
+            Previous state of this model
+        """
 
     def __init__(self, name):
         """Create a new model.
@@ -130,7 +149,27 @@ class Model(object):
             self.dirichlet_conditions[dof] = value
 
     def add_single_load(self, id, node_id, fu=0, fv=0, fw=0):
-        """FIXME"""
+        """Add a single force element to the model.
+
+        Attributes
+        ----------
+        id : int or str
+            Unique ID of the force element.
+        node_id : int or str
+            ID of the node.
+        fu : float
+            Load magnitude in x direction - default 0.0   
+        fv : float
+            Load magnitude in y direction - default 0.0 
+        fw : float
+            Load magnitude in z direction - default 0.0   
+
+        Examples
+        --------
+        Add a single force element at node `A` with only a component in negative y direction:
+
+        >>> model.add_single_load(id=1, node_id='A', fv=-1.0)
+        """
 
         if id in self.elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))
@@ -141,18 +180,42 @@ class Model(object):
         self.elements[id] = SingleLoad(id, self.nodes[node_id], fu, fv, fw)
 
     def set_dof_state(self, dof, value):
-        """FIXME"""
+        """Sets the state of the dof
+
+        Attributes
+        ----------
+        dof : tuple(node_id, dof_type)
+            Dof that is modified
+        value : float
+            Value that is set at the dof
+        """
         node_id, dof_type = dof
         self.nodes[node_id].set_dof_state(dof_type, value)
 
     def get_dof_state(self, dof):
-        """FIXME"""
+        """Sets the state of the dof
+
+        Attributes
+        ----------
+        dof : tuple(node_id, dof_type)
+            Dof that is asked
+
+        Returns
+        ----------
+        value : float
+            Value at the dof
+        """
         node_id, dof_type = dof
         return self.nodes[node_id].get_dof_state(dof_type)
 
     def get_initial_model(self):
-        """FIXME"""
+        """Gets the initial model of this model.
 
+        Returns
+        ----------
+        model : Model
+            initial model 
+        """
         current_model = self
 
         while current_model.previous_model is not None:
@@ -161,7 +224,13 @@ class Model(object):
         return current_model
 
     def get_model_history(self):
-        """FIXME"""
+        """Gets a list of all previous models of this model.
+
+        Returns
+        ----------
+        history : list
+            List of previous models
+        """
 
         history = [self]
 
@@ -216,7 +285,11 @@ class Model(object):
         return duplicate
 
     def perform_linear_solution_step(self):
-        """Just for testing"""
+        """Performs a linear solution step on the model.
+            It uses the member variable `lam` as load factor.
+            The results are stored at the dofs and used to update the current 
+            coordinates of the nodes.
+        """
 
         assembler = Assembler(self)
 
@@ -252,10 +325,27 @@ class Model(object):
     def perform_non_linear_solution_step(self,
                                      predictor_method=LoadIncrementPredictor,
                                      path_following_method=ArcLengthControl):
-        """FIXME"""
+        """Performs a non linear solution step on the model.
+            It uses the parameter `predictor_method` to predict the solution and
+            the parameter `path_following_method` to constrain the non linear problem.
+            A newton raphson algorithm is used to iteratively solve the nonlinear 
+            equation system r(u,lam) = 0
+            The results are stored at the dofs and used to update the current 
+            coordinates of the nodes.
+
+        Parameters
+        ----------
+        predictor_method : Object
+            Predictor object that predicts the solution. 
+            (predictor.py for details)            
+        path_following_method : Object
+            Path following object that constrains the solution. 
+            (path_following_method.py for details)
+        """
 
         print("=================================")
         print("Start non linear solution step...")
+
         # calculate the direction of the predictor
         predictor_method.predict(self)
 
@@ -271,7 +361,24 @@ class Model(object):
         free_count = assembler.free_dof_count
 
         def calculate_system(x):
-            """FIXME"""
+            """Callback function for the newton raphson method that calculates the 
+                system for a given state x
+
+            Parameters
+            ----------
+            x : numpy.ndarray
+                Current state of dofs and lambda (unknowns of the non linear system) 
+
+            Returns
+            ----------
+            lhs : numpy.ndarray
+                Left hand side matrix of size (n_free_dofs+1,n_free_dofs+1).
+                Containts the derivatives of the residuum and the constraint.
+            rhs : numpy.ndarray
+                Right hand side vector of size (n_free_dofs+1).
+                Contains the values of the residuum of the structure and the constraint.
+            """
+
             # update actual coordinates
             for index, dof in enumerate(assembler.dofs[:free_count]):
                 value = x[index]
@@ -280,7 +387,7 @@ class Model(object):
             # update lambda
             self.lam = x[-1]
 
-            # initialize with zeros
+            # initialize matrices and vectors with zeros
             k = np.zeros((dof_count, dof_count))
             external_f = np.zeros(dof_count)
             internal_f = np.zeros(dof_count)
@@ -292,26 +399,29 @@ class Model(object):
             assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
             assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
 
-            # assemble left and right hand side for newton raphson
+            # initialize left and right hand side for newton raphson
             lhs = np.zeros((free_count + 1, free_count + 1))
             rhs = np.zeros(free_count + 1)
 
-            # mechanical system
+            # assemble contribution from mechanical system
             lhs[:free_count, :free_count] = k[:free_count, :free_count]
             lhs[:free_count, -1] = -external_f[:free_count]
             rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
 
-            # constraint
+            # assemble contribution from constraint
             path_following_method.calculate_derivatives(self, lhs[-1, :])
             rhs[-1] = path_following_method.calculate_constraint(self)
 
             return lhs, rhs
 
-        # prediction as vector for newton raphson
+        # iniatialize prediction vector for newton raphson
         x = np.zeros(free_count+1)
+
+        # assemble contribution from dofs
         for i in range(free_count):
             x[i] = self.get_dof_state(assembler.dofs[i])
 
+        # assemble contribution from lambda
         x[-1] = self.lam
 
         # solve newton raphson
@@ -320,3 +430,5 @@ class Model(object):
         print("Solution found after {} iteration steps.".format(n_iter))
 
         # TODO solve attendant eigenvalue problem
+
+        return
