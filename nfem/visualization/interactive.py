@@ -194,7 +194,7 @@ class InteractiveWindow(Tk):
         self.plot_canvas.draw()
 
 def interact(model, dof):
-    window = InteractiveWindow(model, dof=('B', 'v'))
+    window = InteractiveWindow(model, dof=dof)
     window.mainloop()
 
     return window.model
