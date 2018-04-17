@@ -56,6 +56,7 @@ def bounding_box(model):
 
 def plot_model(ax, model, color, initial):
     xys = list()
+    colors = list()
     zs = list()
 
     for element in model.elements.values():
@@ -68,9 +69,13 @@ def plot_model(ax, model, color, initial):
             z = node_b.reference_z if initial else node_b.z
 
             xys.append([a, b])
+            colors.append(color)
+            if element.is_cable and not initial:
+                if (element.get_actual_length() - element.get_reference_length()) < 0.0:
+                    colors[-1] = "yellow"
             zs.append(z)
 
-    lc = LineCollection(xys, colors=color, linewidths=2)
+    lc = LineCollection(xys, colors=colors, linewidths=2)
 
     ax.add_collection3d(lc, zs=zs)
 

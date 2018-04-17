@@ -8,7 +8,7 @@ from .element_base import ElementBase
 class Truss(ElementBase):
     """FIXME"""
 
-    def __init__(self, id, node_a, node_b, youngs_modulus, area, prestress=0):
+    def __init__(self, id, node_a, node_b, youngs_modulus, area, prestress=0, is_cable=False):
         """FIXME"""
 
         self.id = id
@@ -17,6 +17,7 @@ class Truss(ElementBase):
         self.youngs_modulus = youngs_modulus
         self.area = area
         self.prestress = prestress
+        self.is_cable = is_cable
 
     def dofs(self):
         """FIXME"""
@@ -60,6 +61,10 @@ class Truss(ElementBase):
 
     def calculate_elastic_stiffness_matrix(self):
         """FIXME"""
+
+        if self.is_cable:
+            if (self.get_actual_length() - self.get_reference_length()) < 0.0:
+                return None
 
         reference_a = self.node_a.get_reference_location()
         reference_b = self.node_b.get_reference_location()
@@ -118,6 +123,10 @@ class Truss(ElementBase):
 
     def calculate_geometric_stiffness_matrix(self):
         """FIXME"""
+
+        if self.is_cable:
+            if (self.get_actual_length() - self.get_reference_length()) < 0.0:
+                return None
 
         E = self.youngs_modulus
         A = self.area
@@ -181,6 +190,10 @@ class Truss(ElementBase):
     def calculate_stiffness_matrix(self):
         """FIXME"""
 
+        if self.is_cable:
+            if (self.get_actual_length() - self.get_reference_length()) < 0.0:
+                return None
+
         element_k_e = self.calculate_elastic_stiffness_matrix()
         element_k_g = self.calculate_geometric_stiffness_matrix()
 
@@ -210,6 +223,10 @@ class Truss(ElementBase):
 
     def calculate_internal_forces(self):
         """FIXME"""
+
+        if self.is_cable:
+            if (self.get_actual_length() - self.get_reference_length()) < 0.0:
+                return None
 
         transformation_matrix = self.calculate_transformation_matrix()
 

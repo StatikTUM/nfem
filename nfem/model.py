@@ -93,6 +93,41 @@ class Model(object):
 
         self.elements[id] = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area)
 
+        
+    def add_cable_element(self, id, node_a, node_b, youngs_modulus, area):
+        """Add a three dimensional cable element to the model. It can only carry
+            tensile forces
+
+        Attributes
+        ----------
+        id : int or str
+            Unique ID of the element.
+        node_a : int or str
+            ID of the first node.
+        node_b : int or str
+            ID of the second node.
+        youngs_modulus : float
+            Youngs modulus of the material for the cable.
+        area : float
+            Area of the cross section for the cable.
+
+        Examples
+        --------
+        Add a cable element from node `A` to node `B`:
+
+        >>> model.add_cable_element(node_a='A', node_a='B', youngs_modulus=20, area=1)
+        """
+        if id in self.elements:
+            raise RuntimeError('The model already contains an element with id {}'.format(id))
+
+        if node_a not in self.nodes:
+            raise RuntimeError('The model does not contain a node with id {}'.format(node_a))
+
+        if node_b not in self.nodes:
+            raise RuntimeError('The model does not contain a node with id {}'.format(node_b))
+
+        self.elements[id] = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, is_cable=True)
+
     def add_dirichlet_condition(self, node_id, dof_types, value):
         """Apply a dirichlet condition to the given dof types of a node.
 
