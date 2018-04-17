@@ -160,18 +160,13 @@ class InteractiveWindow(Tk):
 
         plot_3d = self.plot_3d
         plot_2d = self.plot_2d
-        
+
         plot_3d.clear()
         plot_3d.grid()
 
-        min_x, max_x, min_y, max_y, min_z, max_z = bounding_box(model)
-        
-        plot_3d.set_xlim(min_x, max_x)
-        plot_3d.set_ylim(min_y, max_y)
-        plot_3d.set_zlim(min_z, max_z)
+        plot_bounding_cube(plot_3d, model)
 
         plot_model(plot_3d, model, 'gray', True)
-
         plot_model(plot_3d, model, 'red', False)
 
         plot_2d.clear()

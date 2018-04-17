@@ -81,6 +81,21 @@ def plot_load_displacement_curve(ax, model, dof):
     label = '{} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
 
+def plot_bounding_cube(ax, model, color='w'):
+    min_x, max_x, min_y, max_y, min_z, max_z = bounding_box(model)
+
+    xyz_min = np.array([min_x, min_y, min_z])
+    xyz_max = np.array([max_x, max_y, max_z])
+
+    max_range = np.array(xyz_max - xyz_min).max()
+
+    center = (xyz_max + xyz_min) / 2
+
+    corners = max_range / 2 * np.mgrid[-1:2:2, -1:2:2, -1:2:2].reshape(3, 8).T + center
+
+    for x, y, z in corners:
+        ax.plot([x], [y], [z], color)
+
 def show_load_displacement_curve(model, dof, switch_x_axis=True):
     dof_type, node_id = dof
 
