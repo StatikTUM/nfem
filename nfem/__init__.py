@@ -1,3 +1,10 @@
+"""
+NFEM teaching tool            
+
+A module for the non linear static analysis of 3D truss problems.
+A light weight object oriented FEM code and some usefull postprocessing tools.
+"""
+
 print("""
 
 --------------------------------------------------------------------------------
