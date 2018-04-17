@@ -35,21 +35,12 @@ def bounding_box(model):
 
     min_x = min(node.x for node in nodes)
     max_x = max(node.x for node in nodes)
-    if min_x == max_x:
-        min_x -= delta
-        max_x += delta
 
     min_y = min(node.y for node in nodes)
     max_y = max(node.y for node in nodes)
-    if min_y == max_y:
-        min_y -= delta
-        max_y += delta
 
     min_z = min(node.z for node in nodes)
     max_z = max(node.z for node in nodes)
-    if min_z == max_z:
-        min_z -= delta
-        max_z += delta
 
     return min_x, max_x, min_y, max_y, min_z, max_z
 
@@ -136,22 +127,11 @@ def show_history_animation(model, speed=200):
 
         ax.grid()
 
-        ax.set_xlim(min_x, max_x)
-        ax.set_ylim(min_y, max_y)
-        ax.set_zlim(min_z, max_z)
+        plot_bounding_cube(ax, model) 
 
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
-
-        plt.title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
-
-        plot_model(ax, step_model, 'gray', True)
-        plot_model(ax, step_model, 'red', False)
-
-    a = anim.FuncAnimation(fig, update, frames=len(history), repeat=True, interval=speed)
-
-    plt.show()_zlabel('z')
 
         plt.title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
 
@@ -172,10 +152,7 @@ def show_deformation_plot(model, step=None):
     ax.clear()
 
     ax.grid()
-
-    ax.set_xlim(min_x, max_x)
-    ax.set_ylim(min_y, max_y)
-    ax.set_zlim(min_z, max_z)
+    plot_bounding_cube(ax, model) 
 
     ax.set_xlabel('x')
     ax.set_ylabel('y')
