@@ -1,8 +1,5 @@
 import numpy as np
-
 import matplotlib
-matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.figure import Figure
 from matplotlib.collections import LineCollection
@@ -31,6 +28,17 @@ class Plot2D(object):
     def show(self):
         self.ax.legend(loc='upper left') 
         plt.show()
+
+class Animation3D(object):
+
+    def show(self, model, speed=200):
+        self.animation = show_history_animation(model, speed)
+
+class DeformationPlot3D(object):
+
+    def show(self, model, step=None):
+        show_deformation_plot(model, step)
+
 
 def bounding_box(model):
     nodes = [node for model in model.get_model_history() for node in model.nodes.values()]
@@ -129,9 +137,7 @@ def show_history_animation(model, speed=200):
 
         ax.grid()
 
-        ax.set_xlim(min_x, max_x)
-        ax.set_ylim(min_y, max_y)
-        ax.set_zlim(min_z, max_z)
+        plot_bounding_cube(ax, model) 
 
         ax.set_xlabel('x')
         ax.set_ylabel('y')
@@ -143,5 +149,36 @@ def show_history_animation(model, speed=200):
         plot_model(ax, step_model, 'red', False)
 
     a = anim.FuncAnimation(fig, update, frames=len(history), repeat=True, interval=speed)
+
+    plt.show()
+
+    return a
+
+def show_deformation_plot(model, step=None):
+
+    min_x, max_x, min_y, max_y, min_z, max_z = bounding_box(model)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    
+    ax.clear()
+
+    ax.grid()
+    plot_bounding_cube(ax, model) 
+
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+    
+    plot_model(ax, model, 'gray', True)
+
+    if step != None:
+        model = model.get_model_history()[step]
+    else:
+        step = len(model.get_model_history())-1
+
+    plot_model(ax, model, 'red', False)
+        
+    plt.title('Deformed structure at time step {}\n{}'.format(step, model.name))
 
     plt.show()
