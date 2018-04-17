@@ -29,8 +29,11 @@ class InteractiveWindow(Tk):
         sidebar.pack(expand=False, fill='both', side='left', anchor='nw')
         self.sidebar = sidebar
 
-        button = tk.Button(sidebar, text='Load controlled step', command=self.load_control_button_click)
+        button = tk.Button(sidebar, text='Linear step', command=self.linear_button_click)
         button.pack(fill='x', padx=4, pady=(4, 2))
+
+        button = tk.Button(sidebar, text='Load controlled step', command=self.load_control_button_click)
+        button.pack(fill='x', padx=4, pady=(2))
 
         button = tk.Button(sidebar, text='Displacement controlled step', command=self.displacement_control_button_click)
         button.pack(fill='x', padx=4, pady=2)
@@ -73,6 +76,19 @@ class InteractiveWindow(Tk):
     @model.setter
     def model(self, value):
         self.branches[-1] = value
+
+    def linear_button_click(self):
+        model = self.model.get_duplicate()
+
+        model.lam += 0.1
+
+        predictor = LoadIncrementPredictor()
+
+        model.perform_linear_solution_step()
+
+        self.model = model
+
+        self.redraw()
 
     def load_control_button_click(self):
         model = self.model.get_duplicate()
@@ -156,18 +172,13 @@ class InteractiveWindow(Tk):
 
         plot_3d = self.plot_3d
         plot_2d = self.plot_2d
-        
+
         plot_3d.clear()
         plot_3d.grid()
 
-        min_x, max_x, min_y, max_y, min_z, max_z = bounding_box(model)
-        
-        plot_3d.set_xlim(min_x, max_x)
-        plot_3d.set_ylim(min_y, max_y)
-        plot_3d.set_zlim(min_z, max_z)
+        plot_bounding_cube(plot_3d, model)
 
         plot_model(plot_3d, model, 'gray', True)
-
         plot_model(plot_3d, model, 'red', False)
 
         plot_2d.clear()
