@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.figure import Figure
 from matplotlib.collections import LineCollection
@@ -29,6 +28,17 @@ class Plot2D(object):
     def show(self):
         self.ax.legend(loc='upper left') 
         plt.show()
+
+class Animation3D(object):
+
+    def show(self, model, speed=200):
+        self.animation = show_history_animation(model, speed)
+
+class DeformationPlot3D(object):
+
+    def show(self, model, step=None):
+        show_deformation_plot(model, step)
+
 
 def bounding_box(model):
     nodes = [node for model in model.get_model_history() for node in model.nodes.values()]
@@ -141,6 +151,8 @@ def show_history_animation(model, speed=200):
     a = anim.FuncAnimation(fig, update, frames=len(history), repeat=True, interval=speed)
 
     plt.show()
+
+    return a
 
 def show_deformation_plot(model, step=None):
 

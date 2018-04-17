@@ -130,4 +130,9 @@ plot.add_load_displacement_curve(model, dof=('B', 'u'))
 plot.show()
 
 # animated plot
-show_history_animation(model)
+animation = Animation3D()
+animation.show(model)
+
+# static plot
+deformation_plot = DeformationPlot3D()
+deformation_plot.show(model)
