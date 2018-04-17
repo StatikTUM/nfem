@@ -90,3 +90,5 @@ plot = Plot2D()
 plot.add_load_displacement_curve(linear_model, dof=('B', 'v'))
 plot.add_load_displacement_curve(non_linear_model, dof=('B', 'v'))
 plot.show()
+
+show_deformation_plot(linear_model)
