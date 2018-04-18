@@ -24,6 +24,10 @@ print("""
 --------------------------------------------------------------------------------  
 """)
 
+import sys
+if sys.version_info < (3,0):
+  raise RuntimeError("The nfem module requires a python3!")
+
 from .model import Model
 from .assembler import Assembler
 
