@@ -170,9 +170,6 @@ class Model(object):
         # rotate the predictor if necessary (e.g. for branch switching)
         # TODO for branch switching
 
-        # scale the predictor so it fulfills the path following constraint
-        method.scale_predictor(self)
-
         # initialize working matrices and functions for newton raphson
         assembler = Assembler(self)
         dof_count = assembler.dof_count
