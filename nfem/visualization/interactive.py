@@ -72,7 +72,7 @@ class InteractiveWindow(QWidget):
 
     def _create_sidebar(self):
         sidebar = QWidget(self)
-        sidebar.setFixedWidth(200)
+        sidebar.setFixedWidth(250)
         sidebar.setContentsMargins(0, 0, 0, 0)
 
         layout = QVBoxLayout()
