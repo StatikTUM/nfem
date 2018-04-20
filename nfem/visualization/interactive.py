@@ -223,18 +223,20 @@ class InteractiveWindow(QWidget):
             strategy_type = self._strategy_combobox.currentIndex()
 
             if strategy_type == 0:
-                method = LoadControl(model.lam, tolerance=10**self.tolerance, max_iterations=self.max_iterations)
+                model.perform_linear_solution_step()
             elif strategy_type == 1:
                 method = LoadControl(model.lam, tolerance=10**self.tolerance, max_iterations=self.max_iterations)
+                model.perform_non_linear_solution(method)
             elif strategy_type == 2:
                 method = DisplacementControl(self.dof, model.get_dof_state(dof), tolerance=10**self.tolerance, max_iterations=self.max_iterations)
+                model.perform_non_linear_solution(method)
             elif strategy_type == 3:
                 delta_d = model.get_dof_state(dof) - model.previous_model.get_dof_state(dof)
                 delta_lambda = model.lam - model.previous_model.lam
                 arc_length = (delta_d**2 + delta_lambda**2)**0.5
                 method = ArcLengthControl(arc_length, tolerance=10**self.tolerance, max_iterations=self.max_iterations)
+                model.perform_non_linear_solution(method)
 
-            model.perform_non_linear_solution(method)
         except Exception as e:
             QMessageBox(QMessageBox.Critical, 'Error', str(e), QMessageBox.Ok, self).show()
             return
