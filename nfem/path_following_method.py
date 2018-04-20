@@ -3,9 +3,6 @@ import numpy as np
 from .assembler import Assembler
 
 class PathFollowingMethod(object):
-    def __init__(self, tolerance=1e-5, max_iterations=100):
-        self.tolerance = tolerance
-        self.max_iterations = max_iterations
 
     def scale_predictor(self, model):
         raise NotImplementedError
@@ -35,8 +32,8 @@ class PathFollowingMethod(object):
 
 
 class LoadControl(PathFollowingMethod):
-    def __init__(self, lam_hat, *args, **kwargs):
-        super(LoadControl, self).__init__(*args, **kwargs)
+    def __init__(self, lam_hat):
+        super(LoadControl, self).__init__()
         self.lam_hat = lam_hat
 
     def scale_predictor(self, model):
@@ -54,8 +51,8 @@ class LoadControl(PathFollowingMethod):
         dc[-1] = 1.0
 
 class DisplacementControl(PathFollowingMethod):
-    def __init__(self, dof, displacement_hat, *args, **kwargs):
-        super(DisplacementControl, self).__init__(*args, **kwargs)
+    def __init__(self, dof, displacement_hat):
+        super(DisplacementControl, self).__init__()
         self.displacement_hat = displacement_hat
         self.dof = dof
 
@@ -89,8 +86,8 @@ class DisplacementControl(PathFollowingMethod):
         dc[index] = 1.0
 
 class ArcLengthControl(PathFollowingMethod):
-    def __init__(self, l_hat, *args, **kwargs):
-        super(ArcLengthControl, self).__init__(*args, **kwargs)
+    def __init__(self, l_hat):
+        super(ArcLengthControl, self).__init__()
         self.squared_l_hat = l_hat**2
 
     def scale_predictor(self, model):

@@ -161,7 +161,7 @@ class Model(object):
 
             self.set_dof_state(dof, value)
 
-    def perform_non_linear_solution(self, method=ArcLengthControl):
+    def perform_non_linear_solution(self, method=ArcLengthControl, tolerance=1e-5, max_iterations=100):
         """FIXME"""
 
         print("=================================")
@@ -222,7 +222,7 @@ class Model(object):
         x[-1] = self.lam
 
         # solve newton raphson
-        x, n_iter = NewtonRaphson().solve(calculate_system, x_initial=x)
+        x, n_iter = NewtonRaphson(max_iterations, tolerance).solve(calculate_system, x_initial=x)
 
         print("Solution found after {} iteration steps.".format(n_iter))
 
