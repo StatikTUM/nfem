@@ -181,7 +181,7 @@ class Model(object):
         def calculate_system(x):
             """FIXME"""
             # update actual coordinates
-            for index, dof in enumerate(assembler.dofs[:free_count]):
+            for index, dof in enumerate(assembler.free_dofs):
                 value = x[index]
                 self.set_dof_state(dof, value)
 
@@ -216,8 +216,7 @@ class Model(object):
             return lhs, rhs
 
         # prediction as vector for newton raphson
-        x = np.zeros(free_count+1)
-        for index, dof in enumerate(assembler.dofs[:free_count]):
+        for index, dof in enumerate(assembler.free_dofs):
             x[index] = self.get_dof_state(dof)
 
         x[-1] = self.lam
@@ -253,7 +252,7 @@ class Model(object):
         def calculate_system(x):
             """FIXME"""
             # update actual coordinates
-            for index, dof in enumerate(assembler.dofs[:free_count]):
+            for index, dof in enumerate(assembler.free_dofs):
                 value = x[index]
                 self.set_dof_state(dof, value)
 

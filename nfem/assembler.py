@@ -103,6 +103,17 @@ class Assembler(object):
         """
         return self.dofs[index]
 
+    @property
+    def free_dofs(self):
+        """Get a list with the unconstrained dofs
+
+        Returns
+        -------
+        free_dofs : list
+            List with the unconstrained dofs
+        """
+        return self.dofs[:self.free_dof_count]
+
     def assemble_matrix(self, system_matrix, calculate_element_matrix):
         """Assemble element matrices into a system matrix.
 

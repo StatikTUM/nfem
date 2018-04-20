@@ -111,10 +111,9 @@ class ArcLengthControl(PathFollowingMethod):
         dc.fill(0.0)
 
         assembler = Assembler(model)
-        free_count = assembler.free_dof_count
         previous_model = model.previous_model
 
-        for index, dof in enumerate(assembler.dofs[:free_count]):
+        for index, dof in enumerate(assembler.free_dofs):
             current_value = model.get_dof_state(dof)
             previous_value = previous_model.get_dof_state(dof)
 
