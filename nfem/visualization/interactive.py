@@ -323,7 +323,7 @@ class _LoadPredictorWidget(QWidget):
         self._lam = value
 
     def predict(self, model):
-        model._lam = self._lam
+        model.lam = self._lam
 
 class _LoadIncrementPredictorWidget(QWidget):
     def __init__(self, parent):
@@ -345,7 +345,7 @@ class _LoadIncrementPredictorWidget(QWidget):
         self._delta_lam = value
 
     def predict(self, model):
-        model._delta_lam += self._delta_lam
+        model.lam += self._delta_lam
 
 class _DisplacementPredictorWidget(QWidget):
     def __init__(self, parent, dof):
