@@ -213,6 +213,7 @@ class Model(object):
             return lhs, rhs
 
         # prediction as vector for newton raphson
+        x = np.zeros(free_count + 1)
         for index, dof in enumerate(assembler.free_dofs):
             x[index] = self.get_dof_state(dof)
 
