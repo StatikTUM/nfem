@@ -5,8 +5,9 @@ A module for the non linear static analysis of 3D truss problems.
 A light weight object oriented FEM code and some usefull postprocessing tools.
 """
 
-print("""
+import sys
 
+print("""
 --------------------------------------------------------------------------------
 
                        _   ________________  ___
@@ -23,6 +24,9 @@ print("""
 
 --------------------------------------------------------------------------------  
 """)
+
+if sys.version_info < (3, 5):
+    raise RuntimeError("The nfem module requires at least Python 3.5!")
 
 from .model import Model
 from .assembler import Assembler
