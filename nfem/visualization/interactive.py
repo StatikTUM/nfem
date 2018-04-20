@@ -1,22 +1,14 @@
 from PyQt5.QtWidgets import QMessageBox, QCheckBox, QGroupBox, QApplication, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QComboBox, QStackedWidget, QLabel, QDoubleSpinBox, QSpinBox
 from PyQt5 import Qt
 
-import sys
-
-import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.figure import Figure
-from matplotlib.collections import LineCollection
-import matplotlib.pyplot as plt
-import matplotlib.animation as anim
 
 import numpy.linalg as la
 
-from .plot import *
+from .plot import plot_model, plot_load_displacement_curve, plot_bounding_cube
 
 from ..path_following_method import LoadControl, DisplacementControl, ArcLengthControl
-from ..predictor import LoadIncrementPredictor, DisplacementIncrementPredictor
 
 def _create_int_spinbox(value=0, step=1, minimum=-100, maximum=100):
     widget = QSpinBox()
