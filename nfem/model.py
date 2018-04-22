@@ -127,7 +127,7 @@ class Model(object):
 
         return duplicate
 
-    def perform_linear_solution_step(self):
+    def solve_linear(self):
         """Just for testing"""
 
         assembler = Assembler(self)

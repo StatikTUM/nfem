@@ -212,7 +212,7 @@ class InteractiveWindow(QWidget):
             max_iterations = self.max_iterations
 
             if selected_strategy == 'linear':
-                model.perform_linear_solution_step()
+                model.solve_linear()
             elif selected_strategy == 'load-control':
                 model.solve_nonlinear(
                     strategy='load-control',
