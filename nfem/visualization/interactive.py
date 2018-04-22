@@ -89,12 +89,12 @@ class InteractiveWindow(QWidget):
         node_id, dof_type = self.dof
 
         widget = QComboBox()
-        widget.addItem('Set load factor (λ):')
-        widget.addItem('Increment load factor (λ):')
-        widget.addItem('Set {} at node {}:'.format(dof_type, node_id))
-        widget.addItem('Increment {} at node {}:'.format(dof_type, node_id))
-        widget.addItem('Set prediction:')
-        widget.addItem('Set direction:')
+        widget.addItem('Set load factor (λ)')
+        widget.addItem('Increment load factor (λ)')
+        widget.addItem('Set {} at node {}'.format(dof_type, node_id))
+        widget.addItem('Increment {} at node {}'.format(dof_type, node_id))
+        widget.addItem('Set prediction')
+        widget.addItem('Set direction')
         group_layout.addWidget(widget)
         self._predictor_combobox = widget
         
