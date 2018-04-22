@@ -4,8 +4,8 @@
 class Assembler(object):
     """An Assembler helps to generate system matrices/vectors from elements.
 
-    Attributes:
-    -----------
+    Attributes
+    ----------
     dofs : list
         List of all dofs in the system. The Dofs with dirichlet constraints are at the end.
     dof_indices : dict
@@ -24,8 +24,8 @@ class Assembler(object):
     def __init__(self, model):
         """Create a new Assembler
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         model : Model
             Model to assemble.
         """
@@ -38,7 +38,7 @@ class Assembler(object):
         fixed_dofs = list()
 
         for element in model.elements.values():
-            for dof in element.Dofs():
+            for dof in element.dofs():
                 if dof in processed_dofs:
                     continue
                 else:
@@ -59,7 +59,7 @@ class Assembler(object):
         element_freedom_table = list()
 
         for element in model.elements.values():
-            indices = [dof_indices[dof] for dof in element.Dofs()]
+            indices = [dof_indices[dof] for dof in element.dofs()]
 
             element_freedom_table.append((element, indices))
 
@@ -73,41 +73,41 @@ class Assembler(object):
         self.fixed_dof_count = len(fixed_dofs)
         self.element_freedom_table = element_freedom_table
 
-    def IndexOfDof(self, dof):
+    def index_of_dof(self, dof):
         """Get the index of the given dof.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         dof : object
             Dof at the index.
 
-        Returns:
-        --------
+        Returns
+        -------
         index : int
             Index of the given dof.
         """
         return self.dof_indices[dof]
 
-    def DofAtIndex(self, index):
+    def dof_at_index(self, index):
         """Get the dof at the given index.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         index : int
             Index of the dof.
 
-        Returns:
-        --------
+        Returns
+        -------
         dof : object
             Dof at the given index.
         """
         return self.dofs[index]
 
-    def AssembleMatrix(self, system_matrix, calculate_element_matrix):
+    def assemble_matrix(self, system_matrix, calculate_element_matrix):
         """Assemble element matrices into a system matrix.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         system_matrix : ndarray
             System matrix to store the results. The results are added to the existing values.
         calculate_element_matrix : function Element -> ndarray
@@ -124,11 +124,11 @@ class Assembler(object):
                     value = element_matrix[element_row, element_col]
                     system_matrix[system_row, system_col] += value
 
-    def AssembleVector(self, system_vector, calculate_element_vector):
+    def assemble_vector(self, system_vector, calculate_element_vector):
         """Assemble element vectors into a system vector.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         system_vector : ndarray
             System vector to store the results. The results are added to the existing values.
         calculate_element_vector : function Element -> ndarray

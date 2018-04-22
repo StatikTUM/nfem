@@ -18,7 +18,7 @@ class Truss(ElementBase):
         self.area = area
         self.prestress = prestress
 
-    def Dofs(self):
+    def dofs(self):
         """FIXME"""
 
         a_id = self.node_a.id
@@ -26,35 +26,35 @@ class Truss(ElementBase):
 
         return [(a_id, 'u'), (a_id, 'v'), (a_id, 'w'), (b_id, 'u'), (b_id, 'v'), (b_id, 'w')]
 
-    def GetReferenceVector(self):
+    def get_reference_vector(self):
         """FIXME"""
 
-        reference_a = self.node_a.GetReferenceLocation()
-        reference_b = self.node_b.GetReferenceLocation()
+        reference_a = self.node_a.get_reference_location()
+        reference_b = self.node_b.get_reference_location()
 
         return reference_b - reference_a
 
-    def GetActualVector(self):
+    def get_actual_vector(self):
         """FIXME"""
 
-        actual_a = self.node_a.GetActualLocation()
-        actual_b = self.node_b.GetActualLocation()
+        actual_a = self.node_a.get_actual_location()
+        actual_b = self.node_b.get_actual_location()
 
         return actual_b - actual_a
 
-    def GetReferenceLength(self):
+    def get_reference_length(self):
         """FIXME"""
 
-        reference_a = self.node_a.GetReferenceLocation()
-        reference_b = self.node_b.GetReferenceLocation()
+        reference_a = self.node_a.get_reference_location()
+        reference_b = self.node_b.get_reference_location()
 
         return la.norm(reference_b - reference_a)
 
-    def GetActualLength(self):
+    def get_actual_length(self):
         """FIXME"""
 
-        actual_a = self.node_a.GetActualLocation()
-        actual_b = self.node_b.GetActualLocation()
+        actual_a = self.node_a.get_actual_location()
+        actual_b = self.node_b.get_actual_location()
         
         return la.norm(actual_b - actual_a)
 
@@ -137,32 +137,32 @@ class Truss(ElementBase):
     def CalculateStiffnessMatrix(self):
         """FIXME"""
 
-        element_k_e = self.CalculateElasticStiffnessMatrix()
-        element_k_g = self.CalculateGeometricStiffnessMatrix()
+        element_k_e = self.calculate_elastic_stiffness_matrix()
+        element_k_g = self.calculate_geometric_stiffness_matrix()
 
         return element_k_e + element_k_g
 
-    def CalculateGreenLagrangeStrain(self):
+    def calculate_green_lagrange_strain(self):
         """FIXME"""
 
-        reference_length = self.GetReferenceLength()
-        actual_length = self.GetActualLength()
+        reference_length = self.get_reference_length()
+        actual_length = self.get_actual_length()
 
         e_gl = (actual_length**2 - reference_length**2) / (2 * reference_length**2)
 
         return e_gl
 
-    def CalculateInternalForces(self):
+    def calculate_internal_forces(self):
         """FIXME"""
 
-        e_gl = self.CalculateGreenLagrangeStrain()
+        e_gl = self.calculate_green_lagrange_strain()
 
         E = self.youngs_modulus
         A = self.area
         prestress = self.prestress
 
-        reference_length = self.GetReferenceLength()
-        actual_length = self.GetActualLength()
+        reference_length = self.get_reference_length()
+        actual_length = self.get_actual_length()
 
         deformation_gradient = actual_length / reference_length
 

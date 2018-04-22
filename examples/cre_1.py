@@ -1,14 +1,16 @@
 
-
+# add the path to the nfem tool to the PATH.
+import sys
+sys.path.append('..') 
+# import necessary modules
 import numpy as np
 import numpy.linalg as la
-import math
 
 from nfem import NewtonRaphson
 
 EA = 1.0
 a = 1.0 
-L = math.sqrt(2.0)
+L = np.sqrt(2.0)
 F = -1.0
 
 
@@ -26,7 +28,7 @@ x = np.zeros(free_count+1)
 x[0] = -0.080071057
 x[-1] = lam_hat
 
-def CalculateSystem(x):
+def calculate_system(x):
     print("x:", x)
     u = x[0]
     lam = x[1]
@@ -53,5 +55,5 @@ def CalculateSystem(x):
     return LHS, RHS 
 
 # solve newton raphson
-x = NewtonRaphson().Solve(CalculateSystem, x_initial=x)
+x = NewtonRaphson().solve(calculate_system, x_initial=x)
 

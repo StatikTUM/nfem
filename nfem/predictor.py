@@ -3,43 +3,131 @@ from .assembler import Assembler
 
 class Predictor():
 
-    def Predict(self, model):
-        """Returns a normalized predictor"""
+    def predict(self, model):        
         raise NotImplementedError
 
 class LoadIncrementPredictor(Predictor):
+    """The LoadIncrementPredictor predicts a solution by only incrementing the 
+        load by a certain delta lambda
+
+    Attributes
+    ----------
+    value : float
+        Value that is used to increment the load factor lambda at the model. 
+        1.0 by default.
+    """
 
     def __init__(self, value=1.0):
+        """Create a new LoadIncrementPredictor
+
+        Parameters
+        ----------
+        value : float
+            Value that is used to increment the load factor lambda at the model. 
+            1.0 by default.
+        """
         self.value = value
 
-    def Predict(self, model):
+    def predict(self, model):
+        """Predicts the solution by incrementing lambda
+
+        Parameters
+        ----------
+        model : Model
+            Model to predict.
+        """
         model.lam += self.value
         return
-        
-class DisplacementIncrementPredictor(Predictor):
 
-    def __init__(self, node_id, dof_type, value=1.0):
-        if len(dof_type) != 1:
-            raise RuntimeError('Only single dof can be incremented by this predictor')
-        self.dof = (node_id, dof_type)
+class DisplacementIncrementPredictor(Predictor):
+    """The DisplacementIncrementPredictor predicts a solution by only incrementing 
+        the displacement of a single dof.
+    
+    Attributes
+    ----------
+    dof : object
+        Dof that is incremented.
+    value : float
+        Value that is used to increment the dof at the model. 1.0 by default.
+    """
+
+    def __init__(self, dof, value=1.0):
+        """Create a new DisplacementIncrementPredictor
+
+        Parameters
+        ----------
+        dof : object
+            Dof that is incremented.
+        value : float
+            Value that is used to increment the dof at the model. 1.0 by default.
+        """
+        self.dof = dof
         self.value = value
 
-    def Predict(self, model):
-        dof_value = model.GetDofState(self.dof)
-        model.SetDofState(self.dof, dof_value + self.value)
+    def predict(self, model):
+        """Predicts the solution by incrementing the dof
+
+        Parameters
+        ----------
+        model : Model
+            Model to predict.
+        """
+        dof_value = model.get_dof_state(self.dof)
+        model.set_dof_state(self.dof, dof_value + self.value)
         return
 
+class LastIncrementPredictor(Predictor): 
+    """The LastIncrementPredictor predicts a solution by using the last increment 
+        of lambda and all dofs of the models history. It can only be used after 
+        the first step.
+    """
+ 
+    def predict(self, model):  
+        """Predicts the solution by incrementing lambda and all dofs with the 
+            last increment
+
+        Parameters
+        ----------
+        model : Model
+            Model to predict.
+
+        Raises
+        ------
+        RuntimeError
+            If the model has not already one calculated step.
+        """
+        previous_model = model.previous_model
+        second_previous_model = previous_model.previous_model
+
+        if second_previous_model == None:
+            raise RuntimeError('LastIncrementPredictor can only be used after the first step.')
+  
+        for node in model.nodes.values(): 
+            previous_node = previous_model.nodes[node.id]
+            second_previous_node = second_previous_model.nodes[node.id]
+            
+            delta = previous_node.u - second_previous_node.u 
+            node.u = previous_node.u + delta 
+            
+            delta = previous_node.v - second_previous_node.v 
+            node.v = previous_node.v + delta 
+            
+            delta = previous_node.w - second_previous_node.w 
+            node.w = previous_node.w + delta 
+    
+        delta = previous_model.lam - second_previous_model.lam 
+        model.lam = previous_model.lam + delta 
 
 # class TangentVectorPredictor(Predictor):
 
-#     def Predict(self, model):        
+#     def predict(self, model):        
 #         assembler = Assembler(self)
 #         dof_count = assembler.dof_count
 
 #         u = np.zeros(dof_count)
 
 #         for dof, value in self.dirichlet_conditions.items():
-#             index = assembler.IndexOfDof(dof)
+#             index = assembler.index_of_dof(dof)
 #             u[index] = value
 
 #         k = np.zeros((dof_count, dof_count))
