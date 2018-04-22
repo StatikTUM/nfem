@@ -1,4 +1,7 @@
-"""This module contains the Newton-Raphson algorithm."""
+"""This module contains the Newton-Raphson algorithm.
+
+Author: Armin Geiser
+"""
 
 import numpy.linalg as la
 

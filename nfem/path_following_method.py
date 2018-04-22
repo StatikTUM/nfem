@@ -1,3 +1,8 @@
+"""This module contains path-following strategies for solving nonlinear systems.
+
+Author: Armin Geiser
+"""
+
 import numpy as np
 
 from .assembler import Assembler

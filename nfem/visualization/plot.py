@@ -1,3 +1,8 @@
+"""This module contains helpers for visualize data.
+
+Authors: Klaus Sautter, Thomas Oberbichler, Armin Geiser
+"""
+
 import numpy as np
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D

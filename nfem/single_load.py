@@ -1,4 +1,7 @@
-"""FIXME"""
+"""This module only contains the single load element.
+
+Author: Thomas Oberbichler
+"""
 
 import numpy as np
 
