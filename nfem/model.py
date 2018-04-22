@@ -10,7 +10,7 @@ from .single_load import SingleLoad
 from .truss import Truss
 
 from .assembler import Assembler
-from .newton_raphson import NewtonRaphson
+from .newton_raphson import newton_raphson_solve
 
 from .path_following_method import ArcLengthControl
 from .predictor import LoadIncrementPredictor
@@ -425,7 +425,7 @@ class Model(object):
         x[-1] = self.lam
 
         # solve newton raphson
-        x, n_iter = NewtonRaphson().solve(calculate_system, x_initial=x)
+        x, n_iter = newton_raphson_solve(calculate_system, x_initial=x)
 
         print("Solution found after {} iteration steps.".format(n_iter))
 
