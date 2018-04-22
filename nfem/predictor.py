@@ -1,35 +1,106 @@
+"""This module contains prediction strategies for solving nonlinear systems.
+
+Author: Armin Geiser
+"""
+
 import numpy as np
 from .assembler import Assembler
 
 class Predictor():
 
-    def predict(self, model):
-        """Returns a normalized predictor"""
+    def predict(self, model):        
         raise NotImplementedError
 
 class LoadIncrementPredictor(Predictor):
+    """The LoadIncrementPredictor predicts a solution by only incrementing the 
+        load by a certain delta lambda
+
+    Attributes
+    ----------
+    value : float
+        Value that is used to increment the load factor lambda at the model. 
+        1.0 by default.
+    """
 
     def __init__(self, value=1.0):
+        """Create a new LoadIncrementPredictor
+
+        Parameters
+        ----------
+        value : float
+            Value that is used to increment the load factor lambda at the model. 
+            1.0 by default.
+        """
         self.value = value
 
     def predict(self, model):
+        """Predicts the solution by incrementing lambda
+
+        Parameters
+        ----------
+        model : Model
+            Model to predict.
+        """
         model.lam += self.value
         return
 
 class DisplacementIncrementPredictor(Predictor):
+    """The DisplacementIncrementPredictor predicts a solution by only incrementing 
+        the displacement of a single dof.
+    
+    Attributes
+    ----------
+    dof : object
+        Dof that is incremented.
+    value : float
+        Value that is used to increment the dof at the model. 1.0 by default.
+    """
 
     def __init__(self, dof, value=1.0):
+        """Create a new DisplacementIncrementPredictor
+
+        Parameters
+        ----------
+        dof : object
+            Dof that is incremented.
+        value : float
+            Value that is used to increment the dof at the model. 1.0 by default.
+        """
         self.dof = dof
         self.value = value
 
     def predict(self, model):
+        """Predicts the solution by incrementing the dof
+
+        Parameters
+        ----------
+        model : Model
+            Model to predict.
+        """
         dof_value = model.get_dof_state(self.dof)
         model.set_dof_state(self.dof, dof_value + self.value)
         return
 
 class LastIncrementPredictor(Predictor): 
+    """The LastIncrementPredictor predicts a solution by using the last increment 
+        of lambda and all dofs of the models history. It can only be used after 
+        the first step.
+    """
  
     def predict(self, model):  
+        """Predicts the solution by incrementing lambda and all dofs with the 
+            last increment
+
+        Parameters
+        ----------
+        model : Model
+            Model to predict.
+
+        Raises
+        ------
+        RuntimeError
+            If the model has not already one calculated step.
+        """
         previous_model = model.previous_model
         second_previous_model = previous_model.previous_model
 

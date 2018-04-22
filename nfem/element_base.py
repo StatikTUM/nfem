@@ -1,4 +1,7 @@
-"""FIXME"""
+"""This module only contains the Element base class.
+
+Author: Thomas Oberbichler
+"""
 
 class ElementBase(object):
     """FIXME"""

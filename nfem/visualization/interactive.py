@@ -1,3 +1,8 @@
+"""This module contains an interactive user interface.
+
+Author: Thomas Oberbichler
+"""
+
 from PyQt5.QtWidgets import QMessageBox, QCheckBox, QGroupBox, QApplication, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QComboBox, QStackedWidget, QLabel, QDoubleSpinBox, QSpinBox
 from PyQt5 import Qt
 

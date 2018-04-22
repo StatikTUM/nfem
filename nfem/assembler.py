@@ -1,4 +1,6 @@
-"""This module only contains the Assembler class
+"""This module only contains the Assembler class.
+
+Author: Thomas Oberbichler
 """
 
 class Assembler(object):

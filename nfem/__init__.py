@@ -1,5 +1,13 @@
-print("""
+"""
+NFEM teaching tool            
 
+A module for the non linear static analysis of 3D truss problems.
+A light weight object oriented FEM code and some usefull postprocessing tools.
+"""
+
+import sys
+
+print("""
 --------------------------------------------------------------------------------
 
                        _   ________________  ___
@@ -17,6 +25,9 @@ print("""
 --------------------------------------------------------------------------------  
 """)
 
+if sys.version_info < (3, 5):
+    raise RuntimeError("The nfem module requires at least Python 3.5!")
+
 from .model import Model
 from .assembler import Assembler
 
@@ -28,4 +39,6 @@ from .predictor import LoadIncrementPredictor
 from .predictor import DisplacementIncrementPredictor
 from .predictor import LastIncrementPredictor
 
-from .visualization import interact, show_load_displacement_curve, show_history_animation, Plot2D
+from .visualization import interact
+from .visualization import show_load_displacement_curve, show_history_animation, show_deformation_plot
+from .visualization import Plot2D, Animation3D, DeformationPlot3D
