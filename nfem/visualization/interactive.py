@@ -119,10 +119,10 @@ class InteractiveWindow(QWidget):
         widget.setLayout(group_layout)
 
         widget = QComboBox()
-        widget.addItem('Linear')
-        widget.addItem('Load controlled')
-        widget.addItem('Displacement controlled')
-        widget.addItem('Arc-length controlled')
+        widget.addItem('Linear', 'linear')
+        widget.addItem('Load control', 'load-control')
+        widget.addItem('Displacement control', 'displacement-control')
+        widget.addItem('Arc-length control', 'arc-length')
         group_layout.addWidget(widget)
         self._strategy_combobox = widget
 
@@ -208,20 +208,20 @@ class InteractiveWindow(QWidget):
 
             self._predictor_stack.currentWidget().predict(model)
 
-            strategy_type = self._strategy_combobox.currentIndex()
+            selected_strategy = self._strategy_combobox.currentData()
 
             tolerance = 10**self.tolerance
             max_iterations = self.max_iterations
 
-            if strategy_type == 0:
+            if selected_strategy == 'linear':
                 model.perform_linear_solution_step()
-            elif strategy_type == 1:
+            elif selected_strategy == 'load-control':
                 method = LoadControl(model.lam)
                 model.perform_non_linear_solution(method, tolerance, max_iterations)
-            elif strategy_type == 2:
+            elif selected_strategy == 'displacement-control':
                 method = DisplacementControl(self.dof, model.get_dof_state(dof))
                 model.perform_non_linear_solution(method, tolerance, max_iterations)
-            elif strategy_type == 3:
+            elif selected_strategy == 'arc-length':
                 delta_d = model.get_dof_state(dof) - model.previous_model.get_dof_state(dof)
                 delta_lambda = model.lam - model.previous_model.lam
                 arc_length = (delta_d**2 + delta_lambda**2)**0.5
