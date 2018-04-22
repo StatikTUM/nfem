@@ -3,6 +3,7 @@
 class ElementBase(object):
     """FIXME"""
 
+    @property
     def dofs(self):
         """FIXME"""
         raise NotImplementedError
