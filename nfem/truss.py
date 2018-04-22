@@ -60,6 +60,11 @@ class Truss(ElementBase):
 
     def get_reference_transformMatrix(self):
         """ Transformation matrix for the reference configuration.
+
+        Returns
+        -------
+        reference_transform : ndarray
+            Transformation matrix.
         """
         direction = self.get_reference_vector()
         direction = direction / la.norm(direction)
@@ -72,6 +77,11 @@ class Truss(ElementBase):
 
     def get_actual_transform_matrix(self):
         """ Transformation matrix for the actual configuration.
+
+        Returns
+        -------
+        actual_transform : ndarray
+            Transformation matrix.
         """
         direction = self.get_actual_vector()
         direction = direction / la.norm(direction)
@@ -137,10 +147,10 @@ class Truss(ElementBase):
     def calculate_stiffness_matrix(self):
         """FIXME"""
 
-        element_k_e = self.calculate_elastic_stiffness_matrix()
-        element_k_g = self.calculate_geometric_stiffness_matrix()
+        element_k_m = self.CalculateMaterialStiffnessMatrix()
+        element_k_g = self.CalculateGeometricStiffnessMatrix()
 
-        return element_k_e + element_k_g
+        return element_k_m + element_k_g
 
     def calculate_green_lagrange_strain(self):
         """FIXME"""
