@@ -385,7 +385,7 @@ class _DisplacementIncrementPredictorWidget(QWidget):
 
     def predict(self, model):
         current_d = model.get_dof_state(self._dof)
-        model.set_dof_state(self._dof, current_d + self._d)
+        model.set_dof_state(self._dof, current_d + self._delta_d)
 
 class _ExplicitPredictorWidget(QWidget):
     def __init__(self, parent, dof):
