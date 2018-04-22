@@ -56,16 +56,54 @@ class Model(object):
 
     @property
     def nodes(self):
+        """Get a list of all nodes in the model.
+
+        Returns
+        -------
+        nodes : list
+            List of all nodes in the model.
+        """
         return self._nodes.values()
 
     def get_node(self, id):
+        """Get a node by its ID.
+
+        Parameters
+        ----------
+        id : int or str
+            ID of the node.
+
+        Returns
+        -------
+        node : list
+            Node with the given ID.
+        """
         return self._nodes[id]
 
     @property
     def elements(self):
+        """Get a list of all elements in the model.
+
+        Returns
+        -------
+        elements : list
+            List of all elements in the model.
+        """
         return self._elements.values()
 
     def get_element(self, id):
+        """Get an element by its ID.
+
+        Parameters
+        ----------
+        id : int or str
+            ID of the element.
+
+        Returns
+        -------
+        element : list
+            Element with the given ID.
+        """
         return self._elements[id]
 
     def add_node(self, id, x, y, z):
