@@ -47,12 +47,19 @@ class Model(object):
         """
 
         self.name = name
-        self.nodes = dict()
+        self._nodes = dict()
         self.elements = dict()
         self.dirichlet_conditions = dict()
         self.neumann_conditions = dict()
         self.lam = 0.0
         self.previous_model = None
+
+    @property
+    def nodes(self):
+        return self._nodes.values()
+
+    def get_node(self, id):
+        return self._nodes[id]
 
     def add_node(self, id, x, y, z):
         """Add a three dimensional node to the model.
@@ -74,10 +81,10 @@ class Model(object):
 
         >>> model.add_node(id='B', x=5, y=2, z=0)
         """
-        if id in self.nodes:
+        if id in self._nodes:
             raise RuntimeError('The model already contains a node with id {}'.format(id))
 
-        self.nodes[id] = Node(id, x, y, z)
+        self._nodes[id] = Node(id, x, y, z)
 
     def add_truss_element(self, id, node_a, node_b, youngs_modulus, area):
         """Add a three dimensional truss element to the model.
@@ -104,13 +111,13 @@ class Model(object):
         if id in self.elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))
 
-        if node_a not in self.nodes:
+        if node_a not in self._nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_a))
 
-        if node_b not in self.nodes:
+        if node_b not in self._nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_b))
 
-        self.elements[id] = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area)
+        self.elements[id] = Truss(id, self._nodes[node_a], self._nodes[node_b], youngs_modulus, area)
 
     def add_dirichlet_condition(self, node_id, dof_types, value):
         """Apply a dirichlet condition to the given dof types of a node.
@@ -136,7 +143,7 @@ class Model(object):
 
         >>> model.add_dirichlet_condition(node_id='B', dof_types='uvw', value=0)
         """
-        if node_id not in self.nodes:
+        if node_id not in self._nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
 
         for dof_type in dof_types:
@@ -174,10 +181,10 @@ class Model(object):
         if id in self.elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))
 
-        if node_id not in self.nodes:
+        if node_id not in self._nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
 
-        self.elements[id] = SingleLoad(id, self.nodes[node_id], fu, fv, fw)
+        self.elements[id] = SingleLoad(id, self._nodes[node_id], fu, fv, fw)
 
     def set_dof_state(self, dof, value):
         """Sets the state of the dof
@@ -190,7 +197,7 @@ class Model(object):
             Value that is set at the dof
         """
         node_id, dof_type = dof
-        self.nodes[node_id].set_dof_state(dof_type, value)
+        self._nodes[node_id].set_dof_state(dof_type, value)
 
     def get_dof_state(self, dof):
         """Sets the state of the dof
@@ -206,7 +213,7 @@ class Model(object):
             Value at the dof
         """
         node_id, dof_type = dof
-        return self.nodes[node_id].get_dof_state(dof_type)
+        return self._nodes[node_id].get_dof_state(dof_type)
 
     def get_initial_model(self):
         """Gets the initial model of this model.

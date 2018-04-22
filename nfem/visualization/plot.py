@@ -41,7 +41,7 @@ class DeformationPlot3D(object):
 
 
 def bounding_box(model):
-    nodes = [node for model in model.get_model_history() for node in model.nodes.values()]
+    nodes = [node for model in model.get_model_history() for node in model.nodes]
 
     min_x = min(node.x for node in nodes)
     max_x = max(node.x for node in nodes)
