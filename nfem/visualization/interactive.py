@@ -8,8 +8,6 @@ import numpy.linalg as la
 
 from .plot import plot_model, plot_load_displacement_curve, plot_bounding_cube
 
-from ..path_following_method import LoadControl, DisplacementControl, ArcLengthControl
-
 def _create_int_spinbox(value=0, step=1, minimum=-100, maximum=100):
     widget = QSpinBox()
     widget.setMinimum(minimum)
@@ -216,17 +214,31 @@ class InteractiveWindow(QWidget):
             if selected_strategy == 'linear':
                 model.perform_linear_solution_step()
             elif selected_strategy == 'load-control':
-                method = LoadControl(model.lam)
-                model.perform_non_linear_solution(method, tolerance, max_iterations)
+                model.solve_nonlinear(
+                    strategy='load-control',
+                    lam_hat=model.lam,
+                    tolerance=tolerance,
+                    max_iterations=max_iterations
+                )
             elif selected_strategy == 'displacement-control':
-                method = DisplacementControl(self.dof, model.get_dof_state(dof))
-                model.perform_non_linear_solution(method, tolerance, max_iterations)
+                model.solve_nonlinear(
+                    strategy='displacement-control',
+                    dof=dof,
+                    displacement_hat=model.get_dof_state(dof),
+                    tolerance=tolerance,
+                    max_iterations=max_iterations
+                )
             elif selected_strategy == 'arc-length':
                 delta_d = model.get_dof_state(dof) - model.previous_model.get_dof_state(dof)
                 delta_lambda = model.lam - model.previous_model.lam
                 arc_length = (delta_d**2 + delta_lambda**2)**0.5
-                method = ArcLengthControl(arc_length)
-                model.perform_non_linear_solution(method, tolerance, max_iterations)
+
+                model.solve_nonlinear(
+                    strategy='arc-length',
+                    l_hat=arc_length,
+                    tolerance=tolerance,
+                    max_iterations=max_iterations
+                )
 
         except Exception as e:
             QMessageBox(QMessageBox.Critical, 'Error', str(e), QMessageBox.Ok, self).show()

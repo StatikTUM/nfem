@@ -161,14 +161,18 @@ class Model(object):
 
             self.set_dof_state(dof, value)
 
-    def perform_non_linear_solution(self, method=ArcLengthControl, tolerance=1e-5, max_iterations=100):
-        """FIXME"""
+    def solve_nonlinear(self, strategy, tolerance=1e-5, max_iterations=100, **options):
+        if strategy == 'load-control':
+            constraint = LoadControl(**options)
+        elif strategy == 'displacement-control':
+            constraint = DisplacementControl(**options)
+        elif strategy == 'arc-length':
+            constraint = ArcLengthControl(**options)
+        else:
+            raise ValueError('Invaid strategy')
 
         print("=================================")
         print("Start non linear solution step...")
-
-        # rotate the predictor if necessary (e.g. for branch switching)
-        # TODO for branch switching
 
         # initialize working matrices and functions for newton raphson
         assembler = Assembler(self)
@@ -207,8 +211,8 @@ class Model(object):
             rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
 
             # constraint
-            method.calculate_derivatives(self, lhs[-1, :])
-            rhs[-1] = method.calculate_constraint(self)
+            constraint.calculate_derivatives(self, lhs[-1, :])
+            rhs[-1] = constraint.calculate_constraint(self)
 
             return lhs, rhs
 
@@ -223,8 +227,6 @@ class Model(object):
         x, n_iter = NewtonRaphson(max_iterations, tolerance).solve(calculate_system, x_initial=x)
 
         print("Solution found after {} iteration steps.".format(n_iter))
-
-        # TODO solve attendant eigenvalue problem
 
     def perform_non_linear_solution_step(self,
                                      predictor_method=LoadIncrementPredictor,
