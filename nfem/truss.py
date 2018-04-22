@@ -58,10 +58,10 @@ class Truss(ElementBase):
         
         return la.norm(actual_b - actual_a)
 
-    def GetReferenceTransformMatrix(self):
+    def get_reference_transformMatrix(self):
         """ Transformation matrix for the reference configuration.
         """
-        direction = self.GetReferenceVector()
+        direction = self.get_reference_vector()
         direction = direction / la.norm(direction)
 
         reference_transform = np.zeros((2, 6))
@@ -70,10 +70,10 @@ class Truss(ElementBase):
 
         return reference_transform
 
-    def GetActualTransformMatrix(self):
+    def get_actual_transform_matrix(self):
         """ Transformation matrix for the actual configuration.
         """
-        direction = self.GetActualVector()
+        direction = self.get_actual_vector()
         direction = direction / la.norm(direction)
 
         actual_transform = np.zeros((2, 6))
@@ -82,48 +82,48 @@ class Truss(ElementBase):
 
         return actual_transform
 
-    def CalculateElasticStiffnessMatrix(self):
+    def calculate_elastic_stiffness_matrix(self):
         """FIXME"""
 
         e = self.youngs_modulus
         a = self.area
-        reference_length = self.GetReferenceLength()
-        reference_transform = self.GetReferenceTransformMatrix()
+        reference_length = self.get_reference_length()
+        reference_transform = self.get_reference_transformMatrix()
 
         k_e = e * a / reference_length
 
         return reference_transform.T @ [[ k_e, -k_e],
                                         [-k_e,  k_e]] @ reference_transform
 
-    def CalculateMaterialStiffnessMatrix(self):
+    def calculate_material_stiffness_matrix(self):
         """FIXME"""
 
         e = self.youngs_modulus
         a = self.area
-        actual_length = self.GetReferenceLength() 
-        reference_length = self.GetReferenceLength()
-        actual_transform = self.GetActualTransformMatrix()
+        actual_length = self.get_reference_length() 
+        reference_length = self.get_reference_length()
+        actual_transform = self.get_actual_transform_matrix()
 
         k_m = e * a / reference_length * (actual_length / reference_length)**2
 
         return actual_transform.T @ [[ k_m, -k_m],
                                      [-k_m,  k_m]] @ actual_transform
 
-    def CalculateInitialDisplacementStiffnessMatrix(self):
+    def calculate_initial_displacement_stiffness_matrix(self):
         """FIXME"""
 
-        k_m = self.CalculateMaterialStiffnessMatrix()
-        k_e = self.CalculateElasticStiffnessMatrix()
+        k_m = self.calculate_material_stiffness_matrix()
+        k_e = self.calculate_elastic_stiffness_matrix()
 
         return k_m - k_e
 
-    def CalculateGeometricStiffnessMatrix(self):
+    def calculate_geometric_stiffness_matrix(self):
         e = self.youngs_modulus
         a = self.area
         prestress = self.prestress
-        reference_length = self.GetReferenceLength()
+        reference_length = self.get_reference_length()
 
-        e_gl = self.CalculateGreenLagrangeStrain()
+        e_gl = self.calculate_green_lagrange_strain()
 
         k_g = e * a / reference_length * e_gl + prestress * a / reference_length
 
@@ -134,7 +134,7 @@ class Truss(ElementBase):
                          [   0, -k_g,    0,    0,  k_g,    0],
                          [   0,    0, -k_g,    0,    0,  k_g]])
 
-    def CalculateStiffnessMatrix(self):
+    def calculate_stiffness_matrix(self):
         """FIXME"""
 
         element_k_e = self.calculate_elastic_stiffness_matrix()
@@ -170,7 +170,7 @@ class Truss(ElementBase):
 
         local_internal_forces = [-normal_force, normal_force]
 
-        actual_transform = self.GetActualTransformMatrix()
+        actual_transform = self.get_actual_transform_matrix()
 
         global_internal_forces = actual_transform.T @ local_internal_forces
 
