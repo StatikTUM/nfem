@@ -15,7 +15,7 @@ from .truss import Truss
 from .assembler import Assembler
 from .newton_raphson import NewtonRaphson
 
-from .path_following_method import ArcLengthControl
+from .path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 from .predictor import LoadIncrementPredictor
 
 class Model(object):
