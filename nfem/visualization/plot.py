@@ -58,7 +58,7 @@ def plot_model(ax, model, color, initial):
     xys = list()
     zs = list()
 
-    for element in model.elements.values():
+    for element in model.elements:
         if type(element) == Truss:
             node_a = element.node_a
             node_b = element.node_b

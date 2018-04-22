@@ -37,7 +37,7 @@ class Assembler(object):
         free_dofs = list()
         fixed_dofs = list()
 
-        for element in model.elements.values():
+        for element in model.elements:
             for dof in element.dofs():
                 if dof in processed_dofs:
                     continue
@@ -58,7 +58,7 @@ class Assembler(object):
 
         element_freedom_table = list()
 
-        for element in model.elements.values():
+        for element in model.elements:
             indices = [dof_indices[dof] for dof in element.dofs()]
 
             element_freedom_table.append((element, indices))

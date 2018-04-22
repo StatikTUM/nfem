@@ -48,7 +48,7 @@ class Model(object):
 
         self.name = name
         self._nodes = dict()
-        self.elements = dict()
+        self._elements = dict()
         self.dirichlet_conditions = dict()
         self.neumann_conditions = dict()
         self.lam = 0.0
@@ -60,6 +60,13 @@ class Model(object):
 
     def get_node(self, id):
         return self._nodes[id]
+
+    @property
+    def elements(self):
+        return self._elements.values()
+
+    def get_element(self, id):
+        return self._elements[id]
 
     def add_node(self, id, x, y, z):
         """Add a three dimensional node to the model.
@@ -108,7 +115,7 @@ class Model(object):
 
         >>> model.add_truss_element(node_a='A', node_a='B', youngs_modulus=20, area=1)
         """
-        if id in self.elements:
+        if id in self._elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))
 
         if node_a not in self._nodes:
@@ -117,7 +124,7 @@ class Model(object):
         if node_b not in self._nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_b))
 
-        self.elements[id] = Truss(id, self._nodes[node_a], self._nodes[node_b], youngs_modulus, area)
+        self._elements[id] = Truss(id, self._nodes[node_a], self._nodes[node_b], youngs_modulus, area)
 
     def add_dirichlet_condition(self, node_id, dof_types, value):
         """Apply a dirichlet condition to the given dof types of a node.
@@ -178,13 +185,13 @@ class Model(object):
         >>> model.add_single_load(id=1, node_id='A', fv=-1.0)
         """
 
-        if id in self.elements:
+        if id in self._elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))
 
         if node_id not in self._nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
 
-        self.elements[id] = SingleLoad(id, self._nodes[node_id], fu, fv, fw)
+        self._elements[id] = SingleLoad(id, self._nodes[node_id], fu, fv, fw)
 
     def set_dof_state(self, dof, value):
         """Sets the state of the dof
