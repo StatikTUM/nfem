@@ -1,4 +1,7 @@
-"""This module contains the NewtonRaphson class"""
+"""This module contains the NewtonRaphson class
+
+Author: Armin Geiser
+"""
 
 import numpy.linalg as la
 

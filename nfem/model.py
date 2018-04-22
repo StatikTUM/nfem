@@ -1,4 +1,7 @@
-"""This module contains the Model class"""
+"""This module contains the Model class.
+
+Authors: Thomas Oberbichler, Armin Geiser
+"""
 
 from copy import deepcopy
 
