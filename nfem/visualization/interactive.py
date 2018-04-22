@@ -98,18 +98,6 @@ class InteractiveWindow(QWidget):
         group_layout.addWidget(widget)
         self._predictor_combobox = widget
         
-        widget = _create_double_spinbox(value=self.model.lam)
-        self._lam_spinbox = widget
-
-        widget = _create_double_spinbox()
-        self._delta_lam_spinbox = widget
-
-        widget = _create_double_spinbox(value=self.model.get_dof_state(self.dof))
-        self._d_spinbox = widget
-
-        widget = _create_double_spinbox()
-        self._delta_d_spinbox = widget
-
         widget = QStackedWidget()
         widget.addWidget(_LoadPredictorWidget(self))
         widget.addWidget(_LoadIncrementPredictorWidget(self))
