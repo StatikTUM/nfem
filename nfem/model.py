@@ -56,6 +56,7 @@ class Model(object):
         self.neumann_conditions = dict()
         self.lam = 0.0
         self.previous_model = None
+        self.det_k = None
 
     def add_node(self, id, x, y, z):
         """Add a three dimensional node to the model.
@@ -415,9 +416,12 @@ class Model(object):
             path_following_method.calculate_derivatives(self, lhs[-1, :])
             rhs[-1] = path_following_method.calculate_constraint(self)
 
+            # solve det(k)
+            self.det_k = la.det(k[:free_count, :free_count])
+
             return lhs, rhs
 
-        # iniatialize prediction vector for newton raphson
+        # initialize prediction vector for newton raphson
         x = np.zeros(free_count+1)
 
         # assemble contribution from dofs
