@@ -30,7 +30,43 @@ class Plot2D(object):
     def add_load_displacement_curve(self, model, dof):
         plot_load_displacement_curve(self.ax, model, dof)
 
+    def add_det_k_curve(self, model, dof):
+        plot_det_k_curve(self.ax, model, dof)
+
+    def add_history_curve(self, model, x_data, y_data, fmt='-o', **kwargs):
+        """Add a history curve of the model to the plot.
+
+        Parameters
+        ----------
+        model : Model
+            Model object of which the history will be printed
+        x_data : function (or argument) Model -> float/int
+            this will be called for each model in the history and used as values
+            on the x-axis 
+        y_data : function (or argument) Model -> float/int
+            this will be called for each model in the history and used as values
+            on the y-axis
+        fmt: matplotlib format string e.g. '-o' for line with points 
+            For details visit the link below 
+        **kwargs: additional format arguments e.g. label="My label" to give the 
+            curve a name.
+            for details visit the link below 
+        https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html
+        """
+        plot_history_curve(self.ax, model, x_data, y_data, fmt, **kwargs)
+    
+    def add_custom_curve(self, *args, **kwargs):
+        """Add a custom curve to the plot.
+        Uses the syntax of the matplotlip.pyplot.plot function       
+
+        For a description of the possible parameters visit
+        https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html
+        """
+        plot_custom_curve(self.ax, *args, **kwargs)
+
     def show(self):
+        """Shows the plot with all the curves that have been added.
+        """
         self.ax.legend(loc='upper left') 
         plt.show()
 
@@ -91,8 +127,38 @@ def plot_load_displacement_curve(ax, model, dof):
         x_data[i] = model.get_dof_state(dof)
         y_data[i] = model.lam
 
-    label = '{} at node {}'.format(dof_type, node_id)
+    label = '$\lambda$ : {} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
+
+def plot_det_k_curve(ax, model, dof):
+    history = model.get_model_history()
+
+    x_data = np.zeros(len(history))
+    y_data = np.zeros(len(history))
+
+    node_id, dof_type = dof
+
+    for i, model in enumerate(history):
+        x_data[i] = model.get_dof_state(dof)
+        y_data[i] = model.det_k
+
+    label = 'det(K) : {} at node {}'.format(dof_type, node_id)
+    ax.plot(x_data, y_data, '-o', label=label)
+
+def plot_history_curve(ax, model, x_function, y_function, fmt, **kwargs):
+    history = model.get_model_history()
+
+    x_data = np.zeros(len(history))
+    y_data = np.zeros(len(history))
+
+    for i, model in enumerate(history):
+        x_data[i] = x_function(model)
+        y_data[i] = y_function(model)
+
+    ax.plot(x_data, y_data, fmt, **kwargs)
+
+def plot_custom_curve(ax, *args, **kwargs):
+    ax.plot(*args, **kwargs)
 
 def plot_bounding_cube(ax, model, color='w'):
     min_x, max_x, min_y, max_y, min_z, max_z = bounding_box(model)

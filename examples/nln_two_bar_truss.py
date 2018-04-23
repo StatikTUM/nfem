@@ -123,10 +123,21 @@ elif method == 4: #arclength control with delta predictor
 # Postprocessing
 #======================================
 
-# plot the load displacement curve
 plot = Plot2D()
-plot.add_load_displacement_curve(model, dof=('B', 'v'))
-plot.add_load_displacement_curve(model, dof=('B', 'u'))
+# plot the load displacement curve
+plot.add_history_curve(model, 
+                        x_data=lambda model: model.get_dof_state(dof=('B', 'v')), 
+                        y_data=lambda model: model.lam,
+                        label='$\lambda$ : B-v')
+# plot det(K) 
+plot.add_history_curve(model, 
+                        x_data=lambda model: model.get_dof_state(dof=('B', 'v')), 
+                        y_data=lambda model: model.det_k,
+                        label='det(K) : B-v')
+# plot a custom curve
+x=[1,-1]
+y=[0, 1]
+plot.add_custom_curve(x, y, label="my_custom_curve", linewidth=5)
 plot.show()
 
 # animated plot
