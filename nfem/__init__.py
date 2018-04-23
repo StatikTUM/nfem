@@ -31,7 +31,7 @@ if sys.version_info < (3, 5):
 from .model import Model
 from .assembler import Assembler
 
-from .newton_raphson import NewtonRaphson
+from .newton_raphson import newton_raphson_solve
 from .path_following_method import LoadControl
 from .path_following_method import DisplacementControl
 from .path_following_method import ArcLengthControl
