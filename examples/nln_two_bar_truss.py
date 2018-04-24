@@ -124,17 +124,22 @@ elif method == 4: #arclength control with delta predictor
 #======================================
 
 plot = Plot2D()
-# plot the load displacement curve
+# plot the load displacement curve using the predefined function
+plot.add_load_displacement_curve(model, dof=('B', 'v'))
+
+# plot det(K) using the general historic plot function
+def x_y_data_function(model):
+    """This function is called for each model in the history. It returns the 
+    values for x and y of a model.
+    """
+    x = model.get_dof_state(dof=('B', 'v'))
+    y = model.det_k
+    return x, y
 plot.add_history_curve(model, 
-                        x_data=lambda model: model.get_dof_state(dof=('B', 'v')), 
-                        y_data=lambda model: model.lam,
-                        label='$\lambda$ : B-v')
-# plot det(K) 
-plot.add_history_curve(model, 
-                        x_data=lambda model: model.get_dof_state(dof=('B', 'v')), 
-                        y_data=lambda model: model.det_k,
+                        x_y_data=x_y_data_function,
                         label='det(K) : B-v')
-# plot a custom curve
+
+# plot a custom curve using matplotlib syntax
 x=[1,-1]
 y=[0, 1]
 plot.add_custom_curve(x, y, label="my_custom_curve", linewidth=5)

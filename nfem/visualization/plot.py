@@ -33,19 +33,15 @@ class Plot2D(object):
     def add_det_k_curve(self, model, dof):
         plot_det_k_curve(self.ax, model, dof)
 
-    def add_history_curve(self, model, x_data, y_data, fmt='-o', **kwargs):
+    def add_history_curve(self, model, x_y_data, fmt='-o', **kwargs):
         """Add a history curve of the model to the plot.
 
         Parameters
         ----------
         model : Model
             Model object of which the history will be printed
-        x_data : function (or argument) Model -> float/int
-            this will be called for each model in the history and used as values
-            on the x-axis 
-        y_data : function (or argument) Model -> float/int
-            this will be called for each model in the history and used as values
-            on the y-axis
+        x_y_data : function(Model) that returns the value for the x and y axis 
+            of a models state. It is called for all models in the history
         fmt: matplotlib format string e.g. '-o' for line with points 
             For details visit the link below 
         **kwargs: additional format arguments e.g. label="My label" to give the 
@@ -53,7 +49,7 @@ class Plot2D(object):
             for details visit the link below 
         https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html
         """
-        plot_history_curve(self.ax, model, x_data, y_data, fmt, **kwargs)
+        plot_history_curve(self.ax, model, x_y_data, fmt, **kwargs)
     
     def add_custom_curve(self, *args, **kwargs):
         """Add a custom curve to the plot.
@@ -145,15 +141,14 @@ def plot_det_k_curve(ax, model, dof):
     label = 'det(K) : {} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
 
-def plot_history_curve(ax, model, x_function, y_function, fmt, **kwargs):
+def plot_history_curve(ax, model, xy_function, fmt, **kwargs):
     history = model.get_model_history()
 
     x_data = np.zeros(len(history))
     y_data = np.zeros(len(history))
 
     for i, model in enumerate(history):
-        x_data[i] = x_function(model)
-        y_data[i] = y_function(model)
+        x_data[i], y_data[i]= xy_function(model)
 
     ax.plot(x_data, y_data, fmt, **kwargs)
 
