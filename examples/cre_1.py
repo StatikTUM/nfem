@@ -6,7 +6,7 @@ sys.path.append('..')
 import numpy as np
 import numpy.linalg as la
 
-from nfem import NewtonRaphson
+from nfem import newton_raphson_solve
 
 EA = 1.0
 a = 1.0 
@@ -55,5 +55,5 @@ def calculate_system(x):
     return LHS, RHS 
 
 # solve newton raphson
-x = NewtonRaphson().solve(calculate_system, x_initial=x)
+x = newton_raphson_solve(calculate_system, x_initial=x)
 

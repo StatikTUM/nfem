@@ -272,7 +272,7 @@ class ArcLengthControl(PathFollowingMethod):
 
         squared_l = 0.0
 
-        for node, previous_node in zip(model.nodes.values(), previous_model.nodes.values()):
+        for node, previous_node in zip(model.nodes, previous_model.nodes):
             dx, dy, dz = node.get_actual_location() - previous_node.get_actual_location()
             squared_l += dx**2 + dy**2 + dz**2
 

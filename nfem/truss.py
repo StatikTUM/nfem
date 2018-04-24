@@ -21,6 +21,7 @@ class Truss(ElementBase):
         self.area = area
         self.prestress = prestress
 
+    @property
     def dofs(self):
         """FIXME"""
 
