@@ -1,3 +1,8 @@
+"""This module contains helpers for visualize data.
+
+Authors: Klaus Sautter, Thomas Oberbichler, Armin Geiser
+"""
+
 import numpy as np
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
@@ -41,7 +46,7 @@ class DeformationPlot3D(object):
 
 
 def bounding_box(model):
-    nodes = [node for model in model.get_model_history() for node in model.nodes.values()]
+    nodes = [node for model in model.get_model_history() for node in model.nodes]
 
     min_x = min(node.x for node in nodes)
     max_x = max(node.x for node in nodes)
@@ -58,7 +63,7 @@ def plot_model(ax, model, color, initial):
     xys = list()
     zs = list()
 
-    for element in model.elements.values():
+    for element in model.elements:
         if type(element) == Truss:
             node_a = element.node_a
             node_b = element.node_b

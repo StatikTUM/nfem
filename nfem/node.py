@@ -1,4 +1,6 @@
-"""This module only contains the Node class
+"""This module only contains the Node class.
+
+Author: Thomas Oberbichler
 """
 
 import numpy as np

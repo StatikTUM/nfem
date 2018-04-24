@@ -59,9 +59,9 @@ history = model.get_model_history()
 # print the result of last step
 deformed = history[-1]
 print('Deformed step {}:'.format(n_steps))
-print(deformed.nodes[2].x)
-print(deformed.nodes[2].y)
-print(deformed.nodes[2].z)
+print(deformed.get_node(id=2).x)
+print(deformed.get_node(id=2).y)
+print(deformed.get_node(id=2).z)
 
 # animated plot
 show_history_animation(model)

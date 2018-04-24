@@ -1,8 +1,12 @@
-"""FIXME"""
+"""This module only contains the Element base class.
+
+Author: Thomas Oberbichler
+"""
 
 class ElementBase(object):
     """FIXME"""
 
+    @property
     def dofs(self):
         """FIXME"""
         raise NotImplementedError

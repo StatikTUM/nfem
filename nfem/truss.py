@@ -1,4 +1,7 @@
-"""FIXME"""
+"""This module only contains the truss element.
+
+Authors: Thomas Oberbichler, Klaus Sautter
+"""
 
 import numpy as np
 import numpy.linalg as la
@@ -18,6 +21,7 @@ class Truss(ElementBase):
         self.area = area
         self.prestress = prestress
 
+    @property
     def dofs(self):
         """FIXME"""
 
