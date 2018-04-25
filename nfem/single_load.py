@@ -1,4 +1,7 @@
-"""FIXME"""
+"""This module only contains the single load element.
+
+Author: Thomas Oberbichler
+"""
 
 import numpy as np
 
@@ -15,6 +18,7 @@ class SingleLoad(ElementBase):
         self.fv = fv
         self.fw = fw
 
+    @property
     def dofs(self):
         """FIXME"""
 

@@ -5,8 +5,9 @@ A module for the non linear static analysis of 3D truss problems.
 A light weight object oriented FEM code and some usefull postprocessing tools.
 """
 
-print("""
+import sys
 
+print("""
 --------------------------------------------------------------------------------
 
                        _   ________________  ___
@@ -17,17 +18,20 @@ print("""
 
   Authors:   Armin Geiser, Aditya Ghantasala, Thomas Oberbichler, Klaus Sautter
   Copyright: © 2018 TUM Statik
-  Version:   1.0
+  Version:   1.1
 
   This is a teaching tool! All results without warranty.
 
 --------------------------------------------------------------------------------  
 """)
 
+if sys.version_info < (3, 5):
+    raise RuntimeError("The nfem module requires at least Python 3.5!")
+
 from .model import Model
 from .assembler import Assembler
 
-from .newton_raphson import NewtonRaphson
+from .newton_raphson import newton_raphson_solve
 from .path_following_method import LoadControl
 from .path_following_method import DisplacementControl
 from .path_following_method import ArcLengthControl

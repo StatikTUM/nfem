@@ -1,3 +1,8 @@
+"""This module contains an interactive user interface.
+
+Author: Thomas Oberbichler
+"""
+
 from tkinter import Tk
 import tkinter.ttk as tk
 

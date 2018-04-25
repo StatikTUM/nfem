@@ -1,3 +1,8 @@
+"""This module contains prediction strategies for solving nonlinear systems.
+
+Author: Armin Geiser
+"""
+
 import numpy as np
 from .assembler import Assembler
 
@@ -102,9 +107,9 @@ class LastIncrementPredictor(Predictor):
         if second_previous_model == None:
             raise RuntimeError('LastIncrementPredictor can only be used after the first step.')
   
-        for node in model.nodes.values(): 
-            previous_node = previous_model.nodes[node.id]
-            second_previous_node = second_previous_model.nodes[node.id]
+        for node in model.nodes: 
+            previous_node = previous_model.get_node(id=node.id)
+            second_previous_node = second_previous_model.get_node(id=node.id)
             
             delta = previous_node.u - second_previous_node.u 
             node.u = previous_node.u + delta 
