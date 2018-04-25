@@ -10,7 +10,7 @@ try:
     print("Executed IPython magic command: %'reset -sf' to delete the history.")
     
     # set the matplotlib to tk, so the plots show
-    get_ipython().magic('matplotlib tk')
+    get_ipython().magic('matplotlib automatic')
     print("Executed IPython magic command: %'matplotlib automatic' to show.")
 
 except:
