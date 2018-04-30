@@ -84,7 +84,7 @@ elif method == 3: #arclength control
         # create a new model for each solution step
         model = model.get_duplicate()
 
-        # increment the do state
+        # increment the dof state
         model.predict_dof_increment(('B', 'v'), displacement_increment)
         
         model.perform_non_linear_solution_step(strategy="arc-length-control")
@@ -100,7 +100,7 @@ elif method == 4: #arclength control with delta predictor
         model = model.get_duplicate()
 
         if i == 0:
-             # increment the do state
+             # increment the dof state
             model.predict_dof_increment(('B', 'v'), -0.1)
         else:
             # increment dof and lambda with the increment from the last solution step

@@ -30,8 +30,8 @@ class Plot2D(object):
     def invert_xaxis(self):
         self.ax.invert_xaxis()
 
-    def add_load_displacement_curve(self, model, dof):
-        plot_load_displacement_curve(self.ax, model, dof)
+    def add_load_displacement_curve(self, model, dof, label=None):
+        plot_load_displacement_curve(self.ax, model, dof, label)
 
     def show(self):
         self.ax.legend(loc='upper left') 
@@ -82,7 +82,7 @@ def plot_model(ax, model, color, initial):
 
     ax.add_collection3d(lc, zs=zs)
 
-def plot_load_displacement_curve(ax, model, dof):
+def plot_load_displacement_curve(ax, model, dof, label=None):
     history = model.get_model_history()
 
     x_data = np.zeros(len(history))
@@ -94,7 +94,8 @@ def plot_load_displacement_curve(ax, model, dof):
         x_data[i] = model.get_dof_state(dof)
         y_data[i] = model.lam
 
-    label = '{} at node {}'.format(dof_type, node_id)
+    if label == None:
+        label = '{} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
 
 def plot_bounding_cube(ax, model, color='w'):
