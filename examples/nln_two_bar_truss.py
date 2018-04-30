@@ -7,7 +7,7 @@ It can be run with different path following methods:
 3: arclength control
 4: arclength control with delta predictor
 
-This can be set right below
+This can be set right below in the 'Solve' block
 """
 # add the path to the nfem tool to the PATH.
 import sys
@@ -16,12 +16,6 @@ sys.path.append('..')
 import numpy as np
 
 from nfem import *
-
-# 1:load control 
-# 2:displacement control
-# 3:arclength control
-# 4:arclength control with delta predictor
-method = 4
 
 #======================================
 # Preprocessing
@@ -42,13 +36,15 @@ model.add_dirichlet_condition(node_id='B', dof_types='w', value=0)
 model.add_dirichlet_condition(node_id='C', dof_types='uvw', value=0)
 
 #======================================
-# Solve (with the chosen method)
+# Solve 
+# (with the chosen method)
+#======================================
 # 1: load control 
 # 2: displacement control
 # 3: arclength control
 # 4: arclength control with delta predictor
 #======================================
-method = 4
+method = 1
 
 if method == 1: #load control
 
@@ -59,12 +55,10 @@ if method == 1: #load control
         # create a new model for each solution step
         model = model.get_duplicate()
 
-        predictor_method = LoadIncrementPredictor()
-
-        path_following_method = LoadControl(lam)
+        # prescribe lambda
+        model.predict_load_factor(lam)
         
-        model.perform_non_linear_solution_step(predictor_method=predictor_method,
-                                           path_following_method=path_following_method)
+        model.perform_non_linear_solution_step(strategy="load-control")
 
 elif method == 2: #displacement control
 
@@ -75,29 +69,25 @@ elif method == 2: #displacement control
         # create a new model for each solution step
         model = model.get_duplicate()
 
-        predictor_method = DisplacementIncrementPredictor(dof=('B', 'v'))
-
-        path_following_method = DisplacementControl(dof=('B', 'v'), displacement_hat=displacement)
+        # prescribe the dof state
+        model.predict_dof_state(('B', 'v'), displacement)
         
-        model.perform_non_linear_solution_step(predictor_method=predictor_method,
-                                           path_following_method=path_following_method)
+        model.perform_non_linear_solution_step(strategy="displacement-control", dof=('B', 'v'))
 
 elif method == 3: #arclength control
 
     # define a list of displacement values that should be used
-    arclength = 0.1
+    displacement_increment = -0.1
     n_steps = 20
     for i in range(n_steps):
 
         # create a new model for each solution step
         model = model.get_duplicate()
 
-        predictor_method = DisplacementIncrementPredictor(dof=('B', 'v'), value=-1.0)
-
-        path_following_method = ArcLengthControl(l_hat=arclength)
+        # increment the dof state
+        model.predict_dof_increment(('B', 'v'), displacement_increment)
         
-        model.perform_non_linear_solution_step(predictor_method=predictor_method,
-                                           path_following_method=path_following_method)
+        model.perform_non_linear_solution_step(strategy="arc-length-control")
 
 elif method == 4: #arclength control with delta predictor
 
@@ -110,14 +100,13 @@ elif method == 4: #arclength control with delta predictor
         model = model.get_duplicate()
 
         if i == 0:
-            predictor_method = DisplacementIncrementPredictor(dof=('B', 'v'), value=-1.0)
+             # increment the dof state
+            model.predict_dof_increment(('B', 'v'), -0.1)
         else:
-            predictor_method = LastIncrementPredictor()
-
-        path_following_method = ArcLengthControl(l_hat=arclength)
+            # increment dof and lambda with the increment from the last solution step
+            model.predict_with_last_increment()
         
-        model.perform_non_linear_solution_step(predictor_method=predictor_method,
-                                           path_following_method=path_following_method)
+        model.perform_non_linear_solution_step(strategy="arc-length-control")
 
 #======================================
 # Postprocessing
