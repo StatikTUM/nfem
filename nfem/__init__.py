@@ -35,9 +35,6 @@ from .newton_raphson import newton_raphson_solve
 from .path_following_method import LoadControl
 from .path_following_method import DisplacementControl
 from .path_following_method import ArcLengthControl
-from .predictor import LoadIncrementPredictor
-from .predictor import DisplacementIncrementPredictor
-from .predictor import LastIncrementPredictor
 
 from .visualization import interact
 from .visualization import show_load_displacement_curve, show_history_animation, show_deformation_plot

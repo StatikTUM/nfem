@@ -16,7 +16,6 @@ from matplotlib.figure import Figure
 from .plot import *
 
 from ..path_following_method import LoadControl, DisplacementControl, ArcLengthControl
-from ..predictor import LoadIncrementPredictor, DisplacementIncrementPredictor
 
 class InteractiveWindow(Tk):
     def __init__(self, model, dof, *args, **kwargs):
@@ -87,8 +86,6 @@ class InteractiveWindow(Tk):
 
         model.lam += 0.1
 
-        predictor = LoadIncrementPredictor()
-
         model.perform_linear_solution_step()
 
         self.model = model
@@ -99,13 +96,8 @@ class InteractiveWindow(Tk):
         model = self.model.get_duplicate()
 
         model.lam += 0.1
-
-        predictor = LoadIncrementPredictor()
-
-        method = LoadControl(model.lam)
         
-        model.perform_non_linear_solution_step(predictor_method=predictor,
-                                           path_following_method=method)
+        model.perform_non_linear_solution_step(strategy='load-control')
 
         self.model = model
 
@@ -118,14 +110,9 @@ class InteractiveWindow(Tk):
 
         dof = self.dof
 
-        predictor_method = DisplacementIncrementPredictor(dof=dof, value=displacement)
+        model.predict_dof_increment(dof, displacement)
 
-        displacement_hat = model.get_dof_state(dof) + displacement
-
-        path_following_method = DisplacementControl(dof=dof, displacement_hat=displacement_hat)
-
-        model.perform_non_linear_solution_step(predictor_method=predictor_method,
-                                           path_following_method=path_following_method)
+        model.perform_non_linear_solution_step(strategy='displacement-control', dof=dof)
 
         self.model = model
 
@@ -134,14 +121,13 @@ class InteractiveWindow(Tk):
     def arc_length_control_button_click(self):
         model = self.model.get_duplicate()
 
+        displacement = -0.1
+
         dof = self.dof
 
-        arclength = 0.12
-        predictor_method = DisplacementIncrementPredictor(dof=dof, value=-1.0)
-        path_following_method = ArcLengthControl(l_hat=arclength)
+        model.predict_dof_increment(dof, displacement)
         
-        model.perform_non_linear_solution_step(predictor_method=predictor_method,
-                                           path_following_method=path_following_method)
+        model.perform_non_linear_solution_step(strategy='arc-length-control')
 
         self.model = model
 

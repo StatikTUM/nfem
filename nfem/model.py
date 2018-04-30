@@ -15,8 +15,7 @@ from .truss import Truss
 from .assembler import Assembler
 from .newton_raphson import newton_raphson_solve
 
-from .path_following_method import ArcLengthControl
-from .predictor import LoadIncrementPredictor
+from .path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 
 class Model(object):
     """A Model contains all the objects that build the finite element model.
@@ -339,6 +338,10 @@ class Model(object):
 
         return duplicate
 
+    #======================================
+    # Solution functions
+    #======================================
+
     def perform_linear_solution_step(self):
         """Performs a linear solution step on the model.
             It uses the member variable `lam` as load factor.
@@ -377,12 +380,9 @@ class Model(object):
 
             self.set_dof_state(dof, value)
 
-    def perform_non_linear_solution_step(self,
-                                     predictor_method=LoadIncrementPredictor,
-                                     path_following_method=ArcLengthControl):
+    def perform_non_linear_solution_step(self, strategy, max_iterations=100, tolerance=1e-7, **options):
         """Performs a non linear solution step on the model.
-            It uses the parameter `predictor_method` to predict the solution and
-            the parameter `path_following_method` to constrain the non linear problem.
+            The path following strategy is chose according to the parameter.
             A newton raphson algorithm is used to iteratively solve the nonlinear 
             equation system r(u,lam) = 0
             The results are stored at the dofs and used to update the current 
@@ -390,25 +390,31 @@ class Model(object):
 
         Parameters
         ----------
-        predictor_method : Object
-            Predictor object that predicts the solution. 
-            (predictor.py for details)            
-        path_following_method : Object
-            Path following object that constrains the solution. 
-            (path_following_method.py for details)
+        strategy : string
+            Path following strategy. Available options:
+            - load-control 
+            - displacement-control
+            - arc-length-control
+        max_iterations: int
+            Maximum number of iteration for the newton raphson
+        tolerance : float
+            Tolerance for the newton raphson
+        **options: kwargs (key word arguments)
+            Additional options e.g. 
+            "dof=('B','v')" for displacement-control
         """
 
         print("=================================")
         print("Start non linear solution step...")
 
-        # calculate the direction of the predictor
-        predictor_method.predict(self)
-
-        # rotate the predictor if necessary (e.g. for branch switching)
-        # TODO for branch switching
-
-        # scale the predictor so it fulfills the path following constraint
-        path_following_method.scale_predictor(self)
+        if strategy == 'load-control':
+            constraint = LoadControl(self)
+        elif strategy == 'displacement-control':
+            constraint = DisplacementControl(self, **options)
+        elif strategy == 'arc-length-control':
+            constraint = ArcLengthControl(self)
+        else:
+            raise ValueError('Invalid path following strategy:' + strategy)
 
         # initialize working matrices and functions for newton raphson
         assembler = Assembler(self)
@@ -464,8 +470,8 @@ class Model(object):
             rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
 
             # assemble contribution from constraint
-            path_following_method.calculate_derivatives(self, lhs[-1, :])
-            rhs[-1] = path_following_method.calculate_constraint(self)
+            constraint.calculate_derivatives(self, lhs[-1, :])
+            rhs[-1] = constraint.calculate_constraint(self)
 
             return lhs, rhs
 
@@ -480,10 +486,90 @@ class Model(object):
         x[-1] = self.lam
 
         # solve newton raphson
-        x, n_iter = newton_raphson_solve(calculate_system, x_initial=x)
+        x, n_iter = newton_raphson_solve(calculate_system, x_initial=x, max_iterations=max_iterations, tolerance=tolerance,)
 
         print("Solution found after {} iteration steps.".format(n_iter))
 
         # TODO solve attendant eigenvalue problem
 
         return
+
+    #======================================
+    # Predictor functions
+    #======================================
+
+    def predict_load_factor(self, value):
+        """Predicts the solution by prescribing lambda
+
+        Parameters
+        ----------
+        value : float
+            Value for the new load factor lambda.  
+        """
+        self.lam = value
+
+    def predict_load_increment(self, value):
+        """Predicts the solution by incrementing lambda
+
+        Parameters
+        ----------
+        value : float
+            Value that is used to increment the load factor lambda. 
+        """
+        self.lam += value
+
+    def predict_dof_state(self, dof, value):
+        """Predicts the solution by prescribing the dof
+
+        Parameters
+        ----------
+        dof : object
+            Dof that is prescribed.
+        value : float
+            Value that is used to prescribe the dof.
+        """
+        self.set_dof_state(dof, value)
+
+    def predict_dof_increment(self, dof, value):
+        """Predicts the solution by incrementing the dof
+
+        Parameters
+        ----------
+        dof : object
+            Dof that is incremented.
+        value : float
+            Value that is used to increment the dof.
+        """
+        tmp_value = self.get_dof_state(dof) + value
+        self.set_dof_state(dof, tmp_value)
+    
+    def predict_with_last_increment(self):
+        """Predicts the solution by incrementing lambda and all dofs with the 
+           increment of the last solution step
+
+        Raises
+        ------
+        RuntimeError
+            If the model has not already one calculated step.
+        """
+        previous_model = self.previous_model
+        second_previous_model = previous_model.previous_model
+
+        if second_previous_model == None:
+            raise RuntimeError('predict_with_last_increment can only be used after the first step.')
+  
+        for node in self.nodes: 
+            previous_node = previous_model.get_node(id=node.id)
+            second_previous_node = second_previous_model.get_node(id=node.id)
+            
+            delta = previous_node.u - second_previous_node.u 
+            node.u = previous_node.u + delta 
+            
+            delta = previous_node.v - second_previous_node.v 
+            node.v = previous_node.v + delta 
+            
+            delta = previous_node.w - second_previous_node.w 
+            node.w = previous_node.w + delta 
+    
+        delta = previous_model.lam - second_previous_model.lam 
+        self.lam = previous_model.lam + delta 
