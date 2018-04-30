@@ -27,6 +27,9 @@ class Plot2D(object):
 
         self.legend = []
 
+    def invert_xaxis(self):
+        self.ax.invert_xaxis()
+
     def add_load_displacement_curve(self, model, dof):
         plot_load_displacement_curve(self.ax, model, dof)
 
@@ -109,7 +112,7 @@ def plot_bounding_cube(ax, model, color='w'):
     for x, y, z in corners:
         ax.plot([x], [y], [z], color)
 
-def show_load_displacement_curve(model, dof, switch_x_axis=True):
+def show_load_displacement_curve(model, dof, invert_xaxis=True):
     dof_type, node_id = dof
 
     fig, ax = plt.subplots()
@@ -122,8 +125,8 @@ def show_load_displacement_curve(model, dof, switch_x_axis=True):
 
     plot_load_displacement_curve(ax, model, dof)
 
-    if switch_x_axis:
-        plt.gca().invert_xaxis()
+    if invert_xaxis:
+        ax.invert_xaxis()
 
     plt.show()
 
