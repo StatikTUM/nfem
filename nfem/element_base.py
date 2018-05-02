@@ -15,6 +15,14 @@ class ElementBase(object):
         """FIXME"""
         return None
 
+    def calculate_material_stiffness_matrix(self):
+        """FIXME"""
+        return None
+
+    def calculate_initial_displacement_stiffness_matrix(self):
+        """FIXME"""
+        return None
+
     def calculate_geometric_stiffness_matrix(self):
         """FIXME"""
         return None
