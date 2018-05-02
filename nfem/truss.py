@@ -151,8 +151,8 @@ class Truss(ElementBase):
     def calculate_stiffness_matrix(self):
         """FIXME"""
 
-        element_k_m = self.CalculateMaterialStiffnessMatrix()
-        element_k_g = self.CalculateGeometricStiffnessMatrix()
+        element_k_m = self.calculate_material_stiffness_matrix()
+        element_k_g = self.calculate_geometric_stiffness_matrix()
 
         return element_k_m + element_k_g
 
