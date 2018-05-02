@@ -44,14 +44,14 @@ model.add_dirichlet_condition(node_id='C', dof_types='uvw', value=0)
 # 3: arclength control
 # 4: arclength control with delta predictor
 #======================================
-method = 1
+method = 4
 
 if method == 1: #load control
 
     # define a load curve with the lambda values that should be used
     load_curve = np.linspace(0.025, 0.5, 20)
     for lam in load_curve:
-
+        
         # create a new model for each solution step
         model = model.get_duplicate()
 

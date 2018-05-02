@@ -507,7 +507,11 @@ class Model(object):
             assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
 
             eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
+            idx = eigvals.argsort() 
+            eigvals = eigvals[idx]
+            eigvecs = eigvecs[:,idx]
             print("First eigenvalue:", eigvals[0].real)
+            print("First eigenvalue * lambda:", eigvals[0].real * self.lam) # this is printed in TRUSS
             print("First eigenvector:", eigvecs[0])
         return
 
