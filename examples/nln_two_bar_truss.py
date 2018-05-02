@@ -114,7 +114,7 @@ elif method == 4: #arclength control with delta predictor
 
 # plot the load displacement curve
 plot = Plot2D()
-plot.add_load_displacement_curve(model, dof=('B', 'v'))
+plot.add_load_displacement_curve(model, dof=('B', 'v'), show_iterations=True)
 plot.add_load_displacement_curve(model, dof=('B', 'u'))
 plot.show()
 

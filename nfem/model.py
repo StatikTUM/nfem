@@ -55,6 +55,7 @@ class Model(object):
         self.neumann_conditions = dict()
         self.lam = 0.0
         self.previous_model = None
+        self.previous_iteration_model = None
 
     @property
     def nodes(self):
@@ -322,21 +323,34 @@ class Model(object):
         """
 
         temp_previous_model = self.previous_model
+        temp_iteration_model = self.previous_iteration_model
         self.previous_model = None
+        self.previous_iteration_model = None
 
         duplicate = deepcopy(self)
 
         self.previous_model = temp_previous_model
+        self.previous_iteration_model = temp_iteration_model
 
         if branch:
             duplicate.previous_model = self.previous_model
         else:
             duplicate.previous_model = self
+        
+        duplicate.previous_iteration_model = self.previous_iteration_model
 
         if name is not None:
             duplicate.name = name
 
         return duplicate
+
+    def add_to_iteration_history(self):
+        model = self.get_duplicate()
+        if self.previous_iteration_model == None:
+            model.previous_model = self.previous_model
+        else: 
+            model.previous_model = self.previous_iteration_model
+        self.previous_iteration_model = model
 
     #======================================
     # Solution functions
@@ -447,6 +461,8 @@ class Model(object):
 
             # update lambda
             self.lam = x[-1]
+
+            self.add_to_iteration_history()
 
             # initialize matrices and vectors with zeros
             k = np.zeros((dof_count, dof_count))
