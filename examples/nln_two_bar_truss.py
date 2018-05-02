@@ -50,6 +50,7 @@ if method == 1: #load control
 
     # define a load curve with the lambda values that should be used
     load_curve = np.linspace(0.025, 0.5, 20)
+    load_curve = [0.1]
     for lam in load_curve:
 
         # create a new model for each solution step

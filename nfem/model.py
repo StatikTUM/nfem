@@ -472,7 +472,7 @@ class Model(object):
             # assemble contribution from constraint
             constraint.calculate_derivatives(self, lhs[-1, :])
             rhs[-1] = constraint.calculate_constraint(self)
-
+            
             return lhs, rhs
 
         # iniatialize prediction vector for newton raphson
@@ -491,7 +491,25 @@ class Model(object):
         print("Solution found after {} iteration steps.".format(n_iter))
 
         # TODO solve attendant eigenvalue problem
+        # [ k_e + k_u - eigv * k_g ] * z= 0
+        solve_attendant_eigenvalue = True
+        if solve_attendant_eigenvalue:
+            k_e = np.zeros((dof_count, dof_count))
+            k_u = np.zeros((dof_count, dof_count))
+            k_g = np.zeros((dof_count, dof_count))
+            k = np.zeros((dof_count, dof_count))
+            assembler.assemble_matrix(k_e, lambda element: element.calculate_elastic_stiffness_matrix())
+            assembler.assemble_matrix(k_u, lambda element: element.calculate_initial_displacement_stiffness_matrix())
+            assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
+            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+            print(k_e[:free_count,:free_count])
+            print(k_u[:free_count,:free_count])
+            print(k_g[:free_count,:free_count])
+            print(k_e[:free_count,:free_count]+k_u[:free_count,:free_count]+k_g[:free_count,:free_count])
 
+            from scipy.linalg import eig
+            eigvals, eigvecs = eig((k_e[:free_count,:free_count] + k_u[:free_count,:free_count]), -k_g[:free_count,:free_count])
+            print("Eigenvalue:", eigvals)
         return
 
     #======================================
