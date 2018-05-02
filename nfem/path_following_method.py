@@ -20,32 +20,6 @@ class PathFollowingMethod(object):
         #returns dc_du, dc_dLambda
         raise NotImplementedError
 
-    def scale_delta_uand_lambda(self, model, factor):
-        """Scales the delta of lambda and all dofs between the model and the 
-            previous model by a factor
-
-        Parameters
-        ----------
-        model : Model
-            Model where lambda and the dofs are scaled.
-        factor : float
-            Linear scaling factor
-        """
-        assembler = Assembler(model)
-        previous_model = model.previous_model
-
-        for dof in assembler.dofs:
-            current_value = model.get_dof_state(dof)
-            previous_value = previous_model.get_dof_state(dof)
-
-            delta = factor * (current_value - previous_value)
-
-            model.set_dof_state(dof, previous_value + delta)
-
-        delta_lambda = factor * (model.lam - previous_model.lam)
-        model.lam = previous_model.lam + delta_lambda
-
-
 class LoadControl(PathFollowingMethod):
     """The LoadControl adds a constraint to the non linear problem that ensures
         a prescribed load factor at the equilibrium point.
@@ -56,7 +30,7 @@ class LoadControl(PathFollowingMethod):
         Prescribed value for the load factor
     """
 
-    def __init__(self, lam_hat):
+    def __init__(self, model):
         """Create a new LoadControl
 
         Parameters
@@ -65,21 +39,7 @@ class LoadControl(PathFollowingMethod):
             Prescribed value for the load factor
         """
         super(LoadControl, self).__init__()
-        self.lam_hat = lam_hat
-
-    def scale_predictor(self, model):
-        """Scales a predictor so that it fulfills the constraint
-
-        Parameters
-        ----------
-        model : Model
-            Model that is scaled.
-        """
-        previous_model = model.previous_model
-        desired_delta_lam = self.lam_hat - previous_model.lam
-        current_delta_lam = model.lam - previous_model.lam
-        factor = desired_delta_lam/current_delta_lam
-        self.scale_delta_uand_lambda(model, factor)
+        self.lam_hat = model.lam
 
     def calculate_constraint(self, model):
         """Calculates the constraint
@@ -120,7 +80,7 @@ class DisplacementControl(PathFollowingMethod):
     displacement_hat : float
         Prescribed value for the controlled dof
     """
-    def __init__(self, dof, displacement_hat):
+    def __init__(self, model, dof):
         """Create a new DisplacementControl
 
         Parameters
@@ -131,30 +91,8 @@ class DisplacementControl(PathFollowingMethod):
             Prescribed value for the controlled dof
         """
         super(DisplacementControl, self).__init__()
-        self.displacement_hat = displacement_hat
+        self.displacement_hat = model.get_dof_state(dof)
         self.dof = dof
-
-    def scale_predictor(self, model):
-        """Scales a predictor so that it fulfills the constraint
-
-        Parameters
-        ----------
-        model : Model
-            Model that is scaled.
-        """
-        dof = self.dof
-        displacement_hat = self.displacement_hat
-        previous_model = model.previous_model
-
-        previous_displacement = previous_model.get_dof_state(dof)
-        prediction_displacement = model.get_dof_state(dof)
-
-        desired_delta = displacement_hat - previous_displacement
-        current_delta = prediction_displacement - previous_displacement
-
-        factor = desired_delta / current_delta
-
-        self.scale_delta_uand_lambda(model, factor)
 
     def calculate_constraint(self, model):
         """Calculates the constraint
@@ -200,7 +138,7 @@ class ArcLengthControl(PathFollowingMethod):
     l_hat : float
         Prescribed value for the length of the increment (l2 norm)
     """
-    def __init__(self, l_hat):
+    def __init__(self, model):
         """Create a new ArcLengthControl
 
         Parameters
@@ -209,22 +147,7 @@ class ArcLengthControl(PathFollowingMethod):
             Prescribed value for the length of the increment (l2 norm)
         """
         super(ArcLengthControl, self).__init__()
-        self.squared_l_hat = l_hat**2
-
-    def scale_predictor(self, model):
-        """Scales a predictor so that it fulfills the constraint
-
-        Parameters
-        ----------
-        model : Model
-            Model that is scaled.
-        """
-        squared_l_hat = self.squared_l_hat
-        squared_l = self._calculate_squared_predictor_length(model)
-
-        factor = np.sqrt(squared_l_hat / squared_l)
-
-        self.scale_delta_uand_lambda(model, factor)
+        self.squared_l_hat = self._calculate_squared_predictor_length(model)
 
     def calculate_constraint(self, model):
         """Calculates the constraint

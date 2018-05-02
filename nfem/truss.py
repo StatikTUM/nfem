@@ -62,125 +62,91 @@ class Truss(ElementBase):
         
         return la.norm(actual_b - actual_a)
 
+    def get_reference_transformMatrix(self):
+        """ Transformation matrix for the reference configuration.
+
+        Returns
+        -------
+        reference_transform : ndarray
+            Transformation matrix.
+        """
+        direction = self.get_reference_vector()
+        direction = direction / la.norm(direction)
+
+        reference_transform = np.zeros((2, 6))
+        reference_transform[0, :3] = direction
+        reference_transform[1, 3:] = direction
+
+        return reference_transform
+
+    def get_actual_transform_matrix(self):
+        """ Transformation matrix for the actual configuration.
+
+        Returns
+        -------
+        actual_transform : ndarray
+            Transformation matrix.
+        """
+        direction = self.get_actual_vector()
+        direction = direction / la.norm(direction)
+
+        actual_transform = np.zeros((2, 6))
+        actual_transform[0, :3] = direction
+        actual_transform[1, 3:] = direction
+
+        return actual_transform
+
     def calculate_elastic_stiffness_matrix(self):
         """FIXME"""
 
-        reference_a = self.node_a.get_reference_location()
-        reference_b = self.node_b.get_reference_location()
+        e = self.youngs_modulus
+        a = self.area
+        reference_length = self.get_reference_length()
+        reference_transform = self.get_reference_transformMatrix()
 
-        reference_length = la.norm(reference_b - reference_a)
+        k_e = e * a / reference_length
 
-        (dx, dy, dz) = reference_b - reference_a
+        return reference_transform.T @ [[ k_e, -k_e],
+                                        [-k_e,  k_e]] @ reference_transform
 
-        EA = self.youngs_modulus * self.area
-
-        L3 = reference_length**3
-
-        k_e = np.empty((6, 6))
-
-        k_e[0, 0] = (EA * dx * dx) / L3
-        k_e[0, 1] = (EA * dx * dy) / L3
-        k_e[0, 2] = (EA * dx * dz) / L3
-        k_e[0, 3] = -k_e[0, 0]
-        k_e[0, 4] = -k_e[0, 1]
-        k_e[0, 5] = -k_e[0, 2]
-        k_e[1, 1] = (EA * dy * dy) / L3
-        k_e[1, 2] = (EA * dy * dz) / L3
-        k_e[1, 3] = k_e[0, 4]
-        k_e[1, 4] = -k_e[1, 1]
-        k_e[1, 5] = -k_e[1, 2]
-        k_e[2, 2] = (EA * dz * dz) / L3
-        k_e[2, 3] = -k_e[0, 2]
-        k_e[2, 4] = -k_e[1, 2]
-        k_e[2, 5] = -k_e[2, 2]
-        k_e[3, 3] = k_e[0, 0]
-        k_e[3, 4] = k_e[0, 1]
-        k_e[3, 5] = k_e[0, 2]
-        k_e[4, 4] = k_e[1, 1]
-        k_e[4, 5] = k_e[1, 2]
-        k_e[5, 5] = k_e[2, 2]
-
-        # symmetry
-
-        k_e[1, 0] = k_e[0, 1]
-        k_e[2, 0] = k_e[0, 2]
-        k_e[2, 1] = k_e[1, 2]
-        k_e[3, 0] = k_e[0, 3]
-        k_e[3, 1] = k_e[1, 3]
-        k_e[3, 2] = k_e[2, 3]
-        k_e[4, 0] = k_e[0, 4]
-        k_e[4, 1] = k_e[1, 4]
-        k_e[4, 2] = k_e[2, 4]
-        k_e[4, 3] = k_e[3, 4]
-        k_e[5, 0] = k_e[0, 5]
-        k_e[5, 1] = k_e[1, 5]
-        k_e[5, 2] = k_e[2, 5]
-        k_e[5, 3] = k_e[3, 5]
-        k_e[5, 4] = k_e[4, 5]
-
-        return k_e
-
-    def calculate_geometric_stiffness_matrix(self):
+    def calculate_material_stiffness_matrix(self):
         """FIXME"""
 
-        E = self.youngs_modulus
-        A = self.area
-
-        prestress = self.prestress
-
+        e = self.youngs_modulus
+        a = self.area
+        actual_length = self.get_reference_length() 
         reference_length = self.get_reference_length()
+        actual_transform = self.get_actual_transform_matrix()
 
-        dx, dy, dz = self.get_reference_vector()
-        du, dv, dw = self.get_actual_vector() - self.get_reference_vector()
+        k_m = e * a / reference_length * (actual_length / reference_length)**2
+
+        return actual_transform.T @ [[ k_m, -k_m],
+                                     [-k_m,  k_m]] @ actual_transform
+
+    def calculate_initial_displacement_stiffness_matrix(self):
+        """FIXME"""
+
+        k_m = self.calculate_material_stiffness_matrix()
+        k_e = self.calculate_elastic_stiffness_matrix()
+
+        return k_m - k_e
+
+    def calculate_geometric_stiffness_matrix(self):
+        e = self.youngs_modulus
+        a = self.area
+        prestress = self.prestress
+        reference_length = self.get_reference_length()
 
         e_gl = self.calculate_green_lagrange_strain()
 
-        K_sigma = ((E * A * e_gl) / reference_length) + ((prestress * A) / reference_length)
-        K_uij = (E * A) / reference_length**3
+        k_g = e * a / reference_length * e_gl + prestress * a / reference_length
 
-        k_g = np.empty((6, 6))
-
-        k_g[0, 0] = K_sigma + K_uij * (2 * du * dx + du * du)
-        k_g[0, 1] = K_uij * (dx * dv + dy * du + du * dv)
-        k_g[0, 2] = K_uij * (dx * dw + dz * du + du * dw)
-        k_g[0, 3] = -k_g[0, 0]
-        k_g[0, 4] = -k_g[0, 1]
-        k_g[0, 5] = -k_g[0, 2]
-        k_g[1, 1] = K_sigma + K_uij * (2 * dv * dy + dv * dv)
-        k_g[1, 2] = K_uij * (dy * dw + dz * dv + dv * dw)
-        k_g[1, 3] = k_g[0, 4]
-        k_g[1, 4] = -k_g[1, 1]
-        k_g[1, 5] = -k_g[1, 2]
-        k_g[2, 2] = K_sigma + K_uij * (2 * dw * dz + dw * dw)
-        k_g[2, 3] = -k_g[0, 2]
-        k_g[2, 4] = -k_g[1, 2]
-        k_g[2, 5] = -k_g[2, 2]
-        k_g[3, 3] = k_g[0, 0]
-        k_g[3, 4] = k_g[0, 1]
-        k_g[3, 5] = k_g[0, 2]
-        k_g[4, 4] = k_g[1, 1]
-        k_g[4, 5] = k_g[1, 2]
-        k_g[5, 5] = k_g[2, 2]
-
-        # symmetry
-
-        k_g[1, 0] = k_g[0, 1]
-        k_g[2, 0] = k_g[0, 2]
-        k_g[2, 1] = k_g[1, 2]
-        k_g[3, 0] = k_g[0, 3]
-        k_g[3, 1] = k_g[1, 3]
-        k_g[3, 2] = k_g[2, 3]
-        k_g[4, 0] = k_g[0, 4]
-        k_g[4, 1] = k_g[1, 4]
-        k_g[4, 2] = k_g[2, 4]
-        k_g[4, 3] = k_g[3, 4]
-        k_g[5, 0] = k_g[0, 5]
-        k_g[5, 1] = k_g[1, 5]
-        k_g[5, 2] = k_g[2, 5]
-        k_g[5, 3] = k_g[3, 5]
-        k_g[5, 4] = k_g[4, 5]
-
-        return k_g
+        return np.array([[ k_g,    0,    0, -k_g,    0,    0],
+                         [   0,  k_g,    0,    0, -k_g,    0],
+                         [   0,    0,  k_g,    0,    0, -k_g],
+                         [-k_g,    0,    0,  k_g,    0,    0],
+                         [   0, -k_g,    0,    0,  k_g,    0],
+                         [   0,    0, -k_g,    0,    0,  k_g]])
 
     def calculate_stiffness_matrix(self):
         """FIXME"""
@@ -189,18 +155,6 @@ class Truss(ElementBase):
         element_k_g = self.calculate_geometric_stiffness_matrix()
 
         return element_k_e + element_k_g
-
-    def calculate_transformation_matrix(self):
-        """FIXME"""
-
-        direction = self.get_actual_vector()
-        direction /= la.norm(direction)
-
-        transformation_matrix = np.zeros((6,6))
-        transformation_matrix[:3, 0] = direction
-        transformation_matrix[3:, 3] = direction
-        
-        return transformation_matrix
 
     def calculate_green_lagrange_strain(self):
         """FIXME"""
@@ -215,8 +169,6 @@ class Truss(ElementBase):
     def calculate_internal_forces(self):
         """FIXME"""
 
-        transformation_matrix = self.calculate_transformation_matrix()
-
         e_gl = self.calculate_green_lagrange_strain()
 
         E = self.youngs_modulus
@@ -230,11 +182,10 @@ class Truss(ElementBase):
 
         normal_force = (E * e_gl + prestress) * A * deformation_gradient 
 
-        local_internal_forces = np.zeros(6)
-        local_internal_forces[0] = -normal_force
-        local_internal_forces[3] = normal_force
+        local_internal_forces = [-normal_force, normal_force]
 
-        global_internal_forces = transformation_matrix @ local_internal_forces
+        actual_transform = self.get_actual_transform_matrix()
+
+        global_internal_forces = actual_transform.T @ local_internal_forces
 
         return global_internal_forces
-

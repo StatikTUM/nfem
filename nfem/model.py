@@ -16,7 +16,6 @@ from .assembler import Assembler
 from .newton_raphson import newton_raphson_solve
 
 from .path_following_method import ArcLengthControl, DisplacementControl, LoadControl
-from .predictor import LoadIncrementPredictor
 
 class Model(object):
     """A Model contains all the objects that build the finite element model.
@@ -338,6 +337,8 @@ class Model(object):
             duplicate.name = name
 
         return duplicate
+    
+    # === solve functions
 
     def solve_linear(self):
         """Performs a linear solution step on the model.
@@ -377,13 +378,13 @@ class Model(object):
 
             self.set_dof_state(dof, value)
 
-    def solve_nonlinear(self, strategy, tolerance=1e-5, max_iterations=100, **options):
+    def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
         if strategy == 'load-control':
-            constraint = LoadControl(**options)
+            constraint = LoadControl(self, **options)
         elif strategy == 'displacement-control':
-            constraint = DisplacementControl(**options)
+            constraint = DisplacementControl(self, **options)
         elif strategy == 'arc-length':
-            constraint = ArcLengthControl(**options)
+            constraint = ArcLengthControl(self, **options)
         else:
             raise ValueError('Invaid strategy')
 
@@ -440,117 +441,84 @@ class Model(object):
         x[-1] = self.lam
 
         # solve newton raphson
-        x, n_iter = NewtonRaphson(max_iterations, tolerance).solve(calculate_system, x_initial=x)
+        x, n_iter = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
 
         print("Solution found after {} iteration steps.".format(n_iter))
 
-    def perform_non_linear_solution_step(self,
-                                     predictor_method=LoadIncrementPredictor,
-                                     path_following_method=ArcLengthControl):
-        """Performs a non linear solution step on the model.
-            It uses the parameter `predictor_method` to predict the solution and
-            the parameter `path_following_method` to constrain the non linear problem.
-            A newton raphson algorithm is used to iteratively solve the nonlinear 
-            equation system r(u,lam) = 0
-            The results are stored at the dofs and used to update the current 
-            coordinates of the nodes.
+    # === prediction functions
+
+    def predict_load_factor(self, value):
+        """Predicts the solution by prescribing lambda
 
         Parameters
         ----------
-        predictor_method : Object
-            Predictor object that predicts the solution. 
-            (predictor.py for details)            
-        path_following_method : Object
-            Path following object that constrains the solution. 
-            (path_following_method.py for details)
+        value : float
+            Value for the new load factor lambda.  
         """
+        self.lam = value
 
-        print("=================================")
-        print("Start non linear solution step...")
+    def predict_load_increment(self, value):
+        """Predicts the solution by incrementing lambda
 
-        # calculate the direction of the predictor
-        predictor_method.predict(self)
+        Parameters
+        ----------
+        value : float
+            Value that is used to increment the load factor lambda. 
+        """
+        self.lam += value
 
-        # rotate the predictor if necessary (e.g. for branch switching)
-        # TODO for branch switching
+    def predict_dof_state(self, dof, value):
+        """Predicts the solution by prescribing the dof
 
-        # scale the predictor so it fulfills the path following constraint
-        path_following_method.scale_predictor(self)
+        Parameters
+        ----------
+        dof : object
+            Dof that is prescribed.
+        value : float
+            Value that is used to prescribe the dof.
+        """
+        self.set_dof_state(dof, value)
 
-        # initialize working matrices and functions for newton raphson
-        assembler = Assembler(self)
-        dof_count = assembler.dof_count
-        free_count = assembler.free_dof_count
+    def predict_dof_increment(self, dof, value):
+        """Predicts the solution by incrementing the dof
 
-        def calculate_system(x):
-            """Callback function for the newton raphson method that calculates the 
-                system for a given state x
+        Parameters
+        ----------
+        dof : object
+            Dof that is incremented.
+        value : float
+            Value that is used to increment the dof.
+        """
+        tmp_value = self.get_dof_state(dof) + value
+        self.set_dof_state(dof, tmp_value)
+    
+    def predict_with_last_increment(self):
+        """Predicts the solution by incrementing lambda and all dofs with the 
+           increment of the last solution step
 
-            Parameters
-            ----------
-            x : numpy.ndarray
-                Current state of dofs and lambda (unknowns of the non linear system) 
+        Raises
+        ------
+        RuntimeError
+            If the model has not already one calculated step.
+        """
+        previous_model = self.previous_model
+        second_previous_model = previous_model.previous_model
 
-            Returns
-            ----------
-            lhs : numpy.ndarray
-                Left hand side matrix of size (n_free_dofs+1,n_free_dofs+1).
-                Containts the derivatives of the residuum and the constraint.
-            rhs : numpy.ndarray
-                Right hand side vector of size (n_free_dofs+1).
-                Contains the values of the residuum of the structure and the constraint.
-            """
+        if second_previous_model == None:
+            raise RuntimeError('predict_with_last_increment can only be used after the first step.')
 
-            # update actual coordinates
-            for index, dof in enumerate(assembler.free_dofs):
-                value = x[index]
-                self.set_dof_state(dof, value)
-
-            # update lambda
-            self.lam = x[-1]
-
-            # initialize matrices and vectors with zeros
-            k = np.zeros((dof_count, dof_count))
-            external_f = np.zeros(dof_count)
-            internal_f = np.zeros(dof_count)
-
-            # assemble stiffness
-            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
-
-            # assemble force
-            assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
-            assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
-
-            # initialize left and right hand side for newton raphson
-            lhs = np.zeros((free_count + 1, free_count + 1))
-            rhs = np.zeros(free_count + 1)
-
-            # assemble contribution from mechanical system
-            lhs[:free_count, :free_count] = k[:free_count, :free_count]
-            lhs[:free_count, -1] = -external_f[:free_count]
-            rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
-
-            # assemble contribution from constraint
-            path_following_method.calculate_derivatives(self, lhs[-1, :])
-            rhs[-1] = path_following_method.calculate_constraint(self)
-
-            return lhs, rhs
-
-        # iniatialize prediction vector for newton raphson
-        x = np.zeros(free_count+1)
-
-        # assemble contribution from dofs
-        for i in range(free_count):
-            x[i] = self.get_dof_state(assembler.dofs[i])
-
-        # assemble contribution from lambda
-        x[-1] = self.lam
-
-        # solve newton raphson
-        x, n_iter = newton_raphson_solve(calculate_system, x_initial=x)
-
-        print("Solution found after {} iteration steps.".format(n_iter))
-
-        # TODO solve attendant eigenvalue problem
-
-        return
+        for node in self.nodes: 
+            previous_node = previous_model.get_node(id=node.id)
+            second_previous_node = second_previous_model.get_node(id=node.id)
+            
+            delta = previous_node.u - second_previous_node.u 
+            node.u = previous_node.u + delta 
+            
+            delta = previous_node.v - second_previous_node.v 
+            node.v = previous_node.v + delta 
+            
+            delta = previous_node.w - second_previous_node.w 
+            node.w = previous_node.w + delta 
+    
+        delta = previous_model.lam - second_previous_model.lam 
+        self.lam = previous_model.lam + delta 

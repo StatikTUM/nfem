@@ -217,19 +217,17 @@ class InteractiveWindow(QWidget):
             max_iterations = self.max_iterations
 
             if selected_strategy == 'linear':
-                model.solve_linear()
+                model.perform_linear_solution_step()
             elif selected_strategy == 'load-control':
-                model.solve_nonlinear(
+                model.perform_non_linear_solution_step(
                     strategy='load-control',
-                    lam_hat=model.lam,
                     tolerance=tolerance,
                     max_iterations=max_iterations
                 )
             elif selected_strategy == 'displacement-control':
-                model.solve_nonlinear(
+                model.perform_non_linear_solution_step(
                     strategy='displacement-control',
                     dof=dof,
-                    displacement_hat=model.get_dof_state(dof),
                     tolerance=tolerance,
                     max_iterations=max_iterations
                 )
@@ -238,9 +236,8 @@ class InteractiveWindow(QWidget):
                 delta_lambda = model.lam - model.previous_model.lam
                 arc_length = (delta_d**2 + delta_lambda**2)**0.5
 
-                model.solve_nonlinear(
+                model.perform_non_linear_solution_step(
                     strategy='arc-length',
-                    l_hat=arc_length,
                     tolerance=tolerance,
                     max_iterations=max_iterations
                 )
