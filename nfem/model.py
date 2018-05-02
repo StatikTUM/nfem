@@ -8,6 +8,8 @@ from copy import deepcopy
 import numpy as np
 import numpy.linalg as la
 
+from scipy.linalg import eig
+
 from .node import Node
 from .single_load import SingleLoad
 from .truss import Truss
@@ -490,26 +492,23 @@ class Model(object):
 
         print("Solution found after {} iteration steps.".format(n_iter))
 
-        # TODO solve attendant eigenvalue problem
-        # [ k_e + k_u - eigv * k_g ] * z= 0
+        solve_det_k = True
+        if solve_det_k:
+            k = np.zeros((dof_count, dof_count))
+            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+            print("Det(K):", la.det(k[:free_count,:free_count]))
+
         solve_attendant_eigenvalue = True
         if solve_attendant_eigenvalue:
-            k_e = np.zeros((dof_count, dof_count))
-            k_u = np.zeros((dof_count, dof_count))
+            # [ k_m - eigvals * k_g ] * eigvecs = 0
+            k_m = np.zeros((dof_count, dof_count))
             k_g = np.zeros((dof_count, dof_count))
-            k = np.zeros((dof_count, dof_count))
-            assembler.assemble_matrix(k_e, lambda element: element.calculate_elastic_stiffness_matrix())
-            assembler.assemble_matrix(k_u, lambda element: element.calculate_initial_displacement_stiffness_matrix())
+            assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
             assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
-            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
-            print(k_e[:free_count,:free_count])
-            print(k_u[:free_count,:free_count])
-            print(k_g[:free_count,:free_count])
-            print(k_e[:free_count,:free_count]+k_u[:free_count,:free_count]+k_g[:free_count,:free_count])
 
-            from scipy.linalg import eig
-            eigvals, eigvecs = eig((k_e[:free_count,:free_count] + k_u[:free_count,:free_count]), -k_g[:free_count,:free_count])
-            print("Eigenvalue:", eigvals)
+            eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
+            print("First eigenvalue:", eigvals[0].real)
+            print("First eigenvector:", eigvecs[0])
         return
 
     #======================================
