@@ -406,9 +406,9 @@ class Model(object):
             Tolerance for the newton raphson
         **options: kwargs (key word arguments)
             Additional options e.g. 
-            "dof=('B','v')" for displacement-control
-            "solve_det_k=True" for solving the determinant of k at convergence
-            "solve_attendant_eigenvalue=True" for solving the attendant eigenvalue problem at convergence
+            - dof=('B','v'): for displacement-control
+            - solve_det_k=True: for solving the determinant of k at convergence
+            - solve_attendant_eigenvalue=True: for solving the attendant eigenvalue problem at convergence
         """
 
         print("=================================")
