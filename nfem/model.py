@@ -480,7 +480,7 @@ class Model(object):
             
             return lhs, rhs
 
-        # iniatialize prediction vector for newton raphson
+        # initialize prediction vector for newton raphson
         x = np.zeros(free_count+1)
 
         # assemble contribution from dofs
