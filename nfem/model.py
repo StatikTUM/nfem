@@ -427,15 +427,15 @@ class Model(object):
 
             Parameters
             ----------
-            x : numpy.ndarray
+            x : ndarray
                 Current state of dofs and lambda (unknowns of the non linear system) 
 
             Returns
             ----------
-            lhs : numpy.ndarray
+            lhs : ndarray
                 Left hand side matrix of size (n_free_dofs+1,n_free_dofs+1).
                 Containts the derivatives of the residuum and the constraint.
-            rhs : numpy.ndarray
+            rhs : ndarray
                 Right hand side vector of size (n_free_dofs+1).
                 Contains the values of the residuum of the structure and the constraint.
             """
