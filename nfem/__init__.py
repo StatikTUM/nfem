@@ -29,6 +29,8 @@ if sys.version_info < (3, 5):
     raise RuntimeError("The nfem module requires at least Python 3.5!")
 
 from .model import Model
+from .node import Node
+from .truss import Truss
 from .assembler import Assembler
 
 from .newton_raphson import newton_raphson_solve
