@@ -114,7 +114,7 @@ class Truss(ElementBase):
 
         e = self.youngs_modulus
         a = self.area
-        actual_length = self.get_reference_length() 
+        actual_length = self.get_actual_length()
         reference_length = self.get_reference_length()
         actual_transform = self.get_actual_transform_matrix()
 
@@ -151,10 +151,10 @@ class Truss(ElementBase):
     def calculate_stiffness_matrix(self):
         """FIXME"""
 
-        element_k_e = self.calculate_elastic_stiffness_matrix()
+        element_k_m = self.calculate_material_stiffness_matrix()
         element_k_g = self.calculate_geometric_stiffness_matrix()
 
-        return element_k_e + element_k_g
+        return element_k_m + element_k_g
 
     def calculate_green_lagrange_strain(self):
         """FIXME"""

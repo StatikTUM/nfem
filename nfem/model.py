@@ -340,6 +340,10 @@ class Model(object):
     
     # === solve functions
 
+    #======================================
+    # Solution functions
+    #======================================
+
     def perform_linear_solution_step(self):
         """Performs a linear solution step on the model.
             It uses the member variable `lam` as load factor.
@@ -379,17 +383,40 @@ class Model(object):
             self.set_dof_state(dof, value)
 
     def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
-        if strategy == 'load-control':
-            constraint = LoadControl(self, **options)
-        elif strategy == 'displacement-control':
-            constraint = DisplacementControl(self, **options)
-        elif strategy == 'arc-length':
-            constraint = ArcLengthControl(self, **options)
-        else:
-            raise ValueError('Invaid strategy')
+        """Performs a non linear solution step on the model.
+            The path following strategy is chose according to the parameter.
+            A newton raphson algorithm is used to iteratively solve the nonlinear 
+            equation system r(u,lam) = 0
+            The results are stored at the dofs and used to update the current 
+            coordinates of the nodes.
+
+        Parameters
+        ----------
+        strategy : string
+            Path following strategy. Available options:
+            - load-control 
+            - displacement-control
+            - arc-length-control
+        max_iterations: int
+            Maximum number of iteration for the newton raphson
+        tolerance : float
+            Tolerance for the newton raphson
+        **options: kwargs (key word arguments)
+            Additional options e.g. 
+            "dof=('B','v')" for displacement-control
+        """
 
         print("=================================")
         print("Start non linear solution step...")
+
+        if strategy == 'load-control':
+            constraint = LoadControl(self)
+        elif strategy == 'displacement-control':
+            constraint = DisplacementControl(self, **options)
+        elif strategy == 'arc-length-control':
+            constraint = ArcLengthControl(self)
+        else:
+            raise ValueError('Invalid path following strategy:' + strategy)
 
         # initialize working matrices and functions for newton raphson
         assembler = Assembler(self)
@@ -397,7 +424,24 @@ class Model(object):
         free_count = assembler.free_dof_count
 
         def calculate_system(x):
-            """FIXME"""
+            """Callback function for the newton raphson method that calculates the 
+                system for a given state x
+
+            Parameters
+            ----------
+            x : ndarray
+                Current state of dofs and lambda (unknowns of the non linear system) 
+
+            Returns
+            ----------
+            lhs : ndarray
+                Left hand side matrix of size (n_free_dofs+1,n_free_dofs+1).
+                Containts the derivatives of the residuum and the constraint.
+            rhs : ndarray
+                Right hand side vector of size (n_free_dofs+1).
+                Contains the values of the residuum of the structure and the constraint.
+            """
+
             # update actual coordinates
             for index, dof in enumerate(assembler.free_dofs):
                 value = x[index]
@@ -427,7 +471,7 @@ class Model(object):
             lhs[:free_count, -1] = -external_f[:free_count]
             rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
 
-            # constraint
+            # assemble contribution from constraint
             constraint.calculate_derivatives(self, lhs[-1, :])
             rhs[-1] = constraint.calculate_constraint(self)
 

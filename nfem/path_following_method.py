@@ -63,7 +63,7 @@ class LoadControl(PathFollowingMethod):
         ----------
         model : Model
             Model for which the constraint derivative is calculated.
-        dc : numpy.ndarray
+        dc : ndarray
             System vector to store the results. Existing values are overwritten.
         """
         dc.fill(0.0)
@@ -121,7 +121,7 @@ class DisplacementControl(PathFollowingMethod):
         ----------
         model : Model
             Model for which the constraint derivative is calculated.
-        dc : numpy.ndarray
+        dc : ndarray
             System vector to store the results. Existing values are overwritten.
         """
         dc.fill(0.0)
@@ -174,7 +174,7 @@ class ArcLengthControl(PathFollowingMethod):
         ----------
         model : Model
             Model for which the constraint derivative is calculated.
-        dc : numpy.ndarray
+        dc : ndarray
             System vector to store the results. Existing values are overwritten.
         """
         dc.fill(0.0)
