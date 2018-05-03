@@ -58,7 +58,9 @@ if method == 1: #load control
         # prescribe lambda
         model.predict_load_factor(lam)
         
-        model.perform_non_linear_solution_step(strategy="load-control")
+        model.perform_non_linear_solution_step(strategy="load-control", 
+                                               solve_det_k=True,
+                                               solve_attendant_eigenvalue=True)
 
 elif method == 2: #displacement control
 
@@ -72,7 +74,9 @@ elif method == 2: #displacement control
         # prescribe the dof state
         model.predict_dof_state(('B', 'v'), displacement)
         
-        model.perform_non_linear_solution_step(strategy="displacement-control", dof=('B', 'v'))
+        model.perform_non_linear_solution_step(strategy="displacement-control", dof=('B', 'v'), 
+                                               solve_det_k=True,
+                                               solve_attendant_eigenvalue=True)
 
 elif method == 3: #arclength control
 
@@ -87,7 +91,9 @@ elif method == 3: #arclength control
         # increment the dof state
         model.predict_dof_increment(('B', 'v'), displacement_increment)
         
-        model.perform_non_linear_solution_step(strategy="arc-length-control")
+        model.perform_non_linear_solution_step(strategy="arc-length-control", 
+                                               solve_det_k=True,
+                                               solve_attendant_eigenvalue=True)
 
 elif method == 4: #arclength control with delta predictor
 
@@ -106,16 +112,51 @@ elif method == 4: #arclength control with delta predictor
             # increment dof and lambda with the increment from the last solution step
             model.predict_with_last_increment()
         
-        model.perform_non_linear_solution_step(strategy="arc-length-control")
+        model.perform_non_linear_solution_step(strategy="arc-length-control", 
+                                               solve_det_k=True,
+                                               solve_attendant_eigenvalue=True)
 
 #======================================
 # Postprocessing
 #======================================
 
-# plot the load displacement curve
 plot = Plot2D()
+plot.invert_xaxis()
+
+# plot the load displacement curve using the predefined function
 plot.add_load_displacement_curve(model, dof=('B', 'v'))
-plot.add_load_displacement_curve(model, dof=('B', 'u'))
+
+# plot det(K) using the general historic plot function
+def det_k_data_function(model):
+    """This function is called for each model in the history. It returns the 
+    values for x and y of a model.
+    """
+    x = model.get_dof_state(dof=('B', 'v'))
+    y = model.det_k
+    return x, y
+plot.add_history_curve(model, 
+                        x_y_data=det_k_data_function,
+                        label='det(K) : B-v')
+
+# plot the first eigenvalue using the general historic plot function
+def eigenvalue_data_function(model):
+    """This function is called for each model in the history. It returns the 
+    values for x and y of a model.
+    """
+    x = model.get_dof_state(dof=('B', 'v'))
+    if model.first_eigenvalue == None:
+        y = None
+    else:
+        y = model.first_eigenvalue * model.lam
+    return x, y
+plot.add_history_curve(model,
+                        x_y_data=eigenvalue_data_function,
+                        label='eigval * lambda : B-v')
+
+# plot a custom curve using matplotlib syntax
+x=[0,-2]
+y=[0, 0]
+plot.add_custom_curve(x, y, label="my_custom_curve", linewidth=0.5)
 plot.show()
 
 # animated plot
