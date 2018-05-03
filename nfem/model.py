@@ -340,7 +340,7 @@ class Model(object):
     
     # === solve functions
 
-    def solve_linear(self):
+    def perform_linear_solution_step(self):
         """Performs a linear solution step on the model.
             It uses the member variable `lam` as load factor.
             The results are stored at the dofs and used to update the current 
