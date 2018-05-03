@@ -57,6 +57,9 @@ class Model(object):
         self.neumann_conditions = dict()
         self.lam = 0.0
         self.previous_model = None
+        self.det_k = None
+        self.first_eigenvalue = None
+        self.first_eigenvector_model = None
 
     @property
     def nodes(self):
@@ -492,28 +495,57 @@ class Model(object):
 
         print("Solution found after {} iteration steps.".format(n_iter))
 
-        solve_det_k = True
-        if solve_det_k:
+        if 'solve_det_k' in options:
+            if options['solve_det_k']:
+                self.solve_det_k(assembler=assembler)
+
+        if 'solve_attendant_eigenvalue' in options:
+            if options['solve_attendant_eigenvalue']:
+                self.solve_eigenvalues(assembler=assembler)
+
+        return
+
+    def solve_det_k(self, k=None, assembler=None):
+        if k == None:
+            if assembler == None:
+                assembler = Assembler(self)
+            dof_count = assembler.dof_count
+            free_count = assembler.free_dof_count
             k = np.zeros((dof_count, dof_count))
             assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
-            print("Det(K):", la.det(k[:free_count,:free_count]))
-
-        solve_attendant_eigenvalue = True
-        if solve_attendant_eigenvalue:
-            # [ k_m - eigvals * k_g ] * eigvecs = 0
-            k_m = np.zeros((dof_count, dof_count))
-            k_g = np.zeros((dof_count, dof_count))
-            assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
-            assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
-
-            eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
-            idx = eigvals.argsort() 
-            eigvals = eigvals[idx]
-            eigvecs = eigvecs[:,idx]
-            print("First eigenvalue:", eigvals[0].real)
-            print("First eigenvalue * lambda:", eigvals[0].real * self.lam) # this is printed in TRUSS
-            print("First eigenvector:", eigvecs[0])
+        self.det_k =  la.det(k[:free_count,:free_count])
+        print("Det(K): {}".format(self.det_k))
         return
+
+    def solve_eigenvalues(self, assembler=None):
+        # [ k_m + eigvals * k_g ] * eigvecs = 0
+        if assembler == None:
+            assembler = Assembler(self)
+        
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+
+        # assemble matrices
+        k_m = np.zeros((dof_count, dof_count))
+        k_g = np.zeros((dof_count, dof_count))
+        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
+        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
+
+        # solve eigenvalue problem
+        eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
+
+        # sort eigenvalues and vectors
+        idx = eigvals.argsort() 
+        eigvals = eigvals[idx]
+        eigvecs = eigvecs[:,idx]
+
+        print("First eigenvalue: {}".format(eigvals[0].real))
+        print("First eigenvalue * lambda$: {}".format(eigvals[0].real * self.lam)) # this is printed in TRUSS
+        print("First eigenvector: {}".format(eigvecs[0]))
+
+        self.first_eigenvalue = eigvals[0].real
+        return
+
 
     #======================================
     # Predictor functions
