@@ -1,25 +1,29 @@
-import sys
-sys.path.append('..') 
+'''
+Tests for det(K)
+'''
 
-# import necessary modules
-from nfem import *
-import test_two_bar_truss_model
+from numpy.testing import assert_almost_equal
+from unittest import TestCase
 
-import math
+from . import test_two_bar_truss_model
 
-# two bar truss model
-model = test_two_bar_truss_model.get_model()
+class TestDetK(TestCase):
+    def setUp(self):
+        # two bar truss model
+        self.model = test_two_bar_truss_model.get_model()
 
-#======================================
-# initial model
-#======================================
-model.solve_det_k()
-assert(math.isclose(model.det_k, 0.4999999999999997, rel_tol=1e-12) )
+    def test_initial_model(self):
+        model = self.model.get_duplicate()
+        model.solve_det_k()
+        actual_value = model.det_k
+        expected_value = 0.4999999999999997
+        assert_almost_equal(actual_value, expected_value)
 
-#======================================
-# after first solution step
-#======================================
-model.lam = 0.1
-model.perform_non_linear_solution_step(strategy="load-control")
-model.solve_det_k()
-assert(math.isclose(model.det_k, 0.19510608810631772, rel_tol=1e-12) )
+    def test_after_solution(self):
+        model = self.model.get_duplicate()
+        model.lam = 0.1
+        model.perform_non_linear_solution_step(strategy="load-control")
+        model.solve_det_k()
+        actual_value = model.det_k
+        expected_value = 0.19510608810631772
+        assert_almost_equal(actual_value, expected_value)
