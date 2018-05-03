@@ -407,6 +407,8 @@ class Model(object):
         **options: kwargs (key word arguments)
             Additional options e.g. 
             "dof=('B','v')" for displacement-control
+            "solve_det_k=True" for solving the determinant of k at convergence
+            "solve_attendant_eigenvalue=True" for solving the attendant eigenvalue problem at convergence
         """
 
         print("=================================")
@@ -506,6 +508,15 @@ class Model(object):
         return
 
     def solve_det_k(self, k=None, assembler=None):
+        """Solves the determinant of k
+
+        Parameters
+        ----------
+        k : numpy.ndarray (optional)
+            stiffness matrix can be directly passed.  
+        assembler : Object (optional)
+            assembler can be passed to speed up if k is not given
+        """
         if k == None:
             if assembler == None:
                 assembler = Assembler(self)
@@ -518,6 +529,14 @@ class Model(object):
         return
 
     def solve_eigenvalues(self, assembler=None):
+        """Solves the eigenvalue problem
+           [ k_m + eigvals * k_g ] * eigvecs = 0
+
+        Parameters
+        ----------
+        assembler : Object (optional)
+            assembler can be passed to speed up  
+        """
         # [ k_m + eigvals * k_g ] * eigvecs = 0
         if assembler == None:
             assembler = Assembler(self)
