@@ -65,7 +65,6 @@ class InteractiveWindow(QWidget):
         self.plot_canvas = plot_canvas
 
         plot_3d = figure.add_subplot(1, 2, 1, projection='3d')
-        plot_3d.set_proj_type('ortho')
         self.plot_3d = plot_3d
 
         plot_2d = figure.add_subplot(1, 2, 2)
