@@ -11,7 +11,7 @@ try:
     
     # set the matplotlib to tk, so the plots show
     get_ipython().magic('matplotlib tk')
-    print("Executed IPython magic command: %'matplotlib automatic' to show.")
+    print("Executed IPython magic command: %'matplotlib tk' to enable animations and the gui.")
 
 except:
     pass
