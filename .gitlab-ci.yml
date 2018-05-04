@@ -1,8 +1,0 @@
-image: python:latest
-
-before_script:
-  - python -V
-
-test:
-  script:
-  - python -m unittest discover -p test_*.py
