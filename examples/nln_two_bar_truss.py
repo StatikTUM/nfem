@@ -52,9 +52,9 @@ if method == 1: #load control
         model = model.get_duplicate()
 
         # prescribe lambda
-        model.predict_tangential(predictor_method="lambda", value=lam)
+        model.predict_tangential(strategy="lambda", value=lam)
         # ALTERNATIVE prescribe delta lambda
-        #model.predict_tangential(predictor_method="delta-lambda", value=0.025)
+        #model.predict_tangential(strategy="delta-lambda", value=0.025)
         
         model.perform_non_linear_solution_step(strategy="load-control")
 
@@ -68,9 +68,9 @@ elif method == 2: #displacement control
         model = model.get_duplicate()
 
         # prescribe u
-        model.predict_tangential(predictor_method="u", value=displacement, dof=('B', 'v') )
+        model.predict_tangential(strategy="dof", value=displacement, dof=('B', 'v') )
         # ALTERNATIVE prescribe delta u
-        #model.predict_tangential(predictor_method="delta-u", value=-0.1, dof=('B', 'v') )
+        #model.predict_tangential(strategy="delta-u", value=-0.1, dof=('B', 'v') )
         
         model.perform_non_linear_solution_step(strategy="displacement-control", dof=('B', 'v'))
 
@@ -85,7 +85,7 @@ elif method == 3: #arclength control
         model = model.get_duplicate()
 
         # prescribe delta_u
-        model.predict_tangential(predictor_method="delta-u", value=displacement_increment, dof=('B', 'v') )
+        model.predict_tangential(strategy="delta-dof", value=displacement_increment, dof=('B', 'v') )
         
         model.perform_non_linear_solution_step(strategy="arc-length-control")
 
@@ -101,10 +101,10 @@ elif method == 4: #arclength control with delta predictor
 
         if i == 0:
             # increment the dof state
-            model.predict_tangential(predictor_method="delta-u", value=-0.1, dof=('B', 'v') )
+            model.predict_tangential(strategy="delta-dof", value=-0.1, dof=('B', 'v') )
         else:
             # increment dof and lambda with the increment from the last solution step
-            model.predict_tangential(predictor_method="arc-length")
+            model.predict_tangential(strategy="arc-length")
         
         model.perform_non_linear_solution_step(strategy="arc-length-control")
 
@@ -120,7 +120,7 @@ elif method == 5: #arclength control with delta predictor
 
         if i == 0:
             # increment the dof state
-            model.predict_tangential(predictor_method="delta-u", value=-0.1, dof=('B', 'v') )
+            model.predict_tangential(strategy="delta-u", value=-0.1, dof=('B', 'v') )
         else:
             # increment dof and lambda with the increment from the last solution step
             model.predict_with_last_increment()
