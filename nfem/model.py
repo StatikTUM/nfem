@@ -565,8 +565,17 @@ class Model(object):
 
 
     def predict_tangential(self, predictor_method, **options):
-        """Predicts the solution by incrementing lambda and all dofs with the 
-           increment of the last solution step
+        """ Make a tangential prediction
+
+        Predicts the solution by incrementing lambda and all dofs with the
+        increment of the last solution step.
+
+        Parameters
+        ----------
+        predictor_method : str
+            ...
+        options
+            ...
         """
         # solve tangend vector
         assembler = Assembler(self)
