@@ -562,11 +562,10 @@ class Model(object):
                 Contains the values of the residuum of the structure and the constraint.
             """
 
-            if self.status != ModelStatus.prediction:
-                # create a duplicate of the current state before updating and insert it in the history 
-                duplicate = self.get_duplicate()
-                duplicate._previous_model = self._previous_model
-                self._previous_model = duplicate
+            # create a duplicate of the current state before updating and insert it in the history 
+            duplicate = self.get_duplicate()
+            duplicate._previous_model = self._previous_model
+            self._previous_model = duplicate
 
             # update status flag
             self.status = ModelStatus.iteration
@@ -766,6 +765,7 @@ class Model(object):
             dof : Object
                 specifies the controlled dof for 'dof' and 'delta-dof' strategy
         """
+        self.status = ModelStatus.prediction
         assembler = Assembler(self)
 
         # get tangent vector
