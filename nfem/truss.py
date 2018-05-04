@@ -114,7 +114,7 @@ class Truss(ElementBase):
 
         e = self.youngs_modulus
         a = self.area
-        actual_length = self.get_actual_length() 
+        actual_length = self.get_actual_length()
         reference_length = self.get_reference_length()
         actual_transform = self.get_actual_transform_matrix()
 

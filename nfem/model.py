@@ -337,6 +337,8 @@ class Model(object):
             duplicate.name = name
 
         return duplicate
+    
+    # === solve functions
 
     #======================================
     # Solution functions
@@ -380,7 +382,7 @@ class Model(object):
 
             self.set_dof_state(dof, value)
 
-    def perform_non_linear_solution_step(self, strategy, max_iterations=100, tolerance=1e-7, **options):
+    def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
         """Performs a non linear solution step on the model.
             The path following strategy is chose according to the parameter.
             A newton raphson algorithm is used to iteratively solve the nonlinear 
@@ -441,14 +443,14 @@ class Model(object):
             """
 
             # update actual coordinates
-            for index, dof in enumerate(assembler.dofs[:free_count]):
+            for index, dof in enumerate(assembler.free_dofs):
                 value = x[index]
                 self.set_dof_state(dof, value)
 
             # update lambda
             self.lam = x[-1]
 
-            # initialize matrices and vectors with zeros
+            # initialize with zeros
             k = np.zeros((dof_count, dof_count))
             external_f = np.zeros(dof_count)
             internal_f = np.zeros(dof_count)
@@ -460,11 +462,11 @@ class Model(object):
             assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
             assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
 
-            # initialize left and right hand side for newton raphson
+            # assemble left and right hand side for newton raphson
             lhs = np.zeros((free_count + 1, free_count + 1))
             rhs = np.zeros(free_count + 1)
 
-            # assemble contribution from mechanical system
+            # mechanical system
             lhs[:free_count, :free_count] = k[:free_count, :free_count]
             lhs[:free_count, -1] = -external_f[:free_count]
             rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
@@ -475,28 +477,19 @@ class Model(object):
 
             return lhs, rhs
 
-        # iniatialize prediction vector for newton raphson
-        x = np.zeros(free_count+1)
+        # prediction as vector for newton raphson
+        x = np.zeros(free_count + 1)
+        for index, dof in enumerate(assembler.free_dofs):
+            x[index] = self.get_dof_state(dof)
 
-        # assemble contribution from dofs
-        for i in range(free_count):
-            x[i] = self.get_dof_state(assembler.dofs[i])
-
-        # assemble contribution from lambda
         x[-1] = self.lam
 
         # solve newton raphson
-        x, n_iter = newton_raphson_solve(calculate_system, x_initial=x, max_iterations=max_iterations, tolerance=tolerance,)
+        x, n_iter = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
 
         print("Solution found after {} iteration steps.".format(n_iter))
 
-        # TODO solve attendant eigenvalue problem
-
-        return
-
-    #======================================
-    # Predictor functions
-    #======================================
+    # === prediction functions
 
     def predict_load_factor(self, value):
         """Predicts the solution by predictor_method lambda
