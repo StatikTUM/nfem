@@ -499,7 +499,7 @@ class Model(object):
     #======================================
 
     def predict_load_factor(self, value):
-        """Predicts the solution by prescribing lambda
+        """Predicts the solution by predictor_method lambda
 
         Parameters
         ----------
@@ -519,7 +519,7 @@ class Model(object):
         self.lam += value
 
     def predict_dof_state(self, dof, value):
-        """Predicts the solution by prescribing the dof
+        """Predicts the solution by predictor_method the dof
 
         Parameters
         ----------
@@ -552,24 +552,136 @@ class Model(object):
         RuntimeError
             If the model has not already one calculated step.
         """
-        previous_model = self.previous_model
-        second_previous_model = previous_model.previous_model
+        if self.previous_model.previous_model == None:
+            raise RuntimeError('predict_with_last_increment can only be used after the first step!')
 
-        if second_previous_model == None:
-            raise RuntimeError('predict_with_last_increment can only be used after the first step.')
-  
-        for node in self.nodes: 
-            previous_node = previous_model.get_node(id=node.id)
-            second_previous_node = second_previous_model.get_node(id=node.id)
-            
-            delta = previous_node.u - second_previous_node.u 
-            node.u = previous_node.u + delta 
-            
-            delta = previous_node.v - second_previous_node.v 
-            node.v = previous_node.v + delta 
-            
-            delta = previous_node.w - second_previous_node.w 
-            node.w = previous_node.w + delta 
-    
-        delta = previous_model.lam - second_previous_model.lam 
-        self.lam = previous_model.lam + delta 
+        assembler = Assembler(self)
+
+        last_increment = self.previous_model.get_increment_vector(assembler)
+
+        # update dofs at model
+        for index, dof in enumerate(assembler.dofs):
+
+            old_value = self.get_dof_state(dof)
+            value = last_increment[index]
+
+            self.set_dof_state(dof, old_value + value)
+
+        # update lam at model
+        self.lam += last_increment[-1]
+
+
+    def predict_tangential(self, predictor_method, **options):
+        """Predicts the solution by incrementing lambda and all dofs with the 
+           increment of the last solution step
+        """
+        # solve tangend vector
+        assembler = Assembler(self)
+        t = self.solve_tangent_vector(assembler=assembler)
+
+        # caclulate scaling factor acoording to chosen prescription
+        factor = 1.0
+        if predictor_method == 'lambda':
+            prescribed_lam = options['value']
+            delta_lambda = prescribed_lam - self.lam
+            factor = delta_lambda
+        elif predictor_method == 'delta-lambda':
+            delta_lambda = options['value']
+            factor = delta_lambda
+        elif predictor_method == 'u':
+            dof = options['dof']
+            u_old = self.get_dof_state(dof)
+            u_prescribed = options['value']
+            delta_u_prescribed = u_prescribed- u_old
+            dof_index = assembler.index_of_dof(dof)
+            delta_u_current = t[dof_index]
+            factor = delta_u_prescribed/delta_u_current
+        elif predictor_method == 'delta-u':
+            dof = options['dof']
+            delta_u_prescribed = options['value']
+            dof_index = assembler.index_of_dof(dof)
+            delta_u_current = t[dof_index]
+            factor = delta_u_prescribed/delta_u_current
+        elif predictor_method == 'arc-length':
+            if self.previous_model.previous_model == None:
+                raise RuntimeError('Tangential arc-length predictor can only be used after the first step!')
+            previous_increment = self.previous_model.get_increment_vector(assembler)
+            prescribed_l = la.norm(previous_increment)
+            current_l = la.norm(t)
+            factor = prescribed_l/current_l
+            # make sure the tangent points in a similar direction as the last increment
+            sign = np.sign(previous_increment @ t)
+            if sign != 0.0:
+                factor *= sign
+        else:            
+            raise ValueError('Invalid predictor_method for prediction:' + predictor_method)
+
+        # scale tangent vector
+        t *= factor
+        
+        # update dofs at model
+        for index, dof in enumerate(assembler.dofs):
+
+            old_value = self.get_dof_state(dof)
+            value = t[index]
+
+            self.set_dof_state(dof, old_value + value)
+
+        # update lam at model
+        self.lam += t[-1]
+
+        return
+
+
+    def get_increment_vector(self, assembler=None):
+        """gets the increment that resulted in the current position
+        """      
+        if assembler == None:
+            assembler = Assembler(self)  
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+ 
+        increment = np.zeros(dof_count+1)
+ 
+        if self.previous_model == None:
+            print("WARNING: increment is zero because no previous model exists!")
+            return increment
+
+        for index, dof in enumerate(assembler.dofs):
+            increment[index] = self.get_dof_state(dof) - self.previous_model.get_dof_state(dof)
+
+        increment[-1] = self.lam - self.previous_model.lam
+
+        return increment
+
+
+    def solve_tangent_vector(self, assembler=None):
+        """solves for the tangent vector t=[v, 1]
+            with v = d_u/d_lambda ... incremental velocity
+        """      
+        if assembler == None:
+            assembler = Assembler(self)  
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+ 
+        v = np.zeros(dof_count)
+ 
+        for dof, value in self.dirichlet_conditions.items():
+            index = assembler.index_of_dof(dof)
+            v[index] = value
+
+        k = np.zeros((dof_count, dof_count))
+        external_f = np.zeros(dof_count)
+
+        # assemble stiffness
+        assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+
+        # assemble force
+        assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())    
+
+        a = k[:free_count, :free_count]
+        b = external_f[:free_count] - k[:free_count, free_count:] @ v[free_count:]
+
+        v[:free_count] = la.solve(a, b)
+
+        return np.append(v, 1.0)
