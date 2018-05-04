@@ -136,17 +136,17 @@ class InteractiveWindow(Tk):
     def new_branch_button_click(self):
         new_model = self.model.get_duplicate()
 
-        new_model.previous_model = self.model.previous_model
+        new_model._previous_model= self.model.get_previous_model()
 
         self.branches.append(new_model)
 
         self.redraw()
 
     def go_back_button_click(self):
-        if self.model.previous_model is None:
+        if self.model.get_previous_model() is None:
             return
 
-        self.model = self.model.previous_model
+        self.model = self.model.get_previous_model()
 
         self.redraw()
 

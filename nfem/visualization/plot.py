@@ -86,10 +86,7 @@ def plot_model(ax, model, color, initial):
 
 
 def plot_load_displacement_iterations(ax, model, dof, label=None):
-    iteration_model = model.previous_iteration_model
-    if iteration_model == None: 
-        return
-    history = iteration_model.get_model_history()
+    history = model.get_model_history(skip_iterations=False)
 
     x_data = np.zeros(len(history))
     y_data = np.zeros(len(history))
