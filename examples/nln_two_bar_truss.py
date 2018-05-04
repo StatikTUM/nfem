@@ -1,13 +1,8 @@
 """
 Non linear example of the two bar truss
 
-It can be run with different path following methods:
-1: load control 
-2: displacement control
-3: arclength control
-4: arclength control with delta predictor
-
-This can be set right below
+It can be run with different path following and predictor methods:
+This can be set right below in the 'Solve' block
 """
 # add the path to the nfem tool to the PATH.
 import sys
@@ -16,12 +11,6 @@ sys.path.append('..')
 import numpy as np
 
 from nfem import *
-
-# 1:load control 
-# 2:displacement control
-# 3:arclength control
-# 4:arclength control with delta predictor
-method = 4
 
 #======================================
 # Preprocessing
@@ -42,13 +31,16 @@ model.add_dirichlet_condition(node_id='B', dof_types='w', value=0)
 model.add_dirichlet_condition(node_id='C', dof_types='uvw', value=0)
 
 #======================================
-# Solve (with the chosen method)
-# 1: load control 
-# 2: displacement control
-# 3: arclength control
-# 4: arclength control with delta predictor
+# Solve 
+# (with the chosen method)
 #======================================
-method = 4
+# 1: load control with tangential 'lambda' predictor
+# 2: displacement control with tangential 'u' predictor
+# 3: arclength control with tangential 'delta-u' predictor
+# 4: arclength control with tangential 'arc-lenght' predictor
+# 5: arclength control with increment predictor
+#======================================
+method = 3
 
 if method == 1: #load control
 
@@ -59,12 +51,12 @@ if method == 1: #load control
         # create a new model for each solution step
         model = model.get_duplicate()
 
-        predictor_method = LoadIncrementPredictor()
-
-        path_following_method = LoadControl(lam)
+        # prescribe lambda
+        model.predict_tangential(strategy="lambda", value=lam)
+        # ALTERNATIVE prescribe delta lambda
+        #model.predict_tangential(strategy="delta-lambda", value=0.025)
         
-        model.perform_non_linear_solution_step(predictor_method=predictor_method,
-                                           path_following_method=path_following_method)
+        model.perform_non_linear_solution_step(strategy="load-control")
 
 elif method == 2: #displacement control
 
@@ -75,29 +67,27 @@ elif method == 2: #displacement control
         # create a new model for each solution step
         model = model.get_duplicate()
 
-        predictor_method = DisplacementIncrementPredictor(dof=('B', 'v'))
-
-        path_following_method = DisplacementControl(dof=('B', 'v'), displacement_hat=displacement)
+        # prescribe u
+        model.predict_tangential(strategy="dof", value=displacement, dof=('B', 'v') )
+        # ALTERNATIVE prescribe delta u
+        #model.predict_tangential(strategy="delta-u", value=-0.1, dof=('B', 'v') )
         
-        model.perform_non_linear_solution_step(predictor_method=predictor_method,
-                                           path_following_method=path_following_method)
+        model.perform_non_linear_solution_step(strategy="displacement-control", dof=('B', 'v'))
 
 elif method == 3: #arclength control
 
     # define a list of displacement values that should be used
-    arclength = 0.1
+    displacement_increment = -0.1
     n_steps = 20
     for i in range(n_steps):
 
         # create a new model for each solution step
         model = model.get_duplicate()
 
-        predictor_method = DisplacementIncrementPredictor(dof=('B', 'v'), value=-1.0)
-
-        path_following_method = ArcLengthControl(l_hat=arclength)
+        # prescribe delta_u
+        model.predict_tangential(strategy="delta-dof", value=displacement_increment, dof=('B', 'v') )
         
-        model.perform_non_linear_solution_step(predictor_method=predictor_method,
-                                           path_following_method=path_following_method)
+        model.perform_non_linear_solution_step(strategy="arc-length-control")
 
 elif method == 4: #arclength control with delta predictor
 
@@ -110,14 +100,32 @@ elif method == 4: #arclength control with delta predictor
         model = model.get_duplicate()
 
         if i == 0:
-            predictor_method = DisplacementIncrementPredictor(dof=('B', 'v'), value=-1.0)
+            # increment the dof state
+            model.predict_tangential(strategy="delta-dof", value=-0.1, dof=('B', 'v') )
         else:
-            predictor_method = LastIncrementPredictor()
-
-        path_following_method = ArcLengthControl(l_hat=arclength)
+            # increment dof and lambda with the increment from the last solution step
+            model.predict_tangential(strategy="arc-length")
         
-        model.perform_non_linear_solution_step(predictor_method=predictor_method,
-                                           path_following_method=path_following_method)
+        model.perform_non_linear_solution_step(strategy="arc-length-control")
+
+elif method == 5: #arclength control with delta predictor
+
+    # define a list of displacement values that should be used
+    arclength = 0.1
+    n_steps = 20
+    for i in range(n_steps):
+        
+        # create a new model for each solution step
+        model = model.get_duplicate()
+
+        if i == 0:
+            # increment the dof state
+            model.predict_tangential(strategy="delta-u", value=-0.1, dof=('B', 'v') )
+        else:
+            # increment dof and lambda with the increment from the last solution step
+            model.predict_with_last_increment()
+        
+        model.perform_non_linear_solution_step(strategy="arc-length-control")
 
 #======================================
 # Postprocessing
