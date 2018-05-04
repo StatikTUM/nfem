@@ -655,8 +655,7 @@ class Model(object):
         value : float
             Value that is used to increment the dof.
         """
-        tmp_value = self.get_dof_state(dof) + value
-        self.set_dof_state(dof, tmp_value)
+        self.increment_dof_state(dof, value)
     
     def predict_with_last_increment(self):
         """Predicts the solution by incrementing lambda and all dofs with the 
@@ -694,17 +693,25 @@ class Model(object):
         Parameters
         ----------
         strategy : str
-            ...
+            Strategy to scale the tangent vector.
+            Avaiblable options:
+            - 'lambda'
+            - 'delta-lambda'
+            - 'dof'
+            - 'delta-dof'
+            - 'arc-length'
         options
-            ...
+            value : float
+                prescribed value according to the strategy (not needed for 'arc-length')
+            dof : Object
+                specifies the controlled dof for 'dof' and 'delta-dof' strategy
         """
         assembler = Assembler(self)
 
         # get tangent vector
         tangent = self.get_tangent_vector(assembler=assembler)
 
-        # caclulate scaling factor according to chosen strategy
-
+        # calculate scaling factor according to chosen strategy
         if strategy == 'lambda':
             prescribed_lam = options['value']
 
