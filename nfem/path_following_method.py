@@ -7,7 +7,7 @@ import numpy as np
 
 from .assembler import Assembler
 
-class PathFollowingMethod():
+class PathFollowingMethod(object):
 
     def scale_predictor(self, model):
         raise NotImplementedError
@@ -63,7 +63,7 @@ class LoadControl(PathFollowingMethod):
         ----------
         model : Model
             Model for which the constraint derivative is calculated.
-        dc : numpy.ndarray
+        dc : ndarray
             System vector to store the results. Existing values are overwritten.
         """
         dc.fill(0.0)
@@ -121,7 +121,7 @@ class DisplacementControl(PathFollowingMethod):
         ----------
         model : Model
             Model for which the constraint derivative is calculated.
-        dc : numpy.ndarray
+        dc : ndarray
             System vector to store the results. Existing values are overwritten.
         """
         dc.fill(0.0)
@@ -174,16 +174,15 @@ class ArcLengthControl(PathFollowingMethod):
         ----------
         model : Model
             Model for which the constraint derivative is calculated.
-        dc : numpy.ndarray
+        dc : ndarray
             System vector to store the results. Existing values are overwritten.
         """
         dc.fill(0.0)
 
         assembler = Assembler(model)
-        free_count = assembler.free_dof_count
         previous_model = model.get_previous_model()
 
-        for index, dof in enumerate(assembler.dofs[:free_count]):
+        for index, dof in enumerate(assembler.free_dofs):
             current_value = model.get_dof_state(dof)
             previous_value = previous_model.get_dof_state(dof)
 
