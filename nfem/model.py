@@ -500,6 +500,8 @@ class Model(object):
         if 'solve_det_k' in options:
             if options['solve_det_k']:
                 self.solve_det_k(assembler=assembler)
+        else:
+            self.solve_det_k(assembler=assembler)
 
         if 'solve_attendant_eigenvalue' in options:
             if options['solve_attendant_eigenvalue']:
