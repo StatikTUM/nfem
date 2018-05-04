@@ -113,6 +113,8 @@ class Model(object):
         """
         return self._elements[id]
 
+    # === modeling
+
     def add_node(self, id, x, y, z):
         """Add a three dimensional node to the model.
 
@@ -238,6 +240,8 @@ class Model(object):
 
         self._elements[id] = SingleLoad(id, self._nodes[node_id], fu, fv, fw)
 
+    # === degree of freedoms
+
     def set_dof_state(self, dof, value):
         """Sets the state of the dof
 
@@ -266,6 +270,82 @@ class Model(object):
         """
         node_id, dof_type = dof
         return self._nodes[node_id].get_dof_state(dof_type)
+
+    def increment_dof_state(self, dof, delta):
+        """Increment the state of the dof by a given value
+
+        Parameters
+        ----------
+        dof : tuple(node_id, dof_type)
+            Dof that is asked
+        delta : float
+            Increment of the dof value
+        """
+        value = self.get_dof_state(dof)
+        self.set_dof_state(dof, value + delta)
+
+    # === increment
+
+    def get_dof_increment(self, dof):
+        """Get the increment of the dof during the last solution step
+
+        Parameters
+        ----------
+        dof : tuple(node_id, dof_type)
+            Dof that is asked
+
+        Returns
+        -------
+        delta : float
+            Increment of the dof during the last step
+        """
+        if self.previous_model is None:
+            return 0.0
+
+        current_value = self.get_dof_state(dof)
+        previous_value = self.previous_model.get_dof_state(dof)
+
+        return previous_value - current_value
+
+    def get_lam_increment(self):
+        """Get the increment of lambda during the last solution step
+
+        Returns
+        -------
+        delta : float
+            Increment of lambda during the last step
+        """
+        if self.previous_model is None:
+            return 0.0
+
+        current_value = self.lam
+        previous_value = self.previous_model.lam
+
+        return previous_value - current_value
+
+    def get_increment_vector(self, assembler=None):
+        """Get the increment that resulted in the current position
+        """
+
+        if assembler is None:
+            assembler = Assembler(self)
+
+        dof_count = assembler.dof_count
+
+        increment = np.zeros(dof_count + 1)
+
+        if self.previous_model is None:
+            print('WARNING: Increment is zero because no previous model exists!')
+            return increment
+
+        for index, dof in enumerate(assembler.dofs):
+            increment[index] = self.get_dof_increment(dof)
+
+        increment[-1] = self.get_lam_increment
+
+        return increment
+
+    # === model history
 
     def get_initial_model(self):
         """Gets the initial model of this model.
@@ -342,10 +422,8 @@ class Model(object):
             duplicate.name = name
 
         return duplicate
-
-    #======================================
-    # Solution functions
-    #======================================
+    
+    # === solving
 
     def perform_linear_solution_step(self):
         """Performs a linear solution step on the model.
@@ -385,7 +463,7 @@ class Model(object):
 
             self.set_dof_state(dof, value)
 
-    def perform_non_linear_solution_step(self, strategy, max_iterations=100, tolerance=1e-7, **options):
+    def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
         """Performs a non linear solution step on the model.
             The path following strategy is chose according to the parameter.
             A newton raphson algorithm is used to iteratively solve the nonlinear 
@@ -434,28 +512,28 @@ class Model(object):
 
             Parameters
             ----------
-            x : numpy.ndarray
+            x : ndarray
                 Current state of dofs and lambda (unknowns of the non linear system) 
 
             Returns
             ----------
-            lhs : numpy.ndarray
+            lhs : ndarray
                 Left hand side matrix of size (n_free_dofs+1,n_free_dofs+1).
                 Containts the derivatives of the residuum and the constraint.
-            rhs : numpy.ndarray
+            rhs : ndarray
                 Right hand side vector of size (n_free_dofs+1).
                 Contains the values of the residuum of the structure and the constraint.
             """
 
             # update actual coordinates
-            for index, dof in enumerate(assembler.dofs[:free_count]):
+            for index, dof in enumerate(assembler.free_dofs):
                 value = x[index]
                 self.set_dof_state(dof, value)
 
             # update lambda
             self.lam = x[-1]
 
-            # initialize matrices and vectors with zeros
+            # initialize with zeros
             k = np.zeros((dof_count, dof_count))
             external_f = np.zeros(dof_count)
             internal_f = np.zeros(dof_count)
@@ -467,11 +545,11 @@ class Model(object):
             assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
             assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
 
-            # initialize left and right hand side for newton raphson
+            # assemble left and right hand side for newton raphson
             lhs = np.zeros((free_count + 1, free_count + 1))
             rhs = np.zeros(free_count + 1)
 
-            # assemble contribution from mechanical system
+            # mechanical system
             lhs[:free_count, :free_count] = k[:free_count, :free_count]
             lhs[:free_count, -1] = -external_f[:free_count]
             rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
@@ -482,18 +560,15 @@ class Model(object):
             
             return lhs, rhs
 
-        # initialize prediction vector for newton raphson
-        x = np.zeros(free_count+1)
+        # prediction as vector for newton raphson
+        x = np.zeros(free_count + 1)
+        for index, dof in enumerate(assembler.free_dofs):
+            x[index] = self.get_dof_state(dof)
 
-        # assemble contribution from dofs
-        for i in range(free_count):
-            x[i] = self.get_dof_state(assembler.dofs[i])
-
-        # assemble contribution from lambda
         x[-1] = self.lam
 
         # solve newton raphson
-        x, n_iter = newton_raphson_solve(calculate_system, x_initial=x, max_iterations=max_iterations, tolerance=tolerance,)
+        x, n_iter = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
 
         print("Solution found after {} iteration steps.".format(n_iter))
 
@@ -565,13 +640,56 @@ class Model(object):
         self.first_eigenvalue = eigvals[0].real
         return
 
+    def get_tangent_vector(self, assembler=None):
+        """ Get the tangent vector
+        
+        Returns
+        -------
+        tangent : ndarray
+            Tangent vector t = [v, 1]
+            with v = d_u / d_lambda ... incremental velocity
+        """
+        if assembler is None:
+            assembler = Assembler(self)
 
-    #======================================
-    # Predictor functions
-    #======================================
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+
+        tangent = np.zeros(dof_count + 1)
+
+        v = tangent[:-1]
+
+        for dof, value in self.dirichlet_conditions.items():
+            index = assembler.index_of_dof(dof)
+            v[index] = value
+
+        k = np.zeros((dof_count, dof_count))
+        external_f = np.zeros(dof_count)
+
+        # assemble stiffness
+        assembler.assemble_matrix(k,
+            lambda element: element.calculate_stiffness_matrix()
+        )
+
+        # assemble force
+        assembler.assemble_vector(external_f,
+            lambda element: element.calculate_external_forces()
+        ) 
+
+        lhs = k[:free_count, :free_count]
+        rhs = external_f[:free_count] - k[:free_count, free_count:] @ v[free_count:]
+
+        v[:free_count] = la.solve(lhs, rhs)
+
+        # lambda = 1
+        tangent[-1] = 1
+
+        return tangent
+
+    # === prediction functions
 
     def predict_load_factor(self, value):
-        """Predicts the solution by prescribing lambda
+        """Predicts the solution by predictor_method lambda
 
         Parameters
         ----------
@@ -591,7 +709,7 @@ class Model(object):
         self.lam += value
 
     def predict_dof_state(self, dof, value):
-        """Predicts the solution by prescribing the dof
+        """Predicts the solution by predictor_method the dof
 
         Parameters
         ----------
@@ -612,8 +730,7 @@ class Model(object):
         value : float
             Value that is used to increment the dof.
         """
-        tmp_value = self.get_dof_state(dof) + value
-        self.set_dof_state(dof, tmp_value)
+        self.increment_dof_state(dof, value)
     
     def predict_with_last_increment(self):
         """Predicts the solution by incrementing lambda and all dofs with the 
@@ -624,24 +741,114 @@ class Model(object):
         RuntimeError
             If the model has not already one calculated step.
         """
-        previous_model = self.previous_model
-        second_previous_model = previous_model.previous_model
+        if self.previous_model.previous_model == None:
+            raise RuntimeError('predict_with_last_increment can only be used after the first step!')
 
-        if second_previous_model == None:
-            raise RuntimeError('predict_with_last_increment can only be used after the first step.')
-  
-        for node in self.nodes: 
-            previous_node = previous_model.get_node(id=node.id)
-            second_previous_node = second_previous_model.get_node(id=node.id)
-            
-            delta = previous_node.u - second_previous_node.u 
-            node.u = previous_node.u + delta 
-            
-            delta = previous_node.v - second_previous_node.v 
-            node.v = previous_node.v + delta 
-            
-            delta = previous_node.w - second_previous_node.w 
-            node.w = previous_node.w + delta 
-    
-        delta = previous_model.lam - second_previous_model.lam 
-        self.lam = previous_model.lam + delta 
+        assembler = Assembler(self)
+
+        last_increment = self.previous_model.get_increment_vector(assembler)
+
+        # update dofs at model
+        for index, dof in enumerate(assembler.dofs):
+
+            old_value = self.get_dof_state(dof)
+            value = last_increment[index]
+
+            self.set_dof_state(dof, old_value + value)
+
+        # update lam at model
+        self.lam += last_increment[-1]
+
+    def predict_tangential(self, strategy, **options):
+        """ Make a tangential prediction
+
+        Predicts the solution by incrementing lambda and all dofs with the
+        increment of the last solution step.
+
+        Parameters
+        ----------
+        strategy : str
+            Strategy to scale the tangent vector.
+            Avaiblable options:
+            - 'lambda'
+            - 'delta-lambda'
+            - 'dof'
+            - 'delta-dof'
+            - 'arc-length'
+        options
+            value : float
+                prescribed value according to the strategy (not needed for 'arc-length')
+            dof : Object
+                specifies the controlled dof for 'dof' and 'delta-dof' strategy
+        """
+        assembler = Assembler(self)
+
+        # get tangent vector
+        tangent = self.get_tangent_vector(assembler=assembler)
+
+        # calculate scaling factor according to chosen strategy
+        if strategy == 'lambda':
+            prescribed_lam = options['value']
+
+            delta_lambda = prescribed_lam - self.lam
+            factor = delta_lambda
+
+        elif strategy == 'delta-lambda':
+            delta_lambda = options['value']
+
+            factor = delta_lambda
+
+        elif strategy == 'dof':
+            dof = options['dof']
+            value_prescribed = options['value']
+
+            value = self.get_dof_state(dof)
+
+            delta_prescribed = value_prescribed - value
+
+            dof_index = assembler.index_of_dof(dof)
+            delta_current = tangent[dof_index]
+
+            factor = delta_prescribed / delta_current
+
+        elif strategy == 'delta-dof':
+            dof = options['dof']
+            delta_dof_prescribed = options['value']
+
+            dof_index = assembler.index_of_dof(dof)
+            delta_dof_current = tangent[dof_index]
+
+            factor = delta_dof_prescribed / delta_dof_current
+
+        elif strategy == 'arc-length':
+            previous_model = self.previous_model
+
+            if previous_model.previous_model is None:
+                raise RuntimeError('Tangential arc-length predictor can only be'
+                                   'used after the first step!')
+
+            previous_increment = previous_model.get_increment_vector(assembler)
+
+            prescribed_length = la.norm(previous_increment)
+            current_length = la.norm(tangent)
+
+            factor = prescribed_length / current_length
+
+            # tangent should point in a similar direction as the last increment
+            if previous_increment @ tangent < 0:
+                factor = -factor
+
+        else:
+            raise ValueError('Invalid strategy for prediction: {}'
+                             .format(strategy))
+
+        # scale tangent vector
+        tangent *= factor
+
+        # update dofs at model
+        for index, dof in enumerate(assembler.dofs):
+            value = tangent[index]
+            self.increment_dof_state(dof, value)
+
+        # update lambda at model
+        self.lam += tangent[-1]
