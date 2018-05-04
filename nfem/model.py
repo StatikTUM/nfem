@@ -331,13 +331,13 @@ class Model(object):
         delta : float
             Increment of the dof during the last step
         """
-        if self.previous_model is None:
+        if self.get_previous_model() is None:
             return 0.0
 
         current_value = self.get_dof_state(dof)
-        previous_value = self.previous_model.get_dof_state(dof)
+        previous_value = self.get_previous_model().get_dof_state(dof)
 
-        return previous_value - current_value
+        return current_value - previous_value
 
     def get_lam_increment(self):
         """Get the increment of lambda during the last solution step
@@ -347,13 +347,13 @@ class Model(object):
         delta : float
             Increment of lambda during the last step
         """
-        if self.previous_model is None:
+        if self.get_previous_model() is None:
             return 0.0
 
         current_value = self.lam
-        previous_value = self.previous_model.lam
+        previous_value = self.get_previous_model().lam
 
-        return previous_value - current_value
+        return current_value - previous_value
 
     def get_increment_vector(self, assembler=None):
         """Get the increment that resulted in the current position
@@ -366,14 +366,14 @@ class Model(object):
 
         increment = np.zeros(dof_count + 1)
 
-        if self.previous_model is None:
+        if self.get_previous_model() is None:
             print('WARNING: Increment is zero because no previous model exists!')
             return increment
 
         for index, dof in enumerate(assembler.dofs):
             increment[index] = self.get_dof_increment(dof)
 
-        increment[-1] = self.get_lam_increment
+        increment[-1] = self.get_lam_increment()
 
         return increment
 
@@ -725,20 +725,18 @@ class Model(object):
             If the model has not already one calculated step.
         """
         self.status = ModelStatus.prediction
-        if self.previous_model.previous_model == None:
+        if self.get_previous_model().get_previous_model() == None:
             raise RuntimeError('predict_with_last_increment can only be used after the first step!')
 
         assembler = Assembler(self)
 
-        last_increment = self.previous_model.get_increment_vector(assembler)
+        last_increment = self.get_previous_model().get_increment_vector(assembler)
 
         # update dofs at model
         for index, dof in enumerate(assembler.dofs):
 
-            old_value = self.get_dof_state(dof)
             value = last_increment[index]
-
-            self.set_dof_state(dof, old_value + value)
+            self.increment_dof_state(dof, value)
 
         # update lam at model
         self.lam += last_increment[-1]
@@ -806,9 +804,9 @@ class Model(object):
             factor = delta_dof_prescribed / delta_dof_current
 
         elif strategy == 'arc-length':
-            previous_model = self.previous_model
+            previous_model = self.get_previous_model()
 
-            if previous_model.previous_model is None:
+            if previous_model.get_previous_model() is None:
                 raise RuntimeError('Tangential arc-length predictor can only be'
                                    'used after the first step!')
 
