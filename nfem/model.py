@@ -341,7 +341,7 @@ class Model(object):
         for index, dof in enumerate(assembler.dofs):
             increment[index] = self.get_dof_increment(dof)
 
-        increment[-1] = self.get_lam_increment
+        increment[-1] = self.get_lam_increment()
 
         return increment
 
