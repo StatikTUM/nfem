@@ -23,10 +23,11 @@ from .path_following_method import ArcLengthControl, DisplacementControl, LoadCo
 class ModelStatus(Enum):
     """Enum for the model status """
     initial = 0
-    prediction = 1
-    iteration = 2
-    equilibrium = 3
-    eigenvector = 4
+    duplicate = 1
+    prediction = 2
+    iteration = 3
+    equilibrium = 4
+    eigenvector = 5
 
 class Model(object):
     """A Model contains all the objects that build the finite element model.
@@ -78,7 +79,7 @@ class Model(object):
         ----------
         skip_iterations : bool
             Flag if iteration or predicted previous models should be skipped
-        
+
         Returns
         -------
         model : Model
@@ -90,12 +91,12 @@ class Model(object):
         #find the most previous model that is not an iteration or prediction
         previous_model = self._previous_model
 
-        if previous_model is None: 
+        if previous_model is None:
             return previous_model
 
-        while previous_model.status == ModelStatus.prediction or previous_model.status == ModelStatus.iteration:
+        while previous_model.status in [ModelStatus.duplicate, ModelStatus.prediction, ModelStatus.iteration]:
             previous_model = previous_model._previous_model
-        
+
         return previous_model
 
     @property
@@ -459,9 +460,15 @@ class Model(object):
             duplicate._previous_model = self._previous_model
         else:
             duplicate._previous_model = self
-        
+
         if name is not None:
             duplicate.name = name
+
+        # make sure the duplicated model is in a clean state
+        duplicate.status = ModelStatus.duplicate
+        duplicate.det_k = None
+        duplicate.first_eigenvalue = None
+        duplicate.first_eigenvector_model = None
 
         return duplicate
 
@@ -504,7 +511,7 @@ class Model(object):
             value = u[index]
 
             self.set_dof_state(dof, value)
-        
+
         self.status = ModelStatus.equilibrium
 
     def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
@@ -569,10 +576,11 @@ class Model(object):
                 Contains the values of the residuum of the structure and the constraint.
             """
 
-            # create a duplicate of the current state before updating and insert it in the history 
+            # create a duplicate of the current state before updating and insert it in the history
             duplicate = self.get_duplicate()
             duplicate._previous_model = self._previous_model
             self._previous_model = duplicate
+            duplicate.status = self.status
 
             # update status flag
             self.status = ModelStatus.iteration
@@ -623,7 +631,7 @@ class Model(object):
         x, n_iter = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
 
         print("Solution found after {} iteration steps.".format(n_iter))
-        
+
         self.status = ModelStatus.equilibrium
 
         if 'solve_det_k' in options:
