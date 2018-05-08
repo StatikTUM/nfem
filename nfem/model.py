@@ -546,7 +546,7 @@ class Model(object):
         if strategy == 'load-control':
             constraint = LoadControl(self)
         elif strategy == 'displacement-control':
-            constraint = DisplacementControl(self, **options)
+            constraint = DisplacementControl(self, options['dof'])
         elif strategy == 'arc-length-control':
             constraint = ArcLengthControl(self)
         else:
