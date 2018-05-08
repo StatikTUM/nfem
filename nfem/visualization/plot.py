@@ -33,10 +33,10 @@ class Plot2D(object):
     def add_load_displacement_curve(self, model, dof, label=None, show_iterations=False):
         plot_load_displacement_curve(self.ax, model, dof, label)
         if show_iterations:
-            plot_load_displacement_iterations(self.ax, model, dof, "iterations")
+            plot_load_displacement_iterations(self.ax, model, dof, label)
 
     def show(self):
-        self.ax.legend(loc='upper left') 
+        self.ax.legend(loc='upper left')
         plt.show()
 
 class Animation3D(object):
@@ -98,7 +98,9 @@ def plot_load_displacement_iterations(ax, model, dof, label=None):
         y_data[i] = model.lam
 
     if label == None:
-        label = '{} at node {}'.format(dof_type, node_id)
+        label = '{} at node {} (iter)'.format(dof_type, node_id)
+    else:
+        label += ' (iter)'
     ax.plot(x_data, y_data, '--o', linewidth=0.75, markersize=2.0, label=label)
 
 
@@ -166,7 +168,7 @@ def show_history_animation(model, speed=200):
 
         ax.grid()
 
-        plot_bounding_cube(ax, model) 
+        plot_bounding_cube(ax, model)
 
         ax.set_xlabel('x')
         ax.set_ylabel('y')
@@ -189,16 +191,16 @@ def show_deformation_plot(model, step=None):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    
+
     ax.clear()
 
     ax.grid()
-    plot_bounding_cube(ax, model) 
+    plot_bounding_cube(ax, model)
 
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
-    
+
     plot_model(ax, model, 'gray', True)
 
     if step != None:
@@ -207,7 +209,7 @@ def show_deformation_plot(model, step=None):
         step = len(model.get_model_history())-1
 
     plot_model(ax, model, 'red', False)
-        
+
     plt.title('Deformed structure at time step {}\n{}'.format(step, model.name))
 
     plt.show()
