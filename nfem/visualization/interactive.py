@@ -11,7 +11,6 @@ from matplotlib.figure import Figure
 
 import numpy.linalg as la
 
-from ..model import ModelStatus
 from .plot import plot_model, plot_load_displacement_curve, plot_bounding_cube
 
 def _create_int_spinbox(value=0, step=1, minimum=-100, maximum=100):
