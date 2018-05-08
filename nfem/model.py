@@ -9,6 +9,8 @@ from enum import Enum
 import numpy as np
 import numpy.linalg as la
 
+from scipy.linalg import eig
+
 from .node import Node
 from .single_load import SingleLoad
 from .truss import Truss
@@ -21,14 +23,15 @@ from .path_following_method import ArcLengthControl, DisplacementControl, LoadCo
 class ModelStatus(Enum):
     """Enum for the model status """
     initial = 0
-    prediction = 1
-    iteration = 2
-    equilibrium = 3
-    eigenvector = 4
+    duplicate = 1
+    prediction = 2
+    iteration = 3
+    equilibrium = 4
+    eigenvector = 5
 
 class Model(object):
     """A Model contains all the objects that build the finite element model.
-        Nodes, elements, loads, dirichlet conditions... 
+        Nodes, elements, loads, dirichlet conditions...
 
     Attributes
     ----------
@@ -65,6 +68,9 @@ class Model(object):
         self.neumann_conditions = dict()
         self.lam = 0.0
         self._previous_model = None
+        self.det_k = None
+        self.first_eigenvalue = None
+        self.first_eigenvector_model = None
 
     def get_previous_model(self, skip_iterations=True):
         """Get the previous model of the current model.
@@ -73,7 +79,7 @@ class Model(object):
         ----------
         skip_iterations : bool
             Flag if iteration or predicted previous models should be skipped
-        
+
         Returns
         -------
         model : Model
@@ -85,12 +91,12 @@ class Model(object):
         #find the most previous model that is not an iteration or prediction
         previous_model = self._previous_model
 
-        if previous_model is None: 
+        if previous_model is None:
             return previous_model
 
-        while previous_model.status == ModelStatus.prediction or previous_model.status == ModelStatus.iteration:
+        while previous_model.status in [ModelStatus.duplicate, ModelStatus.prediction, ModelStatus.iteration]:
             previous_model = previous_model._previous_model
-        
+
         return previous_model
 
     @property
@@ -251,11 +257,11 @@ class Model(object):
         node_id : int or str
             ID of the node.
         fu : float
-            Load magnitude in x direction - default 0.0   
+            Load magnitude in x direction - default 0.0
         fv : float
-            Load magnitude in y direction - default 0.0 
+            Load magnitude in y direction - default 0.0
         fw : float
-            Load magnitude in z direction - default 0.0   
+            Load magnitude in z direction - default 0.0
 
         Examples
         --------
@@ -385,7 +391,7 @@ class Model(object):
         Returns
         ----------
         model : Model
-            initial model 
+            initial model
         """
         current_model = self
 
@@ -434,7 +440,7 @@ class Model(object):
             If `branch` is `True` the duplicate will be a successor of the previous model::
 
                 previous ----> current
-                          \ 
+                          \
                            \-> duplicate
 
         Returns
@@ -454,18 +460,24 @@ class Model(object):
             duplicate._previous_model = self._previous_model
         else:
             duplicate._previous_model = self
-        
+
         if name is not None:
             duplicate.name = name
 
+        # make sure the duplicated model is in a clean state
+        duplicate.status = ModelStatus.duplicate
+        duplicate.det_k = None
+        duplicate.first_eigenvalue = None
+        duplicate.first_eigenvector_model = None
+
         return duplicate
-    
+
     # === solving
 
     def perform_linear_solution_step(self):
         """Performs a linear solution step on the model.
             It uses the member variable `lam` as load factor.
-            The results are stored at the dofs and used to update the current 
+            The results are stored at the dofs and used to update the current
             coordinates of the nodes.
         """
 
@@ -499,22 +511,22 @@ class Model(object):
             value = u[index]
 
             self.set_dof_state(dof, value)
-        
+
         self.status = ModelStatus.equilibrium
 
     def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
         """Performs a non linear solution step on the model.
             The path following strategy is chose according to the parameter.
-            A newton raphson algorithm is used to iteratively solve the nonlinear 
+            A newton raphson algorithm is used to iteratively solve the nonlinear
             equation system r(u,lam) = 0
-            The results are stored at the dofs and used to update the current 
+            The results are stored at the dofs and used to update the current
             coordinates of the nodes.
 
         Parameters
         ----------
         strategy : string
             Path following strategy. Available options:
-            - load-control 
+            - load-control
             - displacement-control
             - arc-length-control
         max_iterations: int
@@ -522,8 +534,10 @@ class Model(object):
         tolerance : float
             Tolerance for the newton raphson
         **options: kwargs (key word arguments)
-            Additional options e.g. 
-            "dof=('B','v')" for displacement-control
+            Additional options e.g.
+            - dof=('B','v'): for displacement-control
+            - solve_det_k=True: for solving the determinant of k at convergence
+            - solve_attendant_eigenvalue=True: for solving the attendant eigenvalue problem at convergence
         """
 
         print("=================================")
@@ -544,13 +558,13 @@ class Model(object):
         free_count = assembler.free_dof_count
 
         def calculate_system(x):
-            """Callback function for the newton raphson method that calculates the 
+            """Callback function for the newton raphson method that calculates the
                 system for a given state x
 
             Parameters
             ----------
             x : ndarray
-                Current state of dofs and lambda (unknowns of the non linear system) 
+                Current state of dofs and lambda (unknowns of the non linear system)
 
             Returns
             ----------
@@ -562,10 +576,11 @@ class Model(object):
                 Contains the values of the residuum of the structure and the constraint.
             """
 
-            # create a duplicate of the current state before updating and insert it in the history 
+            # create a duplicate of the current state before updating and insert it in the history
             duplicate = self.get_duplicate()
             duplicate._previous_model = self._previous_model
             self._previous_model = duplicate
+            duplicate.status = self.status
 
             # update status flag
             self.status = ModelStatus.iteration
@@ -616,12 +631,76 @@ class Model(object):
         x, n_iter = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
 
         print("Solution found after {} iteration steps.".format(n_iter))
-        
+
         self.status = ModelStatus.equilibrium
+
+        if 'solve_det_k' in options:
+            if options['solve_det_k']:
+                self.solve_det_k(assembler=assembler)
+
+        if 'solve_attendant_eigenvalue' in options:
+            if options['solve_attendant_eigenvalue']:
+                self.solve_eigenvalues(assembler=assembler)
+
+    def solve_det_k(self, k=None, assembler=None):
+        """Solves the determinant of k
+
+        Parameters
+        ----------
+        k : numpy.ndarray (optional)
+            stiffness matrix can be directly passed.
+        assembler : Object (optional)
+            assembler can be passed to speed up if k is not given
+        """
+        if k is None:
+            if assembler is None:
+                assembler = Assembler(self)
+            dof_count = assembler.dof_count
+            free_count = assembler.free_dof_count
+            k = np.zeros((dof_count, dof_count))
+            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+        self.det_k =  la.det(k[:free_count,:free_count])
+        print("Det(K): {}".format(self.det_k))
+
+    def solve_eigenvalues(self, assembler=None):
+        """Solves the eigenvalue problem
+           [ k_m + eigvals * k_g ] * eigvecs = 0
+
+        Parameters
+        ----------
+        assembler : Object (optional)
+            assembler can be passed to speed up
+        """
+        # [ k_m + eigvals * k_g ] * eigvecs = 0
+        if assembler is None:
+            assembler = Assembler(self)
+
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+
+        # assemble matrices
+        k_m = np.zeros((dof_count, dof_count))
+        k_g = np.zeros((dof_count, dof_count))
+        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
+        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
+
+        # solve eigenvalue problem
+        eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
+
+        # sort eigenvalues and vectors
+        idx = eigvals.argsort()
+        eigvals = eigvals[idx]
+        eigvecs = eigvecs[:,idx]
+
+        print("First eigenvalue: {}".format(eigvals[0].real))
+        print("First eigenvalue * lambda$: {}".format(eigvals[0].real * self.lam)) # this is printed in TRUSS
+        print("First eigenvector: {}".format(eigvecs[0]))
+
+        self.first_eigenvalue = eigvals[0].real
 
     def get_tangent_vector(self, assembler=None):
         """ Get the tangent vector
-        
+
         Returns
         -------
         tangent : ndarray
@@ -653,7 +732,7 @@ class Model(object):
         # assemble force
         assembler.assemble_vector(external_f,
             lambda element: element.calculate_external_forces()
-        ) 
+        )
 
         lhs = k[:free_count, :free_count]
         rhs = external_f[:free_count] - k[:free_count, free_count:] @ v[free_count:]
@@ -673,7 +752,7 @@ class Model(object):
         Parameters
         ----------
         value : float
-            Value for the new load factor lambda.  
+            Value for the new load factor lambda.
         """
         self.status = ModelStatus.prediction
         self.lam = value
@@ -684,7 +763,7 @@ class Model(object):
         Parameters
         ----------
         value : float
-            Value that is used to increment the load factor lambda. 
+            Value that is used to increment the load factor lambda.
         """
         self.status = ModelStatus.prediction
         self.lam += value
@@ -714,9 +793,9 @@ class Model(object):
         """
         self.status = ModelStatus.prediction
         self.increment_dof_state(dof, value)
-    
+
     def predict_with_last_increment(self):
-        """Predicts the solution by incrementing lambda and all dofs with the 
+        """Predicts the solution by incrementing lambda and all dofs with the
            increment of the last solution step
 
         Raises
