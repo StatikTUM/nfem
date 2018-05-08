@@ -1,4 +1,4 @@
-"""This file contains some the bracketing function to find the next critical point"""
+"""This file contains the bracketing function to find the next critical point"""
 
 import numpy as np
 
@@ -31,7 +31,7 @@ def bracketing(model, tol=1e-7, max_steps=100, **options):
     print("Starting bracketing to search for next critical point.")
 
     if model.det_k == None:
-        raise RuntimeError('Det(K) needs to be solved for the model.')
+        model.solve_det_k()
 
     if 'solve_attendant_eigenvalue' in options:
         solve_attendant_eigenvalue = options['solve_attendant_eigenvalue']
