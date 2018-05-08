@@ -580,8 +580,6 @@ class Model(object):
             if options['solve_attendant_eigenvalue']:
                 self.solve_eigenvalues(assembler=assembler)
 
-        return
-
     def solve_det_k(self, k=None, assembler=None):
         """Solves the determinant of k
 
@@ -601,7 +599,6 @@ class Model(object):
             assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
         self.det_k =  la.det(k[:free_count,:free_count])
         print("Det(K): {}".format(self.det_k))
-        return
 
     def solve_eigenvalues(self, assembler=None):
         """Solves the eigenvalue problem
@@ -638,7 +635,6 @@ class Model(object):
         print("First eigenvector: {}".format(eigvecs[0]))
 
         self.first_eigenvalue = eigvals[0].real
-        return
 
     def get_tangent_vector(self, assembler=None):
         """ Get the tangent vector
