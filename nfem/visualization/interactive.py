@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 
 import numpy.linalg as la
 
+from ..model import ModelStatus
 from .plot import plot_model, plot_load_displacement_curve, plot_bounding_cube
 
 def _create_int_spinbox(value=0, step=1, minimum=-100, maximum=100):
@@ -219,27 +220,25 @@ class InteractiveWindow(QWidget):
                 model.perform_linear_solution_step()
             elif selected_strategy == 'load-control':
                 model.perform_non_linear_solution_step(
-                    strategy='load-control',
+                    strategy=selected_strategy,
                     tolerance=tolerance,
                     max_iterations=max_iterations
                 )
             elif selected_strategy == 'displacement-control':
                 model.perform_non_linear_solution_step(
-                    strategy='displacement-control',
+                    strategy=selected_strategy,
                     dof=dof,
                     tolerance=tolerance,
                     max_iterations=max_iterations
                 )
-            elif selected_strategy == 'arc-length':
-                delta_d = model.get_dof_state(dof) - model.get_previous_model().get_dof_state(dof)
-                delta_lambda = model.lam - model.get_previous_model().lam
-                arc_length = (delta_d**2 + delta_lambda**2)**0.5
-
+            elif selected_strategy == 'arc-length-control':
                 model.perform_non_linear_solution_step(
-                    strategy='arc-length',
+                    strategy=selected_strategy,
                     tolerance=tolerance,
                     max_iterations=max_iterations
                 )
+            else:
+                raise RuntimeError('Invalid solution strategy:', selected_strategy)
 
         except Exception as e:
             QMessageBox(QMessageBox.Critical, 'Error', str(e), QMessageBox.Ok, self).show()
