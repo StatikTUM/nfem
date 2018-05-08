@@ -1,12 +1,12 @@
-"""This file contains some the bracketing function to find the next critical point"""
+"""This file contains the bracketing function to find the next critical point"""
 
 import numpy as np
 
 def bracketing(model, tol=1e-7, max_steps=100, **options):
     """Finds next critical point
 
-    The bracketing function finds the next critical point starting from a models 
-    state. 
+    The bracketing function finds the next critical point starting from a models
+    state.
     - A first nonlinear step needs to be solved already.
     - Det(K) has to be solved for the model.
 
@@ -23,7 +23,7 @@ def bracketing(model, tol=1e-7, max_steps=100, **options):
         tolerance for Det(K)==0
     max_steps : int
         maximum number of steps for the iterative search
-    options : 
+    options :
         additional options for the nonlinear solution
     """
 
@@ -31,7 +31,7 @@ def bracketing(model, tol=1e-7, max_steps=100, **options):
     print("Starting bracketing to search for next critical point.")
 
     if model.det_k == None:
-        raise RuntimeError('Det(K) needs to be solved for the model.')
+        model.solve_det_k()
 
     if 'solve_attendant_eigenvalue' in options:
         solve_attendant_eigenvalue = options['solve_attendant_eigenvalue']
@@ -44,12 +44,14 @@ def bracketing(model, tol=1e-7, max_steps=100, **options):
     success = False
     step = 0
     while step < max_steps and not success:
-        step += 1
-        model = model.get_duplicate()
-        #model.predict_with_last_increment()
-        model.predict_dof_increment(('B', 'v'), -0.1)
 
-        model.perform_non_linear_solution_step(strategy='arc-length-control', 
+        step += 1
+
+        model = model.get_duplicate()
+
+        model.predict_tangential(strategy="arc-length")
+
+        model.perform_non_linear_solution_step(strategy='arc-length-control',
                                             solve_det_k=True,
                                             solve_attendant_eigenvalue=solve_attendant_eigenvalue,
                                             **options)
@@ -66,30 +68,30 @@ def bracketing(model, tol=1e-7, max_steps=100, **options):
 
     # iterate until abs(det(K)) is < tol using bisection algorithm
     success = False
-    lower_limit_model = model.previous_model
+    lower_limit_model = model.get_previous_model()
     upper_limit_model = model
     while step < max_steps and not success:
         step += 1
 
         tmp_model = lower_limit_model.get_duplicate()
 
-        for node in tmp_model.nodes: 
+        for node in tmp_model.nodes:
             lower_node = lower_limit_model.get_node(id=node.id)
             upper_node = upper_limit_model.get_node(id=node.id)
-            
+
             node.u = (lower_node.u + upper_node.u)/2
             node.v = (lower_node.v + upper_node.v)/2
             node.w = (lower_node.w + upper_node.w)/2
-            
+
         tmp_model.lam = (lower_limit_model.lam + upper_limit_model.lam)/2
-        
-        tmp_model.perform_non_linear_solution_step(strategy='arc-length-control', 
+
+        tmp_model.perform_non_linear_solution_step(strategy='arc-length-control',
                                             solve_det_k=True,
                                             solve_attendant_eigenvalue=solve_attendant_eigenvalue,
                                             **options)
 
         if abs(tmp_model.det_k) < tol:
-            tmp_model.previous_model = model.previous_model
+            tmp_model._previous_model = model.get_previous_model()
             success = True
             break
 
