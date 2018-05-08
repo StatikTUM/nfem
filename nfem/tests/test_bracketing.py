@@ -21,7 +21,7 @@ class TestBracketing(TestCase):
         critical_model = bracketing(limit_model)
 
         actual = critical_model.lam
-        expected = 0.13608072553544143
+        expected = 0.13607744543608463
         assert_almost_equal(actual, expected)
 
     def test_bracketing_bifurcation_point(self):
@@ -33,5 +33,5 @@ class TestBracketing(TestCase):
 
         critical_model = bracketing(bifurcation_model)
         actual = critical_model.lam
-        expected = 0.16732861628777548
+        expected = 0.16733018783531955
         assert_almost_equal(actual, expected)
