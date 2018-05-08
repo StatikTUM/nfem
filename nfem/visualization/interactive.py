@@ -124,7 +124,7 @@ class InteractiveWindow(QWidget):
         widget.addItem('Linear', 'linear')
         widget.addItem('Load control', 'load-control')
         widget.addItem('Displacement control', 'displacement-control')
-        widget.addItem('Arc-length control', 'arc-length')
+        widget.addItem('Arc-length control', 'arc-length-control')
         group_layout.addWidget(widget)
         self._strategy_combobox = widget
 
