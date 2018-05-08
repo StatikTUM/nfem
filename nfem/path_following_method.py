@@ -180,7 +180,7 @@ class ArcLengthControl(PathFollowingMethod):
         dc.fill(0.0)
 
         assembler = Assembler(model)
-        previous_model = model.previous_model
+        previous_model = model.get_previous_model()
 
         for index, dof in enumerate(assembler.free_dofs):
             current_value = model.get_dof_state(dof)
@@ -188,10 +188,10 @@ class ArcLengthControl(PathFollowingMethod):
 
             dc[index] = 2 * (current_value - previous_value)
 
-        dc[-1] = 2 * (model.lam - model.previous_model.lam)
+        dc[-1] = 2 * (model.lam - model.get_previous_model().lam)
 
     def _calculate_squared_predictor_length(self, model):
-        previous_model = model.previous_model
+        previous_model = model.get_previous_model()
 
         squared_l = 0.0
 
