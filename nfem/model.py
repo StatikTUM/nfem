@@ -699,6 +699,23 @@ class Model(object):
 
         self.first_eigenvalue = eigvals[0].real
 
+        # store eigenvector as model
+        model = self.get_duplicate()
+        model._previous_model = self
+        model.status = ModelStatus.eigenvector
+        model.det_k = None
+        model.first_eigenvalue = None
+        model.first_eigenvector_model = None
+        model.lam = None
+
+        for index, dof in enumerate(assembler.free_dofs):
+
+            value = eigvecs[0][index]
+
+            model.set_dof_state(dof, value)
+
+        self.first_eigenvector_model = model
+
     def get_tangent_vector(self, assembler=None):
         """ Get the tangent vector
 
@@ -915,3 +932,54 @@ class Model(object):
 
         # update lambda at model
         self.lam += tangent[-1]
+
+
+    def combine_prediction_with_eigenvector(self, factor):
+        if factor < 0.0 or factor > 1.0:
+            raise ValueError('factor needs to be between 0.0 and 1.0')
+
+        previous_model = self.get_previous_model()
+        if previous_model.first_eigenvector_model == None:
+            print('WARNING: solve eigenvalue problem in order to do branch switching')
+            self.solve_eigenvalues()
+
+        eigenvector_model = previous_model.first_eigenvector_model
+
+        assembler = Assembler(self)
+
+        u_prediction = self.get_delta_dof_vector(model_b=previous_model, assembler=assembler)
+
+        eigenvector = eigenvector_model.get_delta_dof_vector(assembler=assembler)
+
+        prediction = u_prediction * (1.0 - factor) + eigenvector * factor
+
+        # make new prediction of the same length as before
+        old_l = la.norm(u_prediction)
+        prediction = prediction/(la.norm(prediction)/old_l)
+        delta_prediction = prediction - u_prediction
+
+        # lambda = 0 for the eigenvector. Note: TRUSS.xls uses the same value as for the last increment 
+        delta_lam = - self.get_lam_increment()
+
+        # update dofs at model
+        for index, dof in enumerate(assembler.free_dofs):
+            value = delta_prediction[index]
+            self.increment_dof_state(dof, value)
+
+        # update lambda at model
+        self.lam += delta_lam
+
+
+    def get_delta_dof_vector(self, model_b=None, assembler=None):
+        if model_b == None:
+            model_b = self.get_initial_model()
+
+        if assembler==None:
+            assembler = Assembler(self)
+
+        delta = np.zeros(assembler.dof_count)
+
+        for index, dof in enumerate(assembler.free_dofs):
+            delta[index] = self.get_dof_state(dof) - model_b.get_dof_state(dof)
+
+        return delta
