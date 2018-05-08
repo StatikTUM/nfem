@@ -694,7 +694,7 @@ class Model(object):
         eigvecs = eigvecs[:,idx]
 
         print("First eigenvalue: {}".format(eigvals[0].real))
-        print("First eigenvalue * lambda$: {}".format(eigvals[0].real * self.lam)) # this is printed in TRUSS
+        print("First eigenvalue * lambda: {}".format(eigvals[0].real * self.lam)) # this is printed in TRUSS
         print("First eigenvector: {}".format(eigvecs[0]))
 
         self.first_eigenvalue = eigvals[0].real
