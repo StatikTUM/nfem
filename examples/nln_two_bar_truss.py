@@ -40,7 +40,7 @@ model.add_dirichlet_condition(node_id='C', dof_types='uvw', value=0)
 # 4: arclength control with tangential 'arc-lenght' predictor
 # 5: arclength control with increment predictor
 #======================================
-method = 3
+method = 5
 
 if method == 1: #load control
 
@@ -69,10 +69,10 @@ elif method == 2: #displacement control
         # create a new model for each solution step
         model = model.get_duplicate()
 
-        # prescribe u
+        # prescribe dof
         model.predict_tangential(strategy="dof", value=displacement, dof=('B', 'v') )
-        # ALTERNATIVE prescribe delta u
-        #model.predict_tangential(strategy="delta-u", value=-0.1, dof=('B', 'v') )
+        # ALTERNATIVE prescribe delta dof
+        #model.predict_tangential(strategy="delta-dof", value=-0.1, dof=('B', 'v') )
 
         model.perform_non_linear_solution_step(strategy="displacement-control", dof=('B', 'v'),
                                                solve_det_k=True,
@@ -88,7 +88,7 @@ elif method == 3: #arclength control
         # create a new model for each solution step
         model = model.get_duplicate()
 
-        # prescribe delta_u
+        # prescribe delta dof
         model.predict_tangential(strategy="delta-dof", value=displacement_increment, dof=('B', 'v') )
 
         model.perform_non_linear_solution_step(strategy="arc-length-control",
@@ -126,7 +126,7 @@ elif method == 5: #arclength control with delta predictor
 
         if i == 0:
             # increment the dof state
-            model.predict_tangential(strategy="delta-u", value=-0.1, dof=('B', 'v') )
+            model.predict_tangential(strategy="delta-dof", value=-0.1, dof=('B', 'v') )
         else:
             # increment dof and lambda with the increment from the last solution step
             model.predict_with_last_increment()
@@ -143,7 +143,7 @@ plot = Plot2D()
 plot.invert_xaxis()
 
 # plot the load displacement curve using the predefined function
-plot.add_load_displacement_curve(model, dof=('B', 'v'))
+plot.add_load_displacement_curve(model, dof=('B', 'v'), show_iterations=True)
 
 # plot det(K) using the general historic plot function
 def det_k_data_function(model):

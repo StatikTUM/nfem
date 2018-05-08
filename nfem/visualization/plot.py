@@ -31,8 +31,10 @@ class Plot2D(object):
         """Invert the x axis of the plot"""
         self.ax.invert_xaxis()
 
-    def add_load_displacement_curve(self, model, dof, label=None):
-        plot_load_displacement_curve(self.ax, model, dof, label=label)
+    def add_load_displacement_curve(self, model, dof, label=None, show_iterations=False):
+        plot_load_displacement_curve(self.ax, model, dof, label)
+        if show_iterations:
+            plot_load_displacement_iterations(self.ax, model, dof, label)
 
     def add_det_k_curve(self, model, dof, label=None):
         plot_det_k_curve(self.ax, model, dof, label=label)
@@ -114,6 +116,26 @@ def plot_model(ax, model, color, initial):
     lc = LineCollection(xys, colors=color, linewidths=2)
 
     ax.add_collection3d(lc, zs=zs)
+
+
+def plot_load_displacement_iterations(ax, model, dof, label=None):
+    history = model.get_model_history(skip_iterations=False)
+
+    x_data = np.zeros(len(history))
+    y_data = np.zeros(len(history))
+
+    node_id, dof_type = dof
+
+    for i, model in enumerate(history):
+        x_data[i] = model.get_dof_state(dof)
+        y_data[i] = model.lam
+
+    if label == None:
+        label = '$\lambda$ : {} at node {} (iter)'.format(dof_type, node_id)
+    else:
+        label += ' (iter)'
+    ax.plot(x_data, y_data, '--o', linewidth=0.75, markersize=2.0, label=label)
+
 
 def plot_load_displacement_curve(ax, model, dof, label=None):
     history = model.get_model_history()
