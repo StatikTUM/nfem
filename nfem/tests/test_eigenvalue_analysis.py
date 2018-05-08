@@ -43,7 +43,7 @@ class TestEigenvalueAnalysis(TestCase):
         ev_expected = 1.7745968576086002 # safety_factor
         assert_almost_equal(ev_actual, ev_expected)
 
-        # TODO test eigenvector [1.0, 0.0]
+        # test eigenvector [1.0, 0.0]
         eigenvector_model = bifurcation_model.first_eigenvector_model
         u_actual = eigenvector_model.get_dof_state(('B','u'))
         u_expected = 1.0

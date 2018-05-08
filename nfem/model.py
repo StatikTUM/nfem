@@ -700,18 +700,21 @@ class Model(object):
         self.first_eigenvalue = eigvals[0].real
 
         # store eigenvector as model
-        self.first_eigenvector_model = self.get_duplicate()
-        model = self.first_eigenvector_model
-        model.status = ModelStatus.eigenvector
+        model = self.get_duplicate()
         model._previous_model = self
-        model.lam = 0.0 #TODO what happens here
+        model.status = ModelStatus.eigenvector
+        model.det_k = None
+        model.first_eigenvalue = None
+        model.first_eigenvector_model = None
+        model.lam = None
+
         for index, dof in enumerate(assembler.free_dofs):
 
             value = eigvecs[0][index]
 
             model.set_dof_state(dof, value)
 
-        return
+        self.first_eigenvector_model = model
 
     def get_tangent_vector(self, assembler=None):
         """ Get the tangent vector
@@ -950,13 +953,13 @@ class Model(object):
 
         prediction = u_prediction * (1.0 - factor) + eigenvector * factor
 
-        #TODO check new length
+        # make new prediction of the same length as before
         old_l = la.norm(u_prediction)
         prediction = prediction/(la.norm(prediction)/old_l)
         delta_prediction = prediction - u_prediction
 
-        #TODO what happens with lambda??
-        delta_lam = 0.0
+        # lambda = 0 for the eigenvector. Note: TRUSS.xls uses the same value as for the last increment 
+        delta_lam = - self.get_lam_increment()
 
         # update dofs at model
         for index, dof in enumerate(assembler.free_dofs):

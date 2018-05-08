@@ -35,7 +35,7 @@ class TestBranchSwitching(TestCase):
 
         # compare lambda
         actual = predicted_model.lam
-        expected = 0.16697135406254746
+        expected = 0.1670167406713742
         assert_almost_equal(actual, expected)
 
         # compare horizontal displacement
