@@ -44,20 +44,20 @@ class Plot2D(object):
         ----------
         model : Model
             Model object of which the history will be printed
-        x_y_data : function(Model) that returns the value for the x and y axis 
+        x_y_data : function(Model) that returns the value for the x and y axis
             of a models state. It is called for all models in the history
-        fmt: matplotlib format string e.g. '-o' for line with points 
-            For details visit the link below 
-        **kwargs: additional format arguments e.g. label="My label" to give the 
+        fmt: matplotlib format string e.g. '-o' for line with points
+            For details visit the link below
+        **kwargs: additional format arguments e.g. label="My label" to give the
             curve a name.
-            for details visit the link below 
+            for details visit the link below
         https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html
         """
         plot_history_curve(self.ax, model, x_y_data, fmt, **kwargs)
-    
+
     def add_custom_curve(self, *args, **kwargs):
         """Add a custom curve to the plot.
-        Uses the syntax of the matplotlip.pyplot.plot function       
+        Uses the syntax of the matplotlip.pyplot.plot function
 
         For a description of the possible parameters visit
         https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html
@@ -67,7 +67,7 @@ class Plot2D(object):
     def show(self):
         """Shows the plot with all the curves that have been added.
         """
-        self.ax.legend(loc='upper left') 
+        self.ax.legend(loc='upper left')
         plt.show()
 
 class Animation3D(object):
@@ -127,7 +127,7 @@ def plot_load_displacement_curve(ax, model, dof, label=None):
         x_data[i] = model.get_dof_state(dof)
         y_data[i] = model.lam
 
-    if label == None:
+    if label is None:
         label = '$\lambda$ : {} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
 
@@ -142,8 +142,8 @@ def plot_det_k_curve(ax, model, dof, label=None):
     for i, model in enumerate(history):
         x_data[i] = model.get_dof_state(dof)
         y_data[i] = model.det_k
-    
-    if label == None:
+
+    if label is None:
         label = 'det(K) : {} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
 
@@ -209,7 +209,7 @@ def show_history_animation(model, speed=200):
 
         ax.grid()
 
-        plot_bounding_cube(ax, model) 
+        plot_bounding_cube(ax, model)
 
         ax.set_xlabel('x')
         ax.set_ylabel('y')
@@ -232,16 +232,16 @@ def show_deformation_plot(model, step=None):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    
+
     ax.clear()
 
     ax.grid()
-    plot_bounding_cube(ax, model) 
+    plot_bounding_cube(ax, model)
 
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
-    
+
     plot_model(ax, model, 'gray', True)
 
     if step != None:
@@ -250,7 +250,7 @@ def show_deformation_plot(model, step=None):
         step = len(model.get_model_history())-1
 
     plot_model(ax, model, 'red', False)
-        
+
     plt.title('Deformed structure at time step {}\n{}'.format(step, model.name))
 
     plt.show()

@@ -6,7 +6,7 @@ This can be set right below in the 'Solve' block
 """
 # add the path to the nfem tool to the PATH.
 import sys
-sys.path.append('..') 
+sys.path.append('..')
 # import necessary modules
 import numpy as np
 
@@ -31,7 +31,7 @@ model.add_dirichlet_condition(node_id='B', dof_types='w', value=0)
 model.add_dirichlet_condition(node_id='C', dof_types='uvw', value=0)
 
 #======================================
-# Solve 
+# Solve
 # (with the chosen method)
 #======================================
 # 1: load control with tangential 'lambda' predictor
@@ -47,7 +47,7 @@ if method == 1: #load control
     # define a load curve with the lambda values that should be used
     load_curve = np.linspace(0.025, 0.5, 20)
     for lam in load_curve:
-        
+
         # create a new model for each solution step
         model = model.get_duplicate()
 
@@ -55,8 +55,8 @@ if method == 1: #load control
         model.predict_tangential(strategy="lambda", value=lam)
         # ALTERNATIVE prescribe delta lambda
         #model.predict_tangential(strategy="delta-lambda", value=0.025)
-        
-        model.perform_non_linear_solution_step(strategy="load-control", 
+
+        model.perform_non_linear_solution_step(strategy="load-control",
                                                solve_det_k=True,
                                                solve_attendant_eigenvalue=True)
 
@@ -73,8 +73,8 @@ elif method == 2: #displacement control
         model.predict_tangential(strategy="dof", value=displacement, dof=('B', 'v') )
         # ALTERNATIVE prescribe delta u
         #model.predict_tangential(strategy="delta-u", value=-0.1, dof=('B', 'v') )
-        
-        model.perform_non_linear_solution_step(strategy="displacement-control", dof=('B', 'v'), 
+
+        model.perform_non_linear_solution_step(strategy="displacement-control", dof=('B', 'v'),
                                                solve_det_k=True,
                                                solve_attendant_eigenvalue=True)
 
@@ -90,8 +90,8 @@ elif method == 3: #arclength control
 
         # prescribe delta_u
         model.predict_tangential(strategy="delta-dof", value=displacement_increment, dof=('B', 'v') )
-        
-        model.perform_non_linear_solution_step(strategy="arc-length-control", 
+
+        model.perform_non_linear_solution_step(strategy="arc-length-control",
                                                solve_det_k=True,
                                                solve_attendant_eigenvalue=True)
 
@@ -101,7 +101,7 @@ elif method == 4: #arclength control with delta predictor
     arclength = 0.1
     n_steps = 20
     for i in range(n_steps):
-        
+
         # create a new model for each solution step
         model = model.get_duplicate()
 
@@ -111,7 +111,7 @@ elif method == 4: #arclength control with delta predictor
         else:
             # increment dof and lambda with the increment from the last solution step
             model.predict_tangential(strategy="arc-length")
-        
+
         model.perform_non_linear_solution_step(strategy="arc-length-control")
 
 elif method == 5: #arclength control with delta predictor
@@ -120,7 +120,7 @@ elif method == 5: #arclength control with delta predictor
     arclength = 0.1
     n_steps = 20
     for i in range(n_steps):
-        
+
         # create a new model for each solution step
         model = model.get_duplicate()
 
@@ -130,8 +130,8 @@ elif method == 5: #arclength control with delta predictor
         else:
             # increment dof and lambda with the increment from the last solution step
             model.predict_with_last_increment()
-        
-        model.perform_non_linear_solution_step(strategy="arc-length-control", 
+
+        model.perform_non_linear_solution_step(strategy="arc-length-control",
                                                solve_det_k=True,
                                                solve_attendant_eigenvalue=True)
 
@@ -147,23 +147,23 @@ plot.add_load_displacement_curve(model, dof=('B', 'v'))
 
 # plot det(K) using the general historic plot function
 def det_k_data_function(model):
-    """This function is called for each model in the history. It returns the 
+    """This function is called for each model in the history. It returns the
     values for x and y of a model.
     """
     x = model.get_dof_state(dof=('B', 'v'))
     y = model.det_k
     return x, y
-plot.add_history_curve(model, 
+plot.add_history_curve(model,
                         x_y_data=det_k_data_function,
                         label='det(K) : B-v')
 
 # plot the first eigenvalue using the general historic plot function
 def eigenvalue_data_function(model):
-    """This function is called for each model in the history. It returns the 
+    """This function is called for each model in the history. It returns the
     values for x and y of a model.
     """
     x = model.get_dof_state(dof=('B', 'v'))
-    if model.first_eigenvalue == None:
+    if model.first_eigenvalue is None:
         y = None
     else:
         y = model.first_eigenvalue * model.lam

@@ -21,7 +21,7 @@ from .path_following_method import ArcLengthControl, DisplacementControl, LoadCo
 
 class Model(object):
     """A Model contains all the objects that build the finite element model.
-        Nodes, elements, loads, dirichlet conditions... 
+        Nodes, elements, loads, dirichlet conditions...
 
     Attributes
     ----------
@@ -219,11 +219,11 @@ class Model(object):
         node_id : int or str
             ID of the node.
         fu : float
-            Load magnitude in x direction - default 0.0   
+            Load magnitude in x direction - default 0.0
         fv : float
-            Load magnitude in y direction - default 0.0 
+            Load magnitude in y direction - default 0.0
         fw : float
-            Load magnitude in z direction - default 0.0   
+            Load magnitude in z direction - default 0.0
 
         Examples
         --------
@@ -353,7 +353,7 @@ class Model(object):
         Returns
         ----------
         model : Model
-            initial model 
+            initial model
         """
         current_model = self
 
@@ -397,7 +397,7 @@ class Model(object):
             If `branch` is `True` the duplicate will be a successor of the previous model::
 
                 previous ----> current
-                          \ 
+                          \
                            \-> duplicate
 
         Returns
@@ -422,13 +422,13 @@ class Model(object):
             duplicate.name = name
 
         return duplicate
-    
+
     # === solving
 
     def perform_linear_solution_step(self):
         """Performs a linear solution step on the model.
             It uses the member variable `lam` as load factor.
-            The results are stored at the dofs and used to update the current 
+            The results are stored at the dofs and used to update the current
             coordinates of the nodes.
         """
 
@@ -466,16 +466,16 @@ class Model(object):
     def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
         """Performs a non linear solution step on the model.
             The path following strategy is chose according to the parameter.
-            A newton raphson algorithm is used to iteratively solve the nonlinear 
+            A newton raphson algorithm is used to iteratively solve the nonlinear
             equation system r(u,lam) = 0
-            The results are stored at the dofs and used to update the current 
+            The results are stored at the dofs and used to update the current
             coordinates of the nodes.
 
         Parameters
         ----------
         strategy : string
             Path following strategy. Available options:
-            - load-control 
+            - load-control
             - displacement-control
             - arc-length-control
         max_iterations: int
@@ -483,7 +483,7 @@ class Model(object):
         tolerance : float
             Tolerance for the newton raphson
         **options: kwargs (key word arguments)
-            Additional options e.g. 
+            Additional options e.g.
             - dof=('B','v'): for displacement-control
             - solve_det_k=True: for solving the determinant of k at convergence
             - solve_attendant_eigenvalue=True: for solving the attendant eigenvalue problem at convergence
@@ -507,13 +507,13 @@ class Model(object):
         free_count = assembler.free_dof_count
 
         def calculate_system(x):
-            """Callback function for the newton raphson method that calculates the 
+            """Callback function for the newton raphson method that calculates the
                 system for a given state x
 
             Parameters
             ----------
             x : ndarray
-                Current state of dofs and lambda (unknowns of the non linear system) 
+                Current state of dofs and lambda (unknowns of the non linear system)
 
             Returns
             ----------
@@ -557,7 +557,7 @@ class Model(object):
             # assemble contribution from constraint
             constraint.calculate_derivatives(self, lhs[-1, :])
             rhs[-1] = constraint.calculate_constraint(self)
-            
+
             return lhs, rhs
 
         # prediction as vector for newton raphson
@@ -588,12 +588,12 @@ class Model(object):
         Parameters
         ----------
         k : numpy.ndarray (optional)
-            stiffness matrix can be directly passed.  
+            stiffness matrix can be directly passed.
         assembler : Object (optional)
             assembler can be passed to speed up if k is not given
         """
-        if k == None:
-            if assembler == None:
+        if k is None:
+            if assembler is None:
                 assembler = Assembler(self)
             dof_count = assembler.dof_count
             free_count = assembler.free_dof_count
@@ -610,12 +610,12 @@ class Model(object):
         Parameters
         ----------
         assembler : Object (optional)
-            assembler can be passed to speed up  
+            assembler can be passed to speed up
         """
         # [ k_m + eigvals * k_g ] * eigvecs = 0
-        if assembler == None:
+        if assembler is None:
             assembler = Assembler(self)
-        
+
         dof_count = assembler.dof_count
         free_count = assembler.free_dof_count
 
@@ -629,7 +629,7 @@ class Model(object):
         eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
 
         # sort eigenvalues and vectors
-        idx = eigvals.argsort() 
+        idx = eigvals.argsort()
         eigvals = eigvals[idx]
         eigvecs = eigvecs[:,idx]
 
@@ -642,7 +642,7 @@ class Model(object):
 
     def get_tangent_vector(self, assembler=None):
         """ Get the tangent vector
-        
+
         Returns
         -------
         tangent : ndarray
@@ -674,7 +674,7 @@ class Model(object):
         # assemble force
         assembler.assemble_vector(external_f,
             lambda element: element.calculate_external_forces()
-        ) 
+        )
 
         lhs = k[:free_count, :free_count]
         rhs = external_f[:free_count] - k[:free_count, free_count:] @ v[free_count:]
@@ -694,7 +694,7 @@ class Model(object):
         Parameters
         ----------
         value : float
-            Value for the new load factor lambda.  
+            Value for the new load factor lambda.
         """
         self.lam = value
 
@@ -704,7 +704,7 @@ class Model(object):
         Parameters
         ----------
         value : float
-            Value that is used to increment the load factor lambda. 
+            Value that is used to increment the load factor lambda.
         """
         self.lam += value
 
@@ -731,9 +731,9 @@ class Model(object):
             Value that is used to increment the dof.
         """
         self.increment_dof_state(dof, value)
-    
+
     def predict_with_last_increment(self):
-        """Predicts the solution by incrementing lambda and all dofs with the 
+        """Predicts the solution by incrementing lambda and all dofs with the
            increment of the last solution step
 
         Raises
@@ -741,7 +741,7 @@ class Model(object):
         RuntimeError
             If the model has not already one calculated step.
         """
-        if self.previous_model.previous_model == None:
+        if self.previous_model.previous_model is None:
             raise RuntimeError('predict_with_last_increment can only be used after the first step!')
 
         assembler = Assembler(self)
