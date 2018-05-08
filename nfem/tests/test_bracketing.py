@@ -15,7 +15,7 @@ class TestBracketing(TestCase):
 
     def test_bracketing_limit_point(self):
         limit_model = self.model.get_duplicate()
-        limit_model.lam = 0.1
+        limit_model.predict_tangential(strategy="lambda", value=0.05)
         limit_model.perform_non_linear_solution_step(strategy="load-control")
 
         critical_model = bracketing(limit_model)
@@ -28,7 +28,7 @@ class TestBracketing(TestCase):
         bifurcation_model = self.model.get_duplicate()
         bifurcation_model._nodes['B'].reference_y = 3.0
         bifurcation_model._nodes['B'].y = 3.0
-        bifurcation_model.lam = 0.1
+        bifurcation_model.predict_tangential(strategy="lambda", value=0.05)
         bifurcation_model.perform_non_linear_solution_step(strategy="load-control")
 
         critical_model = bracketing(bifurcation_model)
