@@ -19,7 +19,7 @@ class TestEigenvalueAnalysis(TestCase):
         limit_model.solve_eigenvalues()
 
         ev_actual = limit_model.first_eigenvalue
-        ev_expected = 3.6959287916726304
+        ev_expected = 3.6959287916726304 # safety_factor
         assert_almost_equal(ev_actual, ev_expected)
         # TODO test eigenvector [0.0, 1.0]
 
@@ -32,6 +32,6 @@ class TestEigenvalueAnalysis(TestCase):
         bifurcation_model.solve_eigenvalues()
 
         ev_actual = bifurcation_model.first_eigenvalue
-        ev_expected = 1.7745968576086002
+        ev_expected = 1.7745968576086002 # safety_factor
         assert_almost_equal(ev_actual, ev_expected)
         # TODO test eigenvector [1.0, 0.0]
