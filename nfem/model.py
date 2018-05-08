@@ -702,7 +702,8 @@ class Model(object):
         # store eigenvector as model
         self.first_eigenvector_model = self.get_duplicate()
         model = self.first_eigenvector_model
-        #model.status = ModelStatus.eigenvector
+        model.status = ModelStatus.eigenvector
+        model._previous_model = self
         model.lam = 0.0 #TODO what happens here
         for index, dof in enumerate(assembler.free_dofs):
 
@@ -934,15 +935,16 @@ class Model(object):
         if factor < 0.0 or factor > 1.0:
             raise ValueError('factor needs to be between 0.0 and 1.0')
 
-        if self.previous_model.first_eigenvector_model == None:
+        previous_model = self.get_previous_model()
+        if previous_model.first_eigenvector_model == None:
             print('WARNING: solve eigenvalue problem in order to do branch switching')
             self.solve_eigenvalues()
 
-        eigenvector_model = self.previous_model.first_eigenvector_model
+        eigenvector_model = previous_model.first_eigenvector_model
 
         assembler = Assembler(self)
 
-        u_prediction = self.get_delta_dof_vector(model_b=self.previous_model, assembler=assembler)
+        u_prediction = self.get_delta_dof_vector(model_b=previous_model, assembler=assembler)
 
         eigenvector = eigenvector_model.get_delta_dof_vector(assembler=assembler)
 

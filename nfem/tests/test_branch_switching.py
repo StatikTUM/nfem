@@ -7,7 +7,6 @@ from unittest import TestCase
 
 from . import test_two_bar_truss_model
 from ..bracketing import bracketing
-from .. import *
 
 class TestBranchSwitching(TestCase):
     def setUp(self):
@@ -36,18 +35,9 @@ class TestBranchSwitching(TestCase):
 
         # compare lambda
         actual = predicted_model.lam
-        expected = 0.16726702267341678
+        expected = 0.16697135406254746
         assert_almost_equal(actual, expected)
 
         # compare horizontal displacement
         actual = predicted_model.get_dof_state(dof=('B','u'))
         assert(actual!=0.0)
-
-        # animated plot
-        animation = Animation3D()
-        animation.show(predicted_model)
-
-if __name__ == "__main__":
-    test = TestBranchSwitching()
-    test.setUp()
-    test.test_branch_switching()
