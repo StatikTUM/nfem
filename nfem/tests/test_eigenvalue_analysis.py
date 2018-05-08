@@ -21,7 +21,15 @@ class TestEigenvalueAnalysis(TestCase):
         ev_actual = limit_model.first_eigenvalue
         ev_expected = 3.6959287916726304 # safety_factor
         assert_almost_equal(ev_actual, ev_expected)
-        # TODO test eigenvector [0.0, 1.0]
+
+        # test eigenvector [0.0, 1.0]
+        eigenvector_model = limit_model.first_eigenvector_model
+        u_actual = eigenvector_model.get_dof_state(('B','u'))
+        u_expected = 0.0
+        assert_almost_equal(u_actual, u_expected)
+        v_actual = eigenvector_model.get_dof_state(('B','v'))
+        v_expected = 1.0
+        assert_almost_equal(v_actual, v_expected)
 
     def test_bifurcation_point(self):
         bifurcation_model = self.model.get_duplicate()
@@ -34,4 +42,12 @@ class TestEigenvalueAnalysis(TestCase):
         ev_actual = bifurcation_model.first_eigenvalue
         ev_expected = 1.7745968576086002 # safety_factor
         assert_almost_equal(ev_actual, ev_expected)
+
         # TODO test eigenvector [1.0, 0.0]
+        eigenvector_model = bifurcation_model.first_eigenvector_model
+        u_actual = eigenvector_model.get_dof_state(('B','u'))
+        u_expected = 1.0
+        assert_almost_equal(u_actual, u_expected)
+        v_actual = eigenvector_model.get_dof_state(('B','v'))
+        v_expected = 0.0
+        assert_almost_equal(v_actual, v_expected)
