@@ -4,9 +4,12 @@ Authors: Thomas Oberbichler, Armin Geiser
 """
 
 from copy import deepcopy
+from enum import Enum
 
 import numpy as np
 import numpy.linalg as la
+
+from scipy.linalg import eig
 
 from .node import Node
 from .single_load import SingleLoad
@@ -17,9 +20,18 @@ from .newton_raphson import newton_raphson_solve
 
 from .path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 
+class ModelStatus(Enum):
+    """Enum for the model status """
+    initial = 0
+    duplicate = 1
+    prediction = 2
+    iteration = 3
+    equilibrium = 4
+    eigenvector = 5
+
 class Model(object):
     """A Model contains all the objects that build the finite element model.
-        Nodes, elements, loads, dirichlet conditions... 
+        Nodes, elements, loads, dirichlet conditions...
 
     Attributes
     ----------
@@ -49,12 +61,43 @@ class Model(object):
         """
 
         self.name = name
+        self.status = ModelStatus.initial
         self._nodes = dict()
         self._elements = dict()
         self.dirichlet_conditions = dict()
         self.neumann_conditions = dict()
         self.lam = 0.0
-        self.previous_model = None
+        self._previous_model = None
+        self.det_k = None
+        self.first_eigenvalue = None
+        self.first_eigenvector_model = None
+
+    def get_previous_model(self, skip_iterations=True):
+        """Get the previous model of the current model.
+
+        Parameters
+        ----------
+        skip_iterations : bool
+            Flag if iteration or predicted previous models should be skipped
+
+        Returns
+        -------
+        model : Model
+            The previous model object
+        """
+        if not skip_iterations:
+            return self._previous_model
+
+        #find the most previous model that is not an iteration or prediction
+        previous_model = self._previous_model
+
+        if previous_model is None:
+            return previous_model
+
+        while previous_model.status in [ModelStatus.duplicate, ModelStatus.prediction, ModelStatus.iteration]:
+            previous_model = previous_model._previous_model
+
+        return previous_model
 
     @property
     def nodes(self):
@@ -214,11 +257,11 @@ class Model(object):
         node_id : int or str
             ID of the node.
         fu : float
-            Load magnitude in x direction - default 0.0   
+            Load magnitude in x direction - default 0.0
         fv : float
-            Load magnitude in y direction - default 0.0 
+            Load magnitude in y direction - default 0.0
         fw : float
-            Load magnitude in z direction - default 0.0   
+            Load magnitude in z direction - default 0.0
 
         Examples
         --------
@@ -294,13 +337,13 @@ class Model(object):
         delta : float
             Increment of the dof during the last step
         """
-        if self.previous_model is None:
+        if self.get_previous_model() is None:
             return 0.0
 
         current_value = self.get_dof_state(dof)
-        previous_value = self.previous_model.get_dof_state(dof)
+        previous_value = self.get_previous_model().get_dof_state(dof)
 
-        return previous_value - current_value
+        return current_value - previous_value
 
     def get_lam_increment(self):
         """Get the increment of lambda during the last solution step
@@ -310,13 +353,13 @@ class Model(object):
         delta : float
             Increment of lambda during the last step
         """
-        if self.previous_model is None:
+        if self.get_previous_model() is None:
             return 0.0
 
         current_value = self.lam
-        previous_value = self.previous_model.lam
+        previous_value = self.get_previous_model().lam
 
-        return previous_value - current_value
+        return current_value - previous_value
 
     def get_increment_vector(self, assembler=None):
         """Get the increment that resulted in the current position
@@ -329,14 +372,14 @@ class Model(object):
 
         increment = np.zeros(dof_count + 1)
 
-        if self.previous_model is None:
+        if self.get_previous_model() is None:
             print('WARNING: Increment is zero because no previous model exists!')
             return increment
 
         for index, dof in enumerate(assembler.dofs):
             increment[index] = self.get_dof_increment(dof)
 
-        increment[-1] = self.get_lam_increment
+        increment[-1] = self.get_lam_increment()
 
         return increment
 
@@ -348,17 +391,22 @@ class Model(object):
         Returns
         ----------
         model : Model
-            initial model 
+            initial model
         """
         current_model = self
 
-        while current_model.previous_model is not None:
-            current_model = current_model.previous_model
+        while current_model.get_previous_model() is not None:
+            current_model = current_model.get_previous_model()
 
         return current_model
 
-    def get_model_history(self):
+    def get_model_history(self, skip_iterations=True):
         """Gets a list of all previous models of this model.
+
+        Parameters
+        ----------
+        skip_iterations : bool
+            Flag that decides if non converged previous models should be considered
 
         Returns
         ----------
@@ -370,8 +418,8 @@ class Model(object):
 
         current_model = self
 
-        while current_model.previous_model is not None:
-            current_model = current_model.previous_model
+        while current_model.get_previous_model(skip_iterations) is not None:
+            current_model = current_model.get_previous_model(skip_iterations)
 
             history = [current_model] + history
 
@@ -392,7 +440,7 @@ class Model(object):
             If `branch` is `True` the duplicate will be a successor of the previous model::
 
                 previous ----> current
-                          \ 
+                          \
                            \-> duplicate
 
         Returns
@@ -401,29 +449,35 @@ class Model(object):
             Duplicate of the current model.
         """
 
-        temp_previous_model = self.previous_model
-        self.previous_model = None
+        temp_previous_model = self._previous_model
+        self._previous_model = None
 
         duplicate = deepcopy(self)
 
-        self.previous_model = temp_previous_model
+        self._previous_model = temp_previous_model
 
         if branch:
-            duplicate.previous_model = self.previous_model
+            duplicate._previous_model = self._previous_model
         else:
-            duplicate.previous_model = self
+            duplicate._previous_model = self
 
         if name is not None:
             duplicate.name = name
 
+        # make sure the duplicated model is in a clean state
+        duplicate.status = ModelStatus.duplicate
+        duplicate.det_k = None
+        duplicate.first_eigenvalue = None
+        duplicate.first_eigenvector_model = None
+
         return duplicate
-    
+
     # === solving
 
     def perform_linear_solution_step(self):
         """Performs a linear solution step on the model.
             It uses the member variable `lam` as load factor.
-            The results are stored at the dofs and used to update the current 
+            The results are stored at the dofs and used to update the current
             coordinates of the nodes.
         """
 
@@ -458,19 +512,21 @@ class Model(object):
 
             self.set_dof_state(dof, value)
 
+        self.status = ModelStatus.equilibrium
+
     def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
         """Performs a non linear solution step on the model.
             The path following strategy is chose according to the parameter.
-            A newton raphson algorithm is used to iteratively solve the nonlinear 
+            A newton raphson algorithm is used to iteratively solve the nonlinear
             equation system r(u,lam) = 0
-            The results are stored at the dofs and used to update the current 
+            The results are stored at the dofs and used to update the current
             coordinates of the nodes.
 
         Parameters
         ----------
         strategy : string
             Path following strategy. Available options:
-            - load-control 
+            - load-control
             - displacement-control
             - arc-length-control
         max_iterations: int
@@ -478,8 +534,10 @@ class Model(object):
         tolerance : float
             Tolerance for the newton raphson
         **options: kwargs (key word arguments)
-            Additional options e.g. 
-            "dof=('B','v')" for displacement-control
+            Additional options e.g.
+            - dof=('B','v'): for displacement-control
+            - solve_det_k=True: for solving the determinant of k at convergence
+            - solve_attendant_eigenvalue=True: for solving the attendant eigenvalue problem at convergence
         """
 
         print("=================================")
@@ -500,13 +558,13 @@ class Model(object):
         free_count = assembler.free_dof_count
 
         def calculate_system(x):
-            """Callback function for the newton raphson method that calculates the 
+            """Callback function for the newton raphson method that calculates the
                 system for a given state x
 
             Parameters
             ----------
             x : ndarray
-                Current state of dofs and lambda (unknowns of the non linear system) 
+                Current state of dofs and lambda (unknowns of the non linear system)
 
             Returns
             ----------
@@ -517,6 +575,15 @@ class Model(object):
                 Right hand side vector of size (n_free_dofs+1).
                 Contains the values of the residuum of the structure and the constraint.
             """
+
+            # create a duplicate of the current state before updating and insert it in the history
+            duplicate = self.get_duplicate()
+            duplicate._previous_model = self._previous_model
+            self._previous_model = duplicate
+            duplicate.status = self.status
+
+            # update status flag
+            self.status = ModelStatus.iteration
 
             # update actual coordinates
             for index, dof in enumerate(assembler.free_dofs):
@@ -565,9 +632,76 @@ class Model(object):
 
         print("Solution found after {} iteration steps.".format(n_iter))
 
+        self.status = ModelStatus.equilibrium
+
+        if 'solve_det_k' in options and not options['solve_det_k']:
+            pass
+        else:
+            self.solve_det_k(assembler=assembler)
+
+        if 'solve_attendant_eigenvalue' in options:
+            if options['solve_attendant_eigenvalue']:
+                self.solve_eigenvalues(assembler=assembler)
+
+    def solve_det_k(self, k=None, assembler=None):
+        """Solves the determinant of k
+
+        Parameters
+        ----------
+        k : numpy.ndarray (optional)
+            stiffness matrix can be directly passed.
+        assembler : Object (optional)
+            assembler can be passed to speed up if k is not given
+        """
+        if k is None:
+            if assembler is None:
+                assembler = Assembler(self)
+            dof_count = assembler.dof_count
+            free_count = assembler.free_dof_count
+            k = np.zeros((dof_count, dof_count))
+            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+        self.det_k =  la.det(k[:free_count,:free_count])
+        print("Det(K): {}".format(self.det_k))
+
+    def solve_eigenvalues(self, assembler=None):
+        """Solves the eigenvalue problem
+           [ k_m + eigvals * k_g ] * eigvecs = 0
+
+        Parameters
+        ----------
+        assembler : Object (optional)
+            assembler can be passed to speed up
+        """
+        # [ k_m + eigvals * k_g ] * eigvecs = 0
+        if assembler is None:
+            assembler = Assembler(self)
+
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+
+        # assemble matrices
+        k_m = np.zeros((dof_count, dof_count))
+        k_g = np.zeros((dof_count, dof_count))
+        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
+        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
+
+        # solve eigenvalue problem
+        eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
+
+        # sort eigenvalues and vectors
+        idx = eigvals.argsort()
+        eigvals = eigvals[idx]
+        eigvecs = eigvecs[:,idx]
+
+        print("First eigenvalue: {}".format(eigvals[0].real))
+        print("First eigenvalue * lambda$: {}".format(eigvals[0].real * self.lam)) # this is printed in TRUSS
+        print("First eigenvector: {}".format(eigvecs[0]))
+
+        self.first_eigenvalue = eigvals[0].real
+
     def get_tangent_vector(self, assembler=None):
         """ Get the tangent vector
-        
+
         Returns
         -------
         tangent : ndarray
@@ -599,7 +733,7 @@ class Model(object):
         # assemble force
         assembler.assemble_vector(external_f,
             lambda element: element.calculate_external_forces()
-        ) 
+        )
 
         lhs = k[:free_count, :free_count]
         rhs = external_f[:free_count] - k[:free_count, free_count:] @ v[free_count:]
@@ -619,8 +753,9 @@ class Model(object):
         Parameters
         ----------
         value : float
-            Value for the new load factor lambda.  
+            Value for the new load factor lambda.
         """
+        self.status = ModelStatus.prediction
         self.lam = value
 
     def predict_load_increment(self, value):
@@ -629,8 +764,9 @@ class Model(object):
         Parameters
         ----------
         value : float
-            Value that is used to increment the load factor lambda. 
+            Value that is used to increment the load factor lambda.
         """
+        self.status = ModelStatus.prediction
         self.lam += value
 
     def predict_dof_state(self, dof, value):
@@ -643,6 +779,7 @@ class Model(object):
         value : float
             Value that is used to prescribe the dof.
         """
+        self.status = ModelStatus.prediction
         self.set_dof_state(dof, value)
 
     def predict_dof_increment(self, dof, value):
@@ -655,10 +792,11 @@ class Model(object):
         value : float
             Value that is used to increment the dof.
         """
+        self.status = ModelStatus.prediction
         self.increment_dof_state(dof, value)
-    
+
     def predict_with_last_increment(self):
-        """Predicts the solution by incrementing lambda and all dofs with the 
+        """Predicts the solution by incrementing lambda and all dofs with the
            increment of the last solution step
 
         Raises
@@ -666,20 +804,19 @@ class Model(object):
         RuntimeError
             If the model has not already one calculated step.
         """
-        if self.previous_model.previous_model == None:
+        self.status = ModelStatus.prediction
+        if self.get_previous_model().get_previous_model() == None:
             raise RuntimeError('predict_with_last_increment can only be used after the first step!')
 
         assembler = Assembler(self)
 
-        last_increment = self.previous_model.get_increment_vector(assembler)
+        last_increment = self.get_previous_model().get_increment_vector(assembler)
 
         # update dofs at model
         for index, dof in enumerate(assembler.dofs):
 
-            old_value = self.get_dof_state(dof)
             value = last_increment[index]
-
-            self.set_dof_state(dof, old_value + value)
+            self.increment_dof_state(dof, value)
 
         # update lam at model
         self.lam += last_increment[-1]
@@ -706,6 +843,7 @@ class Model(object):
             dof : Object
                 specifies the controlled dof for 'dof' and 'delta-dof' strategy
         """
+        self.status = ModelStatus.prediction
         assembler = Assembler(self)
 
         # get tangent vector
@@ -746,9 +884,9 @@ class Model(object):
             factor = delta_dof_prescribed / delta_dof_current
 
         elif strategy == 'arc-length':
-            previous_model = self.previous_model
+            previous_model = self.get_previous_model()
 
-            if previous_model.previous_model is None:
+            if previous_model.get_previous_model() is None:
                 raise RuntimeError('Tangential arc-length predictor can only be'
                                    'used after the first step!')
 

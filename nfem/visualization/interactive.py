@@ -231,8 +231,8 @@ class InteractiveWindow(QWidget):
                     max_iterations=max_iterations
                 )
             elif selected_strategy == 'arc-length':
-                delta_d = model.get_dof_state(dof) - model.previous_model.get_dof_state(dof)
-                delta_lambda = model.lam - model.previous_model.lam
+                delta_d = model.get_dof_state(dof) - model.get_previous_model().get_dof_state(dof)
+                delta_lambda = model.lam - model.get_previous_model().lam
                 arc_length = (delta_d**2 + delta_lambda**2)**0.5
 
                 model.perform_non_linear_solution_step(
@@ -252,22 +252,22 @@ class InteractiveWindow(QWidget):
     def new_branch_button_click(self):
         new_model = self.model.get_duplicate()
 
-        new_model.previous_model = self.model.previous_model
+        new_model._previous_model= self.model.get_previous_model()
 
         self.branches.append(new_model)
 
         self.redraw()
 
     def go_back_button_click(self):
-        if self.model.previous_model is None:
+        if self.model.get_previous_model() is None:
             return
 
-        self.model = self.model.previous_model
+        self.model = self.model.get_previous_model()
 
         self.redraw()
 
     def reset_branch_button_click(self):
-        if self.model.previous_model is None:
+        if self.model.get_previous_model() is None:
             return
 
         self.model = self.model.get_initial_model()
