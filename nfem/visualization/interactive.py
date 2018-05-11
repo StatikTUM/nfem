@@ -12,6 +12,7 @@ from matplotlib.figure import Figure
 import numpy.linalg as la
 
 from .plot import plot_model, plot_load_displacement_curve, plot_bounding_cube
+from ..assembler import Assembler
 
 def _create_int_spinbox(value=0, step=1, minimum=-100, maximum=100):
     widget = QSpinBox()
@@ -28,6 +29,26 @@ def _create_double_spinbox(value=0, step=0.1, minimum=None, maximum=None):
     widget.setValue(value)
     widget.setSingleStep(step)
     return widget
+
+def _create_free_dof_combobox(model, assembler=None, value=None):
+    if assembler is None:
+        assembler = Assembler(model)
+    widget = QComboBox()
+    for free_dof in assembler.free_dofs:
+        widget.addItem(_dof_to_string(free_dof, assembler))
+
+    if value is not None:
+        index = assembler.index_of_dof(value)
+        widget.setCurrentIndex(index)
+    return widget
+
+def _dof_to_string(dof, assembler):
+    index = assembler.index_of_dof(dof)
+    return 'Dof #{}: {} {}'.format(index+1, dof[0], dof[1])
+
+def _string_to_dof(string, assembler):
+    dof_number = int(string[ 5:string.index(':')-1])
+    return assembler.dof_at_index(dof_number-1)
 
 class InteractiveWindow(QWidget):
     def __init__(self, model, dof):
