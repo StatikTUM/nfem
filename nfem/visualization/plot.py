@@ -117,6 +117,31 @@ def plot_model(ax, model, color, initial):
 
     ax.add_collection3d(lc, zs=zs)
 
+def animate_model(fig, ax, model, speed=200):
+
+    history = model.get_model_history()
+
+    def update(step):
+        step_model = history[step]
+
+        ax.clear()
+
+        ax.grid()
+
+        plot_bounding_cube(ax, model)
+
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+
+        ax.set_title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
+
+        plot_model(ax, step_model, 'gray', True)
+        plot_model(ax, step_model, 'red', False)
+
+    a = anim.FuncAnimation(fig, update, frames=len(history), repeat=True, interval=speed)
+
+    return a
 
 def plot_load_displacement_iterations(ax, model, dof, label=None):
     history = model.get_model_history(skip_iterations=False)
@@ -224,25 +249,7 @@ def show_history_animation(model, speed=200):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    def update(step):
-        step_model = history[step]
-
-        ax.clear()
-
-        ax.grid()
-
-        plot_bounding_cube(ax, model)
-
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        ax.set_zlabel('z')
-
-        plt.title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
-
-        plot_model(ax, step_model, 'gray', True)
-        plot_model(ax, step_model, 'red', False)
-
-    a = anim.FuncAnimation(fig, update, frames=len(history), repeat=True, interval=speed)
+    a = animate_model(fig, ax, model, speed=speed)
 
     plt.show()
 
@@ -273,6 +280,6 @@ def show_deformation_plot(model, step=None):
 
     plot_model(ax, model, 'red', False)
 
-    plt.title('Deformed structure at time step {}\n{}'.format(step, model.name))
+    ax.set_title('Deformed structure at time step {}\n{}'.format(step, model.name))
 
     plt.show()
