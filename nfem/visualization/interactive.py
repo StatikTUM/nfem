@@ -39,6 +39,9 @@ class InteractiveWindow(QWidget):
         self.tolerance = -5
         self.max_iterations = 100
 
+        self.solve_det_k = True
+        self.solve_eigenvalue = False
+
         # --- setup window
 
         self.resize(1000, 400)
@@ -114,7 +117,7 @@ class InteractiveWindow(QWidget):
 
         # --- strategy
 
-        widget = QGroupBox('Strategy', self)
+        widget = QGroupBox('Constraint', self)
         layout.addWidget(widget)
 
         group_layout = QVBoxLayout()
@@ -128,19 +131,25 @@ class InteractiveWindow(QWidget):
         group_layout.addWidget(widget)
         self._strategy_combobox = widget
 
-        # --- newton-raphson
+        # --- solution
 
-        widget = QGroupBox('Newton-Raphson', self)
+        widget = QGroupBox('Solution', self)
         layout.addWidget(widget)
 
         group_layout = QVBoxLayout()
         widget.setLayout(group_layout)
 
-        widget = QLabel('Tolerance:')
+        widget = QGroupBox('Newton-Raphson', widget)
         group_layout.addWidget(widget)
 
+        nr_group_layout = QVBoxLayout()
+        widget.setLayout(nr_group_layout)
+
+        widget = QLabel('Tolerance:')
+        nr_group_layout.addWidget(widget)
+
         widget = QWidget()
-        group_layout.addWidget(widget)
+        nr_group_layout.addWidget(widget)
 
         tolerance_layout = QHBoxLayout()
         tolerance_layout.setContentsMargins(0, 0, 0, 0)
@@ -154,37 +163,57 @@ class InteractiveWindow(QWidget):
         tolerance_layout.addWidget(widget, 1)
 
         widget = QLabel('Maximum iterations:')
-        group_layout.addWidget(widget)
+        nr_group_layout.addWidget(widget)
 
         widget = _create_int_spinbox(value=self.max_iterations, minimum=0, maximum=1000)
         widget.valueChanged.connect(self._set_max_iterations)
+        nr_group_layout.addWidget(widget)
+
+        # --- ---  other solution options
+
+        widget = QCheckBox('Solve Det(K)')
+        widget.setChecked(self.solve_det_k)
+        widget.stateChanged.connect(self._set_solve_det_K)
         group_layout.addWidget(widget)
+
+        widget = QCheckBox('Solve attendant eigenvalue analysis')        
+        widget.setChecked(self.solve_eigenvalue)
+        widget.stateChanged.connect(self._set_solve_eigenvalue_analysis)
+        group_layout.addWidget(widget)
+
+        #  --- --- action
+     
+        button = QPushButton('Solve')
+        button.clicked.connect(self.solve_button_click)
+        group_layout.addWidget(button)
 
         # --- space
 
         layout.addStretch(1)
 
-        # --- actions
+        # --- path control
 
-        button = QPushButton('Solve')
-        button.clicked.connect(self.solve_button_click)
-        layout.addWidget(button)
+        widget = QGroupBox('Path control', self)
+        layout.addWidget(widget)
+
+        group_layout = QVBoxLayout()
+        widget.setLayout(group_layout)
 
         button = QPushButton('Go back')
         button.clicked.connect(self.go_back_button_click)
-        layout.addWidget(button)
+        group_layout.addWidget(button)
 
-        button = QPushButton('Reset branch')
+        button = QPushButton('Reset path')
         button.clicked.connect(self.reset_branch_button_click)
-        layout.addWidget(button)
+        group_layout.addWidget(button)
 
-        button = QPushButton('New branch')
+        button = QPushButton('New path')
         button.clicked.connect(self.new_branch_button_click)
-        layout.addWidget(button)
+        group_layout.addWidget(button)
 
         button = QPushButton('Reset all')
         button.clicked.connect(self.reset_button_click)
-        layout.addWidget(button)
+        group_layout.addWidget(button)
 
         return sidebar
 
@@ -193,6 +222,12 @@ class InteractiveWindow(QWidget):
 
     def _set_max_iterations(self, value):
         self.max_iterations = value
+
+    def _set_solve_det_K(self, value):
+        self.solve_det_k = value
+
+    def _set_solve_eigenvalue_analysis(self, value):
+        self.solve_eigenvalue = value
 
     @property
     def model(self):
@@ -221,20 +256,26 @@ class InteractiveWindow(QWidget):
                 model.perform_non_linear_solution_step(
                     strategy=selected_strategy,
                     tolerance=tolerance,
-                    max_iterations=max_iterations
+                    max_iterations=max_iterations,
+                    solve_det_k=self.solve_det_k,
+                    solve_attendant_eigenvalue=self.solve_eigenvalue,
                 )
             elif selected_strategy == 'displacement-control':
                 model.perform_non_linear_solution_step(
                     strategy=selected_strategy,
                     dof=dof,
                     tolerance=tolerance,
-                    max_iterations=max_iterations
+                    max_iterations=max_iterations,
+                    solve_det_k=self.solve_det_k,
+                    solve_attendant_eigenvalue=self.solve_eigenvalue,
                 )
             elif selected_strategy == 'arc-length-control':
                 model.perform_non_linear_solution_step(
                     strategy=selected_strategy,
                     tolerance=tolerance,
-                    max_iterations=max_iterations
+                    max_iterations=max_iterations,
+                    solve_det_k=self.solve_det_k,
+                    solve_attendant_eigenvalue=self.solve_eigenvalue,
                 )
             else:
                 raise RuntimeError('Invalid solution strategy:', selected_strategy)
