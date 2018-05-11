@@ -969,6 +969,32 @@ class Model(object):
         # update lambda at model
         self.lam += delta_lam
 
+    def scale_prediction(self, factor):
+        if self.status != ModelStatus.prediction:
+            raise RuntimeError('Can only scale predictor!')
+
+        if factor == 1.0:
+            return
+
+        previous_model = self.get_previous_model()
+
+        if previous_model is None:
+            raise RuntimeError('Previous Model is None!')
+
+        assembler = Assembler(self)
+
+        delta_dof_vector = self.get_delta_dof_vector(previous_model, assembler=assembler)
+
+        delta_lambda = self.lam - previous_model.lam
+
+        delta_dof_vector *= (factor - 1.0)
+        delta_lambda *= (factor - 1.0)
+
+        for i, dof in enumerate(assembler.free_dofs):
+            self.increment_dof_state(dof, delta_dof_vector[i])
+
+        self.lam += delta_lambda
+
 
     def get_delta_dof_vector(self, model_b=None, assembler=None):
         if model_b == None:
