@@ -244,8 +244,6 @@ def show_load_displacement_curve(model, dof, invert_xaxis=True):
 def show_history_animation(model, speed=200):
     history = model.get_model_history()
 
-    min_x, max_x, min_y, max_y, min_z, max_z = bounding_box(model)
-
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
@@ -256,8 +254,6 @@ def show_history_animation(model, speed=200):
     return a
 
 def show_deformation_plot(model, step=None):
-
-    min_x, max_x, min_y, max_y, min_z, max_z = bounding_box(model)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
