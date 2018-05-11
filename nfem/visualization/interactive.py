@@ -12,6 +12,7 @@ from matplotlib.figure import Figure
 import numpy.linalg as la
 
 from .plot import plot_model, plot_load_displacement_curve, plot_bounding_cube
+from .plot import animate_model
 from ..assembler import Assembler
 
 def _create_int_spinbox(value=0, step=1, minimum=-100, maximum=100):
@@ -62,6 +63,8 @@ class InteractiveWindow(QWidget):
 
         self.solve_det_k = True
         self.solve_eigenvalue = False
+
+        self.animation_window = None
 
         # --- setup window
 
@@ -236,6 +239,10 @@ class InteractiveWindow(QWidget):
         button.clicked.connect(self.reset_button_click)
         group_layout.addWidget(button)
 
+        button = QPushButton('Animation')
+        button.clicked.connect(self._animation_button_click)
+        layout.addWidget(button)
+
         return sidebar
 
     def _set_tolerance(self, value):
@@ -341,6 +348,12 @@ class InteractiveWindow(QWidget):
 
         self.redraw()
 
+    def _animation_button_click(self):
+        if self.animation_window is not None:
+            self.animation_window.close()
+        model = self.model
+        self.animation_window = _AnimationWindow(self, model)      
+
     def redraw(self):
         model = self.model
         node_id, dof_type = self.dof
@@ -368,6 +381,10 @@ class InteractiveWindow(QWidget):
 
         self.plot_canvas.draw()
 
+    def closeEvent(self, event):
+        if self.animation_window is not None:
+            self.animation_window.close()
+        super(InteractiveWindow, self).closeEvent(event) 
 
 class _LoadPredictorWidget(QWidget):
     def __init__(self, parent):
@@ -562,6 +579,31 @@ class _DirectionPredictorWidget(QWidget):
 
         model.lam += delta_lam
         model.set_dof_state(self._dof, current_d + delta_d)
+
+class _AnimationWindow(QWidget):
+    def __init__(self, parent, model):
+        super(_AnimationWindow, self).__init__()
+
+        self.setWindowTitle('Animation')
+
+        layout = QVBoxLayout() 
+
+        figure = Figure(dpi=80)
+        figure = figure
+        
+        animation_canvas = FigureCanvasQTAgg(figure)
+        animation_canvas.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(animation_canvas)  
+
+        ax_3d = figure.add_subplot(1, 1, 1, projection='3d')
+        ax_3d = ax_3d
+
+        self.setLayout(layout)
+
+        # store the animation
+        self.a = animate_model(figure, ax_3d, model)
+
+        self.show()
 
 def interact(model, dof):
     app = QApplication([])
