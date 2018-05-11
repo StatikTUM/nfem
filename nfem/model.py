@@ -935,12 +935,30 @@ class Model(object):
 
 
     def combine_prediction_with_eigenvector(self, factor):
+        """Combine the prediciton with the first eigenvector
+        
+        Parameters
+        ----------
+        factor : float
+            factor between 0.0 and 1.0 used for a linear combination of the 
+            prediction with the eigenvector
+
+        Raises
+        ------
+        RuntimeError
+            If the model is not in prediction status
+        ValueError
+            If the factor is not between 0.0 and 1.0
+        """
+        if self.status != ModelStatus.prediction:
+            raise RuntimeError('Model is not a predictor. Cannot combine with eigenvector!')
+
         if factor < 0.0 or factor > 1.0:
             raise ValueError('factor needs to be between 0.0 and 1.0')
 
         previous_model = self.get_previous_model()
-        if previous_model.first_eigenvector_model == None:
-            print('WARNING: solve eigenvalue problem in order to do branch switching')
+        if previous_model.first_eigenvector_model is None:
+            print('WARNING: solving eigenvalue problem in order to do branch switching')
             self.solve_eigenvalues()
 
         eigenvector_model = previous_model.first_eigenvector_model
@@ -949,13 +967,15 @@ class Model(object):
 
         u_prediction = self.get_delta_dof_vector(model_b=previous_model, assembler=assembler)
 
+        prediction_length = la.norm(u_prediction)
+        
         eigenvector = eigenvector_model.get_delta_dof_vector(assembler=assembler)
+
+        #scale eigenvector to the length of the prediction
+        eigenvector *= (1.0/(la.norm(eigenvector)/prediction_length)) 
 
         prediction = u_prediction * (1.0 - factor) + eigenvector * factor
 
-        # make new prediction of the same length as before
-        old_l = la.norm(u_prediction)
-        prediction = prediction/(la.norm(prediction)/old_l)
         delta_prediction = prediction - u_prediction
 
         # lambda = 0 for the eigenvector. Note: TRUSS.xls uses the same value as for the last increment 
@@ -970,8 +990,23 @@ class Model(object):
         self.lam += delta_lam
 
     def scale_prediction(self, factor):
+        """scale the prediction with a factor
+        
+        Parameters
+        ----------
+        factor : float
+            factor used to scale the prediction
+
+
+        Raises
+        ------
+        RuntimeError
+            If the model is not in prediction status
+        RuntimeError
+            If the model has no previous model
+        """
         if self.status != ModelStatus.prediction:
-            raise RuntimeError('Can only scale predictor!')
+            raise RuntimeError('Model is not a predictor. Can only scale predictor!')
 
         if factor == 1.0:
             return
@@ -997,6 +1032,30 @@ class Model(object):
 
 
     def get_delta_dof_vector(self, model_b=None, assembler=None):
+        """gets the delta dof between this and a given model_b as a numpy array
+        
+        Parameters
+        ----------
+        model_b : Model
+            Model that is used as reference for the delta dof calculation. If 
+            not given, the initial model is used as reference.
+        assembler: Assembler
+            Assembler is used to order the dofs in the vector. If not given, a 
+            new assembler is created
+
+            
+        Returns
+        ------
+        delta : np.ndarray
+            vector with the delta of all dofs
+
+        Raises
+        ------
+        RuntimeError
+            If the model is not in prediction status
+        RuntimeError
+            If the model has no previous model
+        """
         if model_b == None:
             model_b = self.get_initial_model()
 
