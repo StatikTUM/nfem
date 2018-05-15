@@ -3,13 +3,17 @@
 Author: Thomas Oberbichler
 """
 
-from PyQt5.QtWidgets import QMessageBox, QCheckBox, QGroupBox, QApplication, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QComboBox, QStackedWidget, QLabel, QDoubleSpinBox, QSpinBox
-from PyQt5 import Qt
+from PyQt5.QtWidgets import QFrame, QGridLayout, QTextEdit, QMessageBox, QCheckBox, QGroupBox, QApplication, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QComboBox, QStackedWidget, QLabel, QDoubleSpinBox, QSpinBox
+from PyQt5.QtGui import QFontDatabase
+from PyQt5 import Qt, QtGui
+from PyQt5 import QtCore
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
 import numpy.linalg as la
+
+import sys
 
 from .plot import plot_model, plot_load_displacement_curve, plot_bounding_cube
 from .plot import animate_model
@@ -51,6 +55,12 @@ def _string_to_dof(string, assembler):
     dof_number = int(string[ 5:string.index(':')-1])
     return assembler.dof_at_index(dof_number-1)
 
+class Stream(QtCore.QObject):
+    textWritten = QtCore.pyqtSignal(str)
+
+    def write(self, text):
+        self.textWritten.emit(str(text))
+
 class InteractiveWindow(QWidget):
     def __init__(self, model, dof):
         super(InteractiveWindow, self).__init__()
@@ -71,7 +81,7 @@ class InteractiveWindow(QWidget):
         self.resize(1000, 400)
         self.setWindowTitle('NFEM Teaching Tool')
 
-        layout = QHBoxLayout()
+        layout = QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.setLayout(layout)
@@ -79,7 +89,7 @@ class InteractiveWindow(QWidget):
         # --- sidebar
 
         sidebar = self._create_sidebar()
-        layout.addWidget(sidebar)
+        layout.addWidget(sidebar, 1, 1, 2, 1)
 
         # --- plot_canvas
 
@@ -88,7 +98,7 @@ class InteractiveWindow(QWidget):
 
         plot_canvas = FigureCanvasQTAgg(figure)
         plot_canvas.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(plot_canvas)
+        layout.addWidget(plot_canvas, 1, 2, 1, 1)
         self.plot_canvas = plot_canvas
 
         plot_3d = figure.add_subplot(1, 2, 1, projection='3d')
@@ -98,6 +108,18 @@ class InteractiveWindow(QWidget):
         self.plot_2d = plot_2d
 
         self.redraw()
+        
+        # --- log
+
+        widget = QTextEdit()
+        widget.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+        widget.setReadOnly(True)
+        widget.setFixedHeight(200)
+        widget.setFrameStyle(QFrame.HLine)
+        layout.addWidget(widget, 2, 2, 1, 1)
+        self.logTextEdit = widget
+        
+        sys.stdout = Stream(textWritten=self.write_log)
 
     def _create_sidebar(self):
         sidebar = QWidget(self)
@@ -385,6 +407,14 @@ class InteractiveWindow(QWidget):
         if self.animation_window is not None:
             self.animation_window.close()
         super(InteractiveWindow, self).closeEvent(event) 
+
+    def write_log(self, text):
+        cursor = self.logTextEdit.textCursor()
+        cursor.movePosition(QtGui.QTextCursor.End)
+        cursor.insertText(text)
+        self.logTextEdit.setTextCursor(cursor)
+        self.logTextEdit.ensureCursorVisible()
+
 
 class _LoadPredictorWidget(QWidget):
     def __init__(self, parent):
