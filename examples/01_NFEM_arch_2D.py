@@ -1,5 +1,5 @@
 """
-2D truss arch - from Tr_02_Arch.xlsx
+from Tr_02_Arch.xlsx
 """
 # add the path to the nfem tool to the PATH.
 import sys
@@ -9,7 +9,7 @@ import numpy as np
 
 from nfem import *
 
-model = Model("Arch")
+model = Model("Arch2D")
 
 # --- Nodes
 model.add_node(id=1,  x=-33.9411255 , y= 33.9411255, z=0)
