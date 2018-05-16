@@ -56,4 +56,4 @@ model.add_single_load(id='load 9', node_id=9, fw=-1)
 model.add_single_load(id='load 10', node_id=10, fw=-1)
 model.add_single_load(id='load 11', node_id=11, fw=-1)
 
-interact(model=model, dof=(11, 'w'))
+model = interact(model=model, dof=(11, 'w'))

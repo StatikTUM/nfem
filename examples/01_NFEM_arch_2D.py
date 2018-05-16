@@ -207,4 +207,7 @@ model.add_single_load(id='load center', node_id=22, fv=-1)
 
 print("Model creation completed - start interaction.")
 
-interact(model=model, dof=(22,'v'))
+model = interact(model=model, dof=(22,'v'))
+
+animation = Animation3D()
+animation.show(model, speed=1)
