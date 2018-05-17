@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.figure import Figure
-from matplotlib.collections import LineCollection
+from mpl_toolkits.mplot3d.art3d import Line3DCollection
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 
@@ -98,24 +98,21 @@ def bounding_box(model):
     return min_x, max_x, min_y, max_y, min_z, max_z
 
 def plot_model(ax, model, color, initial):
-    xys = list()
-    zs = list()
+    lines = list()
 
     for element in model.elements:
         if type(element) == Truss:
             node_a = element.node_a
             node_b = element.node_b
 
-            a = (node_a.reference_x, node_a.reference_y) if initial else (node_a.x, node_a.y)
-            b = (node_b.reference_x, node_b.reference_y) if initial else (node_b.x, node_b.y)
-            z = node_b.reference_z if initial else node_b.z
+            a = [node_a.reference_x, node_a.reference_y, node_a.reference_z] if initial else [node_a.x, node_a.y, node_a.z]
+            b = [node_b.reference_x, node_b.reference_y, node_b.reference_z] if initial else [node_b.x, node_b.y, node_b.z]
 
-            xys.append([a, b])
-            zs.append(z)
+            lines.append([a, b])
 
-    lc = LineCollection(xys, colors=color, linewidths=2)
+    lc = Line3DCollection(lines, colors=color, linewidths=2)
 
-    ax.add_collection3d(lc, zs=zs)
+    ax.add_collection(lc)
 
 
 def plot_load_displacement_iterations(ax, model, dof, label=None):
