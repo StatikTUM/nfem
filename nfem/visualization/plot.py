@@ -6,6 +6,7 @@ Authors: Klaus Sautter, Thomas Oberbichler, Armin Geiser
 import numpy as np
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib.figure import Figure
 from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
@@ -116,6 +117,57 @@ def plot_model(ax, model, color, initial):
     lc = LineCollection(xys, colors=color, linewidths=2)
 
     ax.add_collection3d(lc, zs=zs)
+    
+    plot_boundary_conditions(ax, model, initial)
+
+def plot_boundary_conditions(ax, model, initial): 
+    # estimate a good size for the symbols
+    x_lim = ax.get_xlim()
+    y_lim = ax.get_ylim()
+    z_lim = ax.get_zlim()
+    max_delta = max([x_lim[1]-x_lim[0], y_lim[1]-y_lim[0], z_lim[1]-z_lim[0]])
+    size = max_delta/40.0
+
+    polygons = list()
+
+    for dof in model.dirichlet_conditions.keys():
+        node = model.get_node(dof[0])
+        if initial:
+            polygons.extend(get_tet4_polygons(node.reference_x, node.reference_y, node.reference_z, size, dof[1]))
+        else:
+            polygons.extend(get_tet4_polygons(node.x, node.y, node.z, size, dof[1]))
+
+    color = 'lightgray' if initial else 'lightcoral'
+    pc = Poly3DCollection(polygons, edgecolor='black', linewidth=0.5, alpha=0.25)
+    pc.set_facecolor(color) # needs to be defined outside otherwhise alpha is not working
+    ax.add_collection3d(pc)
+
+def get_tet4_polygons(x, y, z, h, direction):
+    d = h/2
+    node_1 = (x, y, z)
+    if direction=='u':
+        node_2 = (x-h, y-d, z-d)
+        node_3 = (x-h, y+d, z-d)
+        node_4 = (x-h, y+d, z+d)
+        node_5 = (x-h, y-d, z+d)
+    elif direction=='v':
+        node_2 = (x-d, y-h, z-d)
+        node_3 = (x-d, y-h, z+d)
+        node_4 = (x+d, y-h, z+d)
+        node_5 = (x+d, y-h, z-d)
+    elif direction=='w':
+        node_2 = (x-d, y-d, z-h)
+        node_3 = (x-d, y+d, z-h)
+        node_4 = (x+d, y+d, z-h)
+        node_5 = (x+d, y-d, z-h)
+
+    poly_1 = [node_1, node_2, node_3]
+    poly_2 = [node_1, node_3, node_4]
+    poly_3 = [node_1, node_3, node_5]
+    poly_4 = [node_1, node_5, node_2]
+    poly_5 = [node_2, node_3, node_4, node_5]
+
+    return poly_1, poly_2, poly_3, poly_4, poly_5 
 
 
 def plot_load_displacement_iterations(ax, model, dof, label=None):
