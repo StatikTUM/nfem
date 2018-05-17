@@ -154,7 +154,7 @@ def plot_boundary_conditions(ax, model, initial):
             polygons.extend(get_tet4_polygons(node.x, node.y, node.z, size, dof[1]))
 
     color = 'lightgray' if initial else 'lightcoral'
-    pc = Poly3DCollection(polygons, edgecolor='black', linewidth=0.5, alpha=0.25)
+    pc = Poly3DCollection(polygons, edgecolor=color, linewidth=0.5, alpha=0.25)
     pc.set_facecolor(color) # needs to be defined outside otherwhise alpha is not working
     ax.add_collection3d(pc)
 
