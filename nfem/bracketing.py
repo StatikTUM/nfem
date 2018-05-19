@@ -124,7 +124,6 @@ def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
 
 
     if not success:
-        print(step)
         msg = 'Bracketing: No critical point found!'
         if raise_error:
             raise RuntimeError(msg)
