@@ -2,7 +2,7 @@
 
 import numpy as np
 
-def bracketing(model, tol=1e-7, max_steps=10, raise_error=True, **options):
+def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
     """Finds next critical point
 
     The bracketing function finds the next critical point starting from a models
@@ -67,19 +67,22 @@ def bracketing(model, tol=1e-7, max_steps=10, raise_error=True, **options):
     while step < max_steps and not success:
 
         # check if critical point has been found
-        if abs(model.det_k) < tol:
-            success == True
+        if abs(det_k_0) < tol:
+            print('Converged to Det(K) = {}'.format(det_k_0))
+            success = True
             break
-        elif abs(model.det_k / initial_model.det_k) < tol:
-            success == True
+        elif abs(det_k_0 / initial_model.det_k) < tol:
+            print('Converged to relative value Det(K)/Det(K)_initial = {}'.format(det_k_0 / initial_model.det_k))
+            success = True
             break
         elif abs(det_k_0 - det_k_1) < tol:
             print('WARNING: Converged at stationary point for Det(K)!')
-            success == True
+            success = True
             break
 
         step += 1
-        print('  Bracketing step {}'.format(step))
+        print('=================================')
+        print('Bracketing step {}'.format(step))
 
         if not in_min_max and np.sign(det_k_0) == np.sign(det_k_1) and np.sign(delta_0) == np.sign(delta_1):
             
@@ -121,6 +124,7 @@ def bracketing(model, tol=1e-7, max_steps=10, raise_error=True, **options):
 
 
     if not success:
+        print(step)
         msg = 'Bracketing: No critical point found!'
         if raise_error:
             raise RuntimeError(msg)
@@ -189,14 +193,10 @@ def minmax(model):
 
 
 def bisection(model):
-   """does a bisectioning to find the root of det_k, between model and its previous model.
-   returns the new upper bound
-   """
+    """does a bisectioning to find the root of det_k, between model and its previous model.
+    returns the new upper bound"""
     lower_limit_model = model.get_previous_model()
     upper_limit_model = model
-
-    print(lower_limit_model.det_k)
-    print(upper_limit_model.det_k)
 
     tmp_model = lower_limit_model.get_duplicate()
 
