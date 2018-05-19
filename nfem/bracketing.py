@@ -128,7 +128,7 @@ def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
         if raise_error:
             raise RuntimeError(msg)
         else:
-            prinit(msg)
+            print(msg)
     return model_0
 
 
