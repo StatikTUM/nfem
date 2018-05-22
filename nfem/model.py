@@ -70,7 +70,7 @@ class Model(object):
         self._previous_model = None
         self.det_k = None
         self.first_eigenvalue = None
-        self.closest_eigenvector_model = None
+        self.first_eigenvector_model = None
 
     def get_previous_model(self, skip_iterations=True):
         """Get the previous model of the current model.
@@ -468,7 +468,7 @@ class Model(object):
         duplicate.status = ModelStatus.duplicate
         duplicate.det_k = None
         duplicate.first_eigenvalue = None
-        duplicate.closest_eigenvector_model = None
+        duplicate.first_eigenvector_model = None
 
         return duplicate
 
@@ -721,7 +721,7 @@ class Model(object):
         model.status = ModelStatus.eigenvector
         model.det_k = None
         model.first_eigenvalue = None
-        model.closest_eigenvector_model = None
+        model.first_eigenvector_model = None
         model.lam = None
 
         for index, dof in enumerate(assembler.free_dofs):
@@ -730,7 +730,7 @@ class Model(object):
 
             model.set_dof_state(dof, value)
 
-        self.closest_eigenvector_model = model
+        self.first_eigenvector_model = model
 
     def get_tangent_vector(self, assembler=None):
         """ Get the tangent vector
@@ -973,11 +973,11 @@ class Model(object):
             raise ValueError('factor needs to be between 0.0 and 1.0')
 
         previous_model = self.get_previous_model()
-        if previous_model.closest_eigenvector_model is None:
+        if previous_model.first_eigenvector_model is None:
             print('WARNING: solving eigenvalue problem in order to do branch switching')
             self.solve_eigenvalues()
 
-        eigenvector_model = previous_model.closest_eigenvector_model
+        eigenvector_model = previous_model.first_eigenvector_model
 
         assembler = Assembler(self)
 
