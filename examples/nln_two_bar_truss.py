@@ -163,10 +163,10 @@ def eigenvalue_data_function(model):
     values for x and y of a model.
     """
     x = model.get_dof_state(dof=('B', 'v'))
-    if model.first_eigenvalue is None:
+    if model.closest_eigenvalue is None:
         y = None
     else:
-        y = model.first_eigenvalue * model.lam
+        y = model.closest_eigenvalue * model.lam
     return x, y
 plot.add_history_curve(model,
                         x_y_data=eigenvalue_data_function,

@@ -70,7 +70,7 @@ class Model(object):
         self._previous_model = None
         self.det_k = None
         self.first_eigenvalue = None
-        self.first_eigenvector_model = None
+        self.closest_eigenvector_model = None
 
     def get_previous_model(self, skip_iterations=True):
         """Get the previous model of the current model.
@@ -468,7 +468,7 @@ class Model(object):
         duplicate.status = ModelStatus.duplicate
         duplicate.det_k = None
         duplicate.first_eigenvalue = None
-        duplicate.first_eigenvector_model = None
+        duplicate.closest_eigenvector_model = None
 
         return duplicate
 
@@ -688,16 +688,27 @@ class Model(object):
         # solve eigenvalue problem
         eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
 
+        # extract real parts of eigenvalues
+        eigvals = np.array([x.real for x in eigvals])
+
         # sort eigenvalues and vectors
         idx = eigvals.argsort()
         eigvals = eigvals[idx]
         eigvecs = eigvecs[:,idx]
 
-        print("First eigenvalue: {}".format(eigvals[0].real))
-        print("First eigenvalue * lambda: {}".format(eigvals[0].real * self.lam)) # this is printed in TRUSS
+        print("First eigenvalue: {}".format(eigvals[0]))
+        print("First eigenvalue * lambda: {}".format(eigvals[0] * self.lam)) # this is printed in TRUSS
         print("First eigenvector: {}".format(eigvecs[0]))
+        
+        # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
+        idx = (np.abs(eigvals - 1.0)).argmin()
 
-        self.first_eigenvalue = eigvals[0].real
+        if (idx != 0):
+            print("== Closest eigenvalue: {}".format(eigvals[idx]))
+            print("== Closest eigenvalue * lambda: {}".format(eigvals[idx] * self.lam)) # this is printed in TRUSS
+            print("== Closest eigenvector: {}".format(eigvecs[idx]))
+
+        self.first_eigenvalue = eigvals[idx]
 
         # store eigenvector as model
         model = self.get_duplicate()
@@ -705,16 +716,16 @@ class Model(object):
         model.status = ModelStatus.eigenvector
         model.det_k = None
         model.first_eigenvalue = None
-        model.first_eigenvector_model = None
+        model.closest_eigenvector_model = None
         model.lam = None
 
         for index, dof in enumerate(assembler.free_dofs):
 
-            value = eigvecs[0][index]
+            value = eigvecs[idx][index]
 
             model.set_dof_state(dof, value)
 
-        self.first_eigenvector_model = model
+        self.closest_eigenvector_model = model
 
     def get_tangent_vector(self, assembler=None):
         """ Get the tangent vector
@@ -957,11 +968,11 @@ class Model(object):
             raise ValueError('factor needs to be between 0.0 and 1.0')
 
         previous_model = self.get_previous_model()
-        if previous_model.first_eigenvector_model is None:
+        if previous_model.closest_eigenvector_model is None:
             print('WARNING: solving eigenvalue problem in order to do branch switching')
             self.solve_eigenvalues()
 
-        eigenvector_model = previous_model.first_eigenvector_model
+        eigenvector_model = previous_model.closest_eigenvector_model
 
         assembler = Assembler(self)
 
