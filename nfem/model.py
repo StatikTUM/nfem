@@ -663,14 +663,16 @@ class Model(object):
         self.det_k =  la.det(k[:free_count,:free_count])
         print("Det(K): {}".format(self.det_k))
 
-    def solve_eigenvalues(self, assembler=None):
+    def solve_eigenvalues(self, assembler=None, linearized_prebuckling=False):
         """Solves the eigenvalue problem
-           [ k_m + eigvals * k_g ] * eigvecs = 0
+           [ k_m + eigvals * k_g ] * eigvecs = 0 
 
         Parameters
         ----------
         assembler : Object (optional)
             assembler can be passed to speed up
+        linearized_prebuckling : bool (optional)
+            If True, linearized prebuckling assumption u=0 : k_m = k_e is used
         """
         # [ k_m + eigvals * k_g ] * eigvecs = 0
         if assembler is None:
@@ -682,7 +684,10 @@ class Model(object):
         # assemble matrices
         k_m = np.zeros((dof_count, dof_count))
         k_g = np.zeros((dof_count, dof_count))
-        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
+        if linearized_prebuckling:
+            assembler.assemble_matrix(k_m, lambda element: element.calculate_elastic_stiffness_matrix())
+        else:
+            assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
 
         # solve eigenvalue problem
