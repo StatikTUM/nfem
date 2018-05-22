@@ -69,7 +69,7 @@ class Plot2D(object):
     def show(self):
         """Shows the plot with all the curves that have been added.
         """
-        self.ax.legend(loc='upper left')
+        self.ax.legend(loc='best')
         plt.show()
 
 class Animation3D(object):
