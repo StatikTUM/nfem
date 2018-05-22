@@ -106,7 +106,7 @@ def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
         elif in_min_max or np.sign(delta_0) != np.sign(delta_1):
             # sign of delta changed target is between det_k_2 and det_k_0
             in_min_max = True
-            print('  Search for local miimum/maximum.')
+            print('  Search for local minimum/maximum.')
             model_0 = minmax(model_0)
         else:
             raise RuntimeError('Unhandled case in bracketing function!')
@@ -187,7 +187,7 @@ def minmax(model):
 
         return model
     else:
-        print("  WARNING: Miniimum/maximum has been already passed!")
+        print("  WARNING: Minimum/maximum has been already passed!")
         return model
 
 
