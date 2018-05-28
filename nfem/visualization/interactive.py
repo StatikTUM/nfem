@@ -3,76 +3,43 @@
 Author: Thomas Oberbichler
 """
 
-from PyQt5.QtWidgets import QFrame, QGridLayout, QTextEdit, QMessageBox, QCheckBox, QGroupBox, QApplication, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QComboBox, QStackedWidget, QLabel, QDoubleSpinBox, QSpinBox
+
+from PyQt5 import Qt, QtCore, QtGui
+from PyQt5.QtCore import pyqtSignal, QObject
 from PyQt5.QtGui import QFontDatabase
-from PyQt5 import Qt, QtGui
-from PyQt5 import QtCore
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox, 
+    QFrame, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox,
+    QPushButton, QSpinBox, QStackedWidget, QTextEdit, QVBoxLayout, QWidget)
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
-import numpy.linalg as la
-
 import sys
 
-from .plot import plot_model, plot_load_displacement_curve, plot_bounding_cube
+from .plot import (plot_model, plot_load_displacement_curve, plot_bounding_cube,
+    plot_history_curve)
 from .plot import animate_model
 from ..assembler import Assembler
 
-def _create_int_spinbox(value=0, step=1, minimum=-100, maximum=100):
-    widget = QSpinBox()
-    widget.setMinimum(minimum)
-    widget.setMaximum(maximum)
-    widget.setValue(value)
-    widget.setSingleStep(step)
-    return widget
+def interact(model, dof):
+    app = QApplication([])
 
-def _create_double_spinbox(value=0, step=0.1, minimum=None, maximum=None):
-    widget = QDoubleSpinBox()
-    widget.setMinimum(minimum if minimum else -Qt.qInf())
-    widget.setMaximum(maximum if maximum else Qt.qInf())
-    widget.setValue(value)
-    widget.setSingleStep(step)
-    return widget
+    window = InteractiveWindow(model, dof=dof)
+    window.show()
 
-def _create_free_dof_combobox(model, assembler=None, value=None):
-    if assembler is None:
-        assembler = Assembler(model)
-    widget = QComboBox()
-    for free_dof in assembler.free_dofs:
-        widget.addItem(_dof_to_string(free_dof, assembler))
+    app.exec_()
 
-    if value is not None:
-        index = assembler.index_of_dof(value)
-        widget.setCurrentIndex(index)
-    return widget
+    return window.model
 
-def _dof_to_string(dof, assembler):
-    index = assembler.index_of_dof(dof)
-    return 'Dof #{}: {} {}'.format(index+1, dof[0], dof[1])
-
-def _string_to_dof(string, assembler):
-    dof_number = int(string[ 5:string.index(':')-1])
-    return assembler.dof_at_index(dof_number-1)
-
-class Stream(QtCore.QObject):
-    textWritten = QtCore.pyqtSignal(str)
-
-    def write(self, text):
-        self.textWritten.emit(str(text))
 
 class InteractiveWindow(QWidget):
     def __init__(self, model, dof):
         super(InteractiveWindow, self).__init__()
 
+        self.options = Options()
+
         self.branches = [model]
         self.dof = dof
-
-        self.tolerance = -5
-        self.max_iterations = 100
-
-        self.solve_det_k = True
-        self.solve_eigenvalue = False
 
         self.animation_window = None
 
@@ -88,27 +55,15 @@ class InteractiveWindow(QWidget):
 
         # --- sidebar
 
-        sidebar = self._create_sidebar()
+        sidebar = Sidebar(self)
         layout.addWidget(sidebar, 1, 1, 2, 1)
 
         # --- plot_canvas
 
-        figure = Figure(dpi=80)
-        self.figure = figure
+        canvas = Canvas(self)
+        layout.addWidget(canvas, 1, 2, 1, 1)
+        self.redraw = canvas.redraw
 
-        plot_canvas = FigureCanvasQTAgg(figure)
-        plot_canvas.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(plot_canvas, 1, 2, 1, 1)
-        self.plot_canvas = plot_canvas
-
-        plot_3d = figure.add_subplot(1, 2, 1, projection='3d')
-        self.plot_3d = plot_3d
-
-        plot_2d = figure.add_subplot(1, 2, 2)
-        self.plot_2d = plot_2d
-
-        self.redraw()
-        
         # --- log
 
         widget = QTextEdit()
@@ -118,170 +73,6 @@ class InteractiveWindow(QWidget):
         widget.setFrameStyle(QFrame.HLine)
         layout.addWidget(widget, 2, 2, 1, 1)
         self.logTextEdit = widget
-        
-        sys.stdout = Stream(textWritten=self.write_log)
-
-    def __del__(self):
-        # restore default output
-        sys.stdout = sys.__stdout__
-
-    def _create_sidebar(self):
-        sidebar = QWidget(self)
-        sidebar.setFixedWidth(250)
-        sidebar.setContentsMargins(0, 0, 0, 0)
-
-        layout = QVBoxLayout()
-        sidebar.setLayout(layout)
-
-        # --- prediction
-
-        widget = QGroupBox('Prediction', self)
-        layout.addWidget(widget)
-
-        group_layout = QVBoxLayout()
-        widget.setLayout(group_layout)
-
-        node_id, dof_type = self.dof
-
-        widget = QComboBox()
-        widget.addItem('Set load factor (λ)')
-        widget.addItem('Increment load factor (λ)')
-        widget.addItem('Set {} at node {}'.format(dof_type, node_id))
-        widget.addItem('Increment {} at node {}'.format(dof_type, node_id))
-        widget.addItem('Set prediction')
-        widget.addItem('Set direction')
-        group_layout.addWidget(widget)
-        self._predictor_combobox = widget
-        
-        widget = QStackedWidget()
-        widget.addWidget(_LoadPredictorWidget(self))
-        widget.addWidget(_LoadIncrementPredictorWidget(self))
-        widget.addWidget(_DisplacementPredictorWidget(self, self.dof))
-        widget.addWidget(_DisplacementIncrementPredictorWidget(self, self.dof))
-        widget.addWidget(_ExplicitPredictorWidget(self, self.dof))
-        widget.addWidget(_DirectionPredictorWidget(self, self.dof))
-        group_layout.addWidget(widget)
-        self._predictor_stack = widget
-
-        self._predictor_combobox.currentIndexChanged.connect(self._predictor_stack.setCurrentIndex)
-
-        # --- strategy
-
-        widget = QGroupBox('Constraint', self)
-        layout.addWidget(widget)
-
-        group_layout = QVBoxLayout()
-        widget.setLayout(group_layout)
-
-        widget = QComboBox()
-        widget.addItem('Linear', 'linear')
-        widget.addItem('Load control', 'load-control')
-        widget.addItem('Displacement control', 'displacement-control')
-        widget.addItem('Arc-length control', 'arc-length-control')
-        group_layout.addWidget(widget)
-        self._strategy_combobox = widget
-
-        # --- solution
-
-        widget = QGroupBox('Solution', self)
-        layout.addWidget(widget)
-
-        group_layout = QVBoxLayout()
-        widget.setLayout(group_layout)
-
-        widget = QGroupBox('Newton-Raphson', widget)
-        group_layout.addWidget(widget)
-
-        nr_group_layout = QVBoxLayout()
-        widget.setLayout(nr_group_layout)
-
-        widget = QLabel('Tolerance:')
-        nr_group_layout.addWidget(widget)
-
-        widget = QWidget()
-        nr_group_layout.addWidget(widget)
-
-        tolerance_layout = QHBoxLayout()
-        tolerance_layout.setContentsMargins(0, 0, 0, 0)
-        widget.setLayout(tolerance_layout)
-
-        widget = QLabel('10^')
-        tolerance_layout.addWidget(widget)
-
-        widget = _create_int_spinbox(value=self.tolerance)
-        widget.valueChanged.connect(self._set_tolerance)
-        tolerance_layout.addWidget(widget, 1)
-
-        widget = QLabel('Maximum iterations:')
-        nr_group_layout.addWidget(widget)
-
-        widget = _create_int_spinbox(value=self.max_iterations, minimum=0, maximum=1000)
-        widget.valueChanged.connect(self._set_max_iterations)
-        nr_group_layout.addWidget(widget)
-
-        # --- ---  other solution options
-
-        widget = QCheckBox('Solve Det(K)')
-        widget.setChecked(self.solve_det_k)
-        widget.stateChanged.connect(self._set_solve_det_K)
-        group_layout.addWidget(widget)
-
-        widget = QCheckBox('Solve attendant eigenvalue analysis')        
-        widget.setChecked(self.solve_eigenvalue)
-        widget.stateChanged.connect(self._set_solve_eigenvalue_analysis)
-        group_layout.addWidget(widget)
-
-        #  --- --- action
-     
-        button = QPushButton('Solve')
-        button.clicked.connect(self.solve_button_click)
-        group_layout.addWidget(button)
-
-        # --- space
-
-        layout.addStretch(1)
-
-        # --- path control
-
-        widget = QGroupBox('Path control', self)
-        layout.addWidget(widget)
-
-        group_layout = QVBoxLayout()
-        widget.setLayout(group_layout)
-
-        button = QPushButton('Go back')
-        button.clicked.connect(self.go_back_button_click)
-        group_layout.addWidget(button)
-
-        button = QPushButton('Reset path')
-        button.clicked.connect(self.reset_branch_button_click)
-        group_layout.addWidget(button)
-
-        button = QPushButton('New path')
-        button.clicked.connect(self.new_branch_button_click)
-        group_layout.addWidget(button)
-
-        button = QPushButton('Reset all')
-        button.clicked.connect(self.reset_button_click)
-        group_layout.addWidget(button)
-
-        button = QPushButton('Animation')
-        button.clicked.connect(self._animation_button_click)
-        layout.addWidget(button)
-
-        return sidebar
-
-    def _set_tolerance(self, value):
-        self.tolerance = value
-
-    def _set_max_iterations(self, value):
-        self.max_iterations = value
-
-    def _set_solve_det_K(self, value):
-        self.solve_det_k = value
-
-    def _set_solve_eigenvalue_analysis(self, value):
-        self.solve_eigenvalue = value
 
     @property
     def model(self):
@@ -291,49 +82,52 @@ class InteractiveWindow(QWidget):
     def model(self, value):
         self.branches[-1] = value
 
-    def solve_button_click(self):
+    def solve_click(self):
         try:
             model = self.model.get_duplicate()
 
-            dof = self.dof
+            solver = self.options['solver']
 
-            self._predictor_stack.currentWidget().predict(model)
-
-            selected_strategy = self._strategy_combobox.currentData()
-
-            tolerance = 10**self.tolerance
-            max_iterations = self.max_iterations
-
-            if selected_strategy == 'linear':
+            if solver == 'linear':
+                model.lam = self.options['linear/loadfactor']
                 model.perform_linear_solution_step()
-            elif selected_strategy == 'load-control':
+            elif solver == 'nonlinear':
+                predictor = self.options['nonlinear/predictor']
+
+                if predictor == 'loadfactor':
+                    model.lam = self.options['nonlinear/predictor/loadfactor']
+                elif predictor == 'loadfactor_increment':
+                    model.lam += self.options['nonlinear/predictor/loadfactor_increment']
+                elif predictor == 'dof_value':
+                    dof = self.options['nonlinear/predictor/dof']
+                    dof_value = self.options['nonlinear/predictor/dof_value']
+                    model.set_dof_state(dof, dof_value)
+                    print(model.get_dof_state(dof))
+                elif predictor == 'dof_value_increment':
+                    dof = self.options['nonlinear/predictor/dof']
+                    dof_value_increment = self.options['nonlinear/predictor/dof_value_increment']
+                    model.increment_dof_state(dof, dof_value_increment)
+                    print(model.get_dof_state(dof))
+                else:
+                    raise Exception(f'Unknown predictor {predictor}')
+
+                constraint = self.options['nonlinear/constraint']
+                constraint_dof = self.options['nonlinear/constraint/dof']
+                tolerance = self.options['nonlinear/newtonraphson/tolerance']
+                max_iterations = self.options['nonlinear/newtonraphson/maxiterations']
+                determinant = self.options['nonlinear/solution/determinant']
+                eigenproblem = self.options['nonlinear/solution/eigenproblem']
+
                 model.perform_non_linear_solution_step(
-                    strategy=selected_strategy,
-                    tolerance=tolerance,
+                    strategy=constraint,
+                    tolerance=10**tolerance,
+                    dof=constraint_dof,
                     max_iterations=max_iterations,
-                    solve_det_k=self.solve_det_k,
-                    solve_attendant_eigenvalue=self.solve_eigenvalue,
-                )
-            elif selected_strategy == 'displacement-control':
-                model.perform_non_linear_solution_step(
-                    strategy=selected_strategy,
-                    dof=dof,
-                    tolerance=tolerance,
-                    max_iterations=max_iterations,
-                    solve_det_k=self.solve_det_k,
-                    solve_attendant_eigenvalue=self.solve_eigenvalue,
-                )
-            elif selected_strategy == 'arc-length-control':
-                model.perform_non_linear_solution_step(
-                    strategy=selected_strategy,
-                    tolerance=tolerance,
-                    max_iterations=max_iterations,
-                    solve_det_k=self.solve_det_k,
-                    solve_attendant_eigenvalue=self.solve_eigenvalue,
+                    solve_det_k=determinant,
+                    solve_attendant_eigenvalue=eigenproblem
                 )
             else:
-                raise RuntimeError('Invalid solution strategy:', selected_strategy)
-
+                raise Exception(f'Unknown solver {solver}')
         except Exception as e:
             QMessageBox(QMessageBox.Critical, 'Error', str(e), QMessageBox.Ok, self).show()
             return
@@ -342,7 +136,23 @@ class InteractiveWindow(QWidget):
 
         self.redraw()
 
-    def new_branch_button_click(self):
+    def go_back_click(self):
+        if self.model.get_previous_model() is None:
+            return
+
+        self.model = self.model.get_previous_model()
+
+        self.redraw()
+
+    def reset_path_click(self):
+        if self.model.get_previous_model() is None:
+            return
+
+        self.model = self.model.get_initial_model()
+
+        self.redraw()
+
+    def new_path_click(self):
         new_model = self.model.get_duplicate()
 
         new_model._previous_model= self.model.get_previous_model()
@@ -351,65 +161,30 @@ class InteractiveWindow(QWidget):
 
         self.redraw()
 
-    def go_back_button_click(self):
-        if self.model.get_previous_model() is None:
-            return
-
-        self.model = self.model.get_previous_model()
-
-        self.redraw()
-
-    def reset_branch_button_click(self):
-        if self.model.get_previous_model() is None:
-            return
-
-        self.model = self.model.get_initial_model()
-
-        self.redraw()
-
-    def reset_button_click(self):
+    def reset_all_click(self):
         model = self.model.get_initial_model()
 
         self.branches = [model]
 
         self.redraw()
 
-    def _animation_button_click(self):
+    def show_animation_click(self):
         if self.animation_window is not None:
             self.animation_window.close()
         model = self.model
-        self.animation_window = _AnimationWindow(self, model)      
-
-    def redraw(self):
-        model = self.model
-        node_id, dof_type = self.dof
-
-        plot_3d = self.plot_3d
-        plot_2d = self.plot_2d
-
-        plot_3d.clear()
-        plot_3d.grid()
-
-        plot_bounding_cube(plot_3d, model)
-
-        plot_model(plot_3d, model, 'gray', True)
-        plot_model(plot_3d, model, 'red', False)
-
-        plot_2d.clear()
-        plot_2d.set(xlabel='{} at node {}'.format(dof_type, node_id), ylabel='Load factor ($\lambda$)', title='Load-displacement diagram')
-        plot_2d.set_facecolor('white')
-        plot_2d.yaxis.tick_right()
-        plot_2d.yaxis.set_label_position('right')
-        plot_2d.grid()
-
-        for model in self.branches:
-            plot_load_displacement_curve(plot_2d, model, self.dof)
-
-        self.plot_canvas.draw()
+        self.animation_window = AnimationWindow(self, model)
+    
+    def showEvent(self, event):
+        # redirect console output
+        sys.stdout = Stream(textWritten=self.write_log)
 
     def closeEvent(self, event):
+        # restore default console output
+        sys.stdout = sys.__stdout__
+
         if self.animation_window is not None:
             self.animation_window.close()
+
         super(InteractiveWindow, self).closeEvent(event) 
 
     def write_log(self, text):
@@ -420,203 +195,558 @@ class InteractiveWindow(QWidget):
         self.logTextEdit.ensureCursorVisible()
 
 
-class _LoadPredictorWidget(QWidget):
+def _dof_to_str(dof):
+    node_id, dof_type = dof
+    return f'\'{dof_type}\' at \'{node_id}\''
+
+def _free_dof_items(model):
+    # FIXME remove this function
+    assembler = Assembler(model)
+
+    return [(_dof_to_str(dof), dof) for dof in assembler.free_dofs]
+
+
+class LoadDisplacementLogger(object):
+    def __init__(self, dof):
+        self.dof = dof
+
+    @property
+    def title(self):
+        node_id, dof_type = self.dof
+        return f'Load-displacement diagram for {dof_type} at node {node_id}'
+
+    @property
+    def xlabel(self):
+        node_id, dof_type = self.dof
+        return f'{dof_type} at node {node_id}'
+
+    @property
+    def ylabel(self):
+        return f'Load factor ($\lambda$)'
+
+    def __call__(self, model):
+        return model.get_dof_state(self.dof), model.lam
+
+
+class Options(QObject):
+    changed = pyqtSignal(str)
+
+    def __init__(self):
+        super(Options, self).__init__()
+        self._root = ''
+        self._data = dict()
+
+        self['linear/loadfactor'] = 1.0
+        self['nonlinear/predictor/loadfactor'] = 0.0
+        self['nonlinear/predictor/loadfactor_increment'] = 0.1
+        self['nonlinear/predictor/dof_value'] = 0.0
+        self['nonlinear/predictor/dof_value_increment'] = 0.1
+        self['nonlinear/constraint/dof'] = None
+        self['nonlinear/constraint/arclength'] = 0.1
+        self['nonlinear/newtonraphson/maxiterations'] = 1000
+        self['nonlinear/newtonraphson/tolerance'] = -5
+        self['nonlinear/solution/determinant'] = False
+        self['nonlinear/solution/eigenproblem'] = False
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
+        self.changed.emit(key)
+
+
+class WidgetBase(QWidget):
     def __init__(self, parent):
-        super(_LoadPredictorWidget, self).__init__(parent)
+        super(WidgetBase, self).__init__(parent)
 
-        self._lam = 0.0
+    def master(self):
+        current = self
+
+        while current.parent() is not None:
+            current = current.parent()
+
+        return current
+
+    def get_option(self, key):
+        return self.master().options[key]
+
+    def set_option(self, key, value):
+        self.master().options[key] = value
+
+class Widget(WidgetBase):
+    def __init__(self, parent, widgets=[]):
+        super(Widget, self).__init__(parent)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
+        self._layout = layout
 
-        widget = _create_double_spinbox(self._lam)
-        widget.valueChanged.connect(self._set_lam)
+        for widget in widgets:
+            self.add_widget(widget)
+
+    def add_widget(self, widget):
+        self._layout.addWidget(widget)
+    
+    def add_group(self, label, content=None):
+        group = QGroupBox(label)
+        self.add_widget(group)
+
+        layout = QVBoxLayout()
+        group.setLayout(layout)
+
+        widget = content or Widget(self)
+
         layout.addWidget(widget)
 
         layout.addStretch(1)
 
-    def _set_lam(self, value):
-        self._lam = value
+        return widget
 
-    def predict(self, model):
-        model.lam = self._lam
+    def add_stack(self, *args, **kwargs):
+        stack = StackWidget(self, *args, **kwargs)
+        self.add_widget(stack)
+        return stack
 
-class _LoadIncrementPredictorWidget(QWidget):
-    def __init__(self, parent):
-        super(_LoadIncrementPredictorWidget, self).__init__(parent)
+    def add_stretch(self):
+        self._layout.addStretch(1)
 
-        self._delta_lam = 0.1
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-
-        widget = _create_double_spinbox(self._delta_lam)
-        widget.valueChanged.connect(self._set_delta_lam)
-        layout.addWidget(widget)
-
-        layout.addStretch(1)
-
-    def _set_delta_lam(self, value):
-        self._delta_lam = value
-
-    def predict(self, model):
-        model.lam += self._delta_lam
-
-class _DisplacementPredictorWidget(QWidget):
-    def __init__(self, parent, dof):
-        super(_DisplacementPredictorWidget, self).__init__(parent)
-
-        self._dof = dof
-        self._d = 0.0
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-
-        widget = _create_double_spinbox(self._d)
-        widget.valueChanged.connect(self._set_d)
-        layout.addWidget(widget)
-
-        layout.addStretch(1)
-
-    def _set_d(self, value):
-        self._d = value
-
-    def predict(self, model):
-        model.set_dof_state(self._dof, self._d)
-
-class _DisplacementIncrementPredictorWidget(QWidget):
-    def __init__(self, parent, dof):
-        super(_DisplacementIncrementPredictorWidget, self).__init__(parent)
-
-        self._dof = dof
-        self._delta_d = -0.1
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-
-        widget = _create_double_spinbox(self._delta_d)
-        widget.valueChanged.connect(self._set_delta_d)
-        layout.addWidget(widget)
-
-        layout.addStretch(1)
-
-    def _set_delta_d(self, value):
-        self._delta_d = value
-
-    def predict(self, model):
-        current_d = model.get_dof_state(self._dof)
-        model.set_dof_state(self._dof, current_d + self._delta_d)
-
-class _ExplicitPredictorWidget(QWidget):
-    def __init__(self, parent, dof):
-        super(_ExplicitPredictorWidget, self).__init__(parent)
-
-        self._dof = dof
-        self._lam = 0.0
-        self._d = 0.0
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-
-        widget = QLabel('Set load factor (λ):')
-        layout.addWidget(widget)
-
-        widget = _create_double_spinbox(self._lam)
-        widget.valueChanged.connect(self._set_lam)
-        layout.addWidget(widget)
-
-        widget = QLabel('Set {} at {}:'.format(dof[1], dof[0]))
-        layout.addWidget(widget)
-
-        widget = _create_double_spinbox(self._d)
-        widget.valueChanged.connect(self._set_d)
-        layout.addWidget(widget)
-
-        layout.addStretch(1)
-
-    def _set_lam(self, value):
-        self._lam = value
-
-    def _set_d(self, value):
-        self._d = value
-
-    def predict(self, model):
-        model.lam = self._lam
-        model.set_dof_state(self._dof, self._d)
-
-class _DirectionPredictorWidget(QWidget):
-    def __init__(self, parent, dof):
-        super(_DirectionPredictorWidget, self).__init__(parent)
-
-        self._dof = dof
-        self._delta_lam = 0.1
-        self._delta_d = -0.1
-        self._scale = True
-        self._length = 0.1
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-
-        widget = QLabel('Increment load factor (λ):')
-        layout.addWidget(widget)
-
-        widget = _create_double_spinbox(self._delta_lam)
-        widget.valueChanged.connect(self._set_delta_lam)
-        layout.addWidget(widget)
+    def add_spinbox(self, label=None, dtype=int, prefix=None, postfix=None, step=None, minimum=None, maximum=None, option_key=None):
+        if label is not None:
+            widget = QLabel(label)
+            self.add_widget(widget)
         
-        widget = QLabel('Increment {} at {}:'.format(dof[1], dof[0]))
-        layout.addWidget(widget)
+        row = QWidget()
+        row_layout = QHBoxLayout()
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row.setLayout(row_layout)
+        self.add_widget(row)
 
-        widget = _create_double_spinbox(self._delta_d)
-        widget.valueChanged.connect(self._set_delta_d)
-        layout.addWidget(widget)
+        if prefix:
+            widget = QLabel(prefix)
+            row_layout.addWidget(widget)
+        
+        if dtype is int:
+            widget = QSpinBox()
+            widget.setMinimum(minimum or -100)
+            widget.setMaximum(maximum or 100)
+            widget.setSingleStep(step or 1)
+        elif dtype is float:
+            widget = QDoubleSpinBox()
+            widget.setMinimum(minimum or -Qt.qInf())
+            widget.setMaximum(maximum or Qt.qInf())
+            widget.setSingleStep(step or 0.1)
+        else:
+            raise ValueError(f'Wrong dtype "{dtype.__name__}"')
 
-        widget = QCheckBox('Set length:')
-        widget.setChecked(self._scale)
-        widget.stateChanged.connect(self._set_scale)
-        layout.addWidget(widget)
+        widget.setValue(self.get_option(option_key))
+        widget.valueChanged.connect(lambda value: self.set_option(option_key, value))
 
-        widget = _create_double_spinbox(self._length)
-        widget.valueChanged.connect(self._set_length)
-        layout.addWidget(widget)
+        row_layout.addWidget(widget, 1)
+
+        if postfix:
+            widget = QLabel(postfix)
+            row_layout.addWidget(widget)
+
+        return widget
+
+    def add_checkbox(self, label, option_key):
+        widget = QCheckBox(label)
+        widget.setChecked(self.get_option(option_key))
+        widget.stateChanged.connect(lambda value: self.set_option(option_key, value != 0))
+        self.add_widget(widget)
+
+    def add_combobox(self, items, option_key):
+        widget = QComboBox()
+
+        for label, value in items:
+            widget.addItem(label, value)
+
+        widget.currentIndexChanged.connect(lambda index: self.set_option(option_key, widget.currentData()))
+        widget.setCurrentIndex(0)
+
+        self.add_widget(widget)
+
+    def add_free_dof_combobox(self, option_key):
+        assembler = Assembler(self.master().model)
+
+        return self.add_combobox(
+            items=[(_dof_to_str(dof), dof) for dof in assembler.free_dofs],
+            option_key=option_key
+        )
+
+    def add_button(self, label, action):
+        button = QPushButton(label)
+        button.clicked.connect(action)
+        self._layout.addWidget(button)
+
+        return button
+
+class StackWidget(WidgetBase):
+    def __init__(self, parent, option_key=None):
+        super(StackWidget, self).__init__(parent)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        combobox = QComboBox()
+        layout.addWidget(combobox)
+        self._combobox = combobox
+
+        stack = QStackedWidget()
+        layout.addWidget(stack)
+        self._stack = stack
+
+        combobox.currentIndexChanged.connect(stack.setCurrentIndex)
+        combobox.currentIndexChanged.connect(lambda value: self.set_option(option_key, combobox.currentData()))
 
         layout.addStretch(1)
 
-    def _set_scale(self, value):
-        self._scale = value
+    def add_page(self, label, option_value=None, content=None):
+        self._combobox.addItem(label, option_value)
 
-    def _set_delta_lam(self, value):
-        self._delta_lam = value
+        widget = content or Widget(self)
+        self._stack.addWidget(widget)
+        
+        return widget
 
-    def _set_delta_d(self, value):
-        self._delta_d = value
+    def selected_widget(self):
+        return self._stack.currentWidget()
 
-    def _set_length(self, value):
-        self._length = value
 
-    def predict(self, model):
-        current_d = model.get_dof_state(self._dof)
+class Sidebar(Widget):
+    def __init__(self, parent):
+        super(Sidebar, self).__init__(parent)
 
-        delta_lam = self._delta_lam
-        delta_d = self._delta_d
+        self.setFixedWidth(250)
+        self._layout.setContentsMargins(8, 8, 8, 8)
 
-        if self._scale:
-            factor = self._length / la.norm([delta_lam, delta_d])
-            delta_lam *= factor
-            delta_d *= factor
+        stack = self.add_stack(option_key='solver')
+        stack.add_page(
+            label='Linear',
+            option_value='linear',
+            content=LinearSettings(self)
+        )
+        stack.add_page(
+            label='Nonlinear',
+            option_value='nonlinear',
+            content=NonlinearSettings(self)
+        )
+        
+        self.add_stretch()
 
-        model.lam += delta_lam
-        model.set_dof_state(self._dof, current_d + delta_d)
+        self.add_button(
+            label='Solve',
+            action=self.master().solve_click
+        )
+        self.add_button(
+            label='Go back',
+            action=self.master().go_back_click
+        )
+        self.add_button(
+            label='Reset path',
+            action=self.master().reset_path_click
+        )
+        self.add_button(
+            label='New path',
+            action=self.master().new_path_click
+        )
+        self.add_button(
+            label='Reset all',
+            action=self.master().reset_all_click
+        )
+        self.add_button(
+            label='Show animation',
+            action=self.master().show_animation_click
+        )
 
-class _AnimationWindow(QWidget):
+class Canvas(WidgetBase):
+    def __init__(self, parent):
+        super(Canvas, self).__init__(parent)
+
+        layout = QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self.setLayout(layout)
+
+        figure3d = Figure(dpi=80)
+        canvas3d = FigureCanvasQTAgg(figure3d)
+        canvas3d.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(canvas3d, 1, 1, 2, 1)
+        self.canvas3d = canvas3d
+
+        plot3d = figure3d.add_subplot(111, projection='3d')
+        self.plot3d = plot3d
+
+        figure2d = Figure(dpi=80)
+        canvas2d = FigureCanvasQTAgg(figure2d)
+        canvas2d.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(canvas2d, 2, 2, 1, 1)
+        self.canvas2d = canvas2d
+
+        plot2d = figure2d.add_subplot(111)
+        self.plot2d = plot2d
+
+        assembler = Assembler(self.master().model)
+
+        # FIXME make this cleaner...
+        dof_selector = QComboBox()
+        for dof in assembler.free_dofs:
+            logger = LoadDisplacementLogger(dof)
+            dof_selector.addItem(logger.title, logger)
+        layout.addWidget(dof_selector, 1, 2, 1, 1)
+        dof_selector.currentIndexChanged.connect(lambda _: self.set_option('plot/logger', dof_selector.currentData()))
+        dof_selector.currentIndexChanged.connect(lambda _: self.redraw())
+        dof_selector.setCurrentIndex(1)
+        dof_selector.setCurrentIndex(0)
+
+        self.redraw()
+
+    def redraw(self):
+        model = self.master().model
+
+        logger = self.get_option('plot/logger')
+
+        node_id, dof_type = logger.dof
+
+        plot3d = self.plot3d
+        plot2d = self.plot2d
+
+        plot3d.clear()
+        plot3d.grid()
+
+        plot_bounding_cube(plot3d, model)
+
+        plot_model(plot3d, model, 'gray', True)
+        plot_model(plot3d, model, 'red', False)
+
+        plot2d.clear()
+        plot2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
+        plot2d.set_facecolor('white')
+        plot2d.yaxis.tick_right()
+        plot2d.yaxis.set_label_position('right')
+        plot2d.grid()
+
+        for model in self.master().branches:
+            plot_history_curve(plot2d, model, logger, '-o')
+
+        self.canvas3d.draw()
+        self.canvas2d.draw()
+
+
+class LinearSettings(Widget):
+    def __init__(self, parent):
+        super(LinearSettings, self).__init__(parent)
+
+        settings = self.add_group('Load factor (λ)')
+        settings.add_spinbox(
+            dtype=float,
+            option_key='linear/loadfactor'
+        )
+
+        self.add_stretch()
+
+class NonlinearSettings(Widget):
+    def __init__(self, parent):
+        super(NonlinearSettings, self).__init__(parent)
+
+        self.add_group(
+            label='Predictor',
+            content=PredictorSettings(self)
+        )
+        self.add_group(
+            label='Constraint',
+            content=ConstraintSettings(self)
+        )
+        self.add_group(
+            label='Newton-Raphson Solver',
+            content=NewtonRaphsonSettings(self)
+        )
+        self.add_group(
+            label='Solution',
+            content=SolutionSettings(self)
+        )
+
+        self.add_stretch()
+
+
+class PredictorSettings(StackWidget):
+    def __init__(self, parent):
+        super(PredictorSettings, self).__init__(parent,
+            option_key='nonlinear/predictor'
+        )
+
+        self.add_page(
+            label='Set load factor (λ)',
+            option_value='loadfactor',
+            content=LoadPredictorSettings(self)
+        )
+        self.add_page(
+            label='Increment load factor (λ)',
+            option_value='loadfactor_increment',
+            content=LoadIncrementPredictorSettings(self)
+        )
+        self.add_page(
+            label=f'Set Dof value',
+            option_value='dof_value',
+            content=DofPredictorSettings(self)
+        )
+        self.add_page(
+            label=f'Increment Dof value',
+            option_value='dof_value_increment',
+            content=DofIncrementPredictorSettings(self)
+        )
+        # FIME add additional predictors
+        # self.add_page(
+        #     label='Set prediction',
+        #     content=SetPredictorSettings(self)
+        # )
+        # self.add_page(
+        #     label='Set direction',
+        #     content=SetPredictorDirectionSettings(self)
+        # )
+
+class ConstraintSettings(StackWidget):
+    def __init__(self, parent):
+        super(ConstraintSettings, self).__init__(parent,
+            option_key='nonlinear/constraint'
+        )
+
+        self.add_page(
+            label='Load control',
+            option_value='load-control',
+            content=LoadControlSettings(parent)
+        )
+        self.add_page(
+            label='Displacement control',
+            option_value='displacement-control',
+            content=DisplacementControlSettings(parent)
+        )
+        self.add_page(
+            label='Arc-length',
+            option_value='arc-length-control',
+            content=ArcLengthSettings(parent)
+        )
+
+class NewtonRaphsonSettings(Widget):
+    def __init__(self, parent):
+        super(NewtonRaphsonSettings, self).__init__(parent)
+
+        self.add_spinbox(
+            dtype=int,
+            label='Maximum iterations',
+            minimum=1,
+            maximum=5000,
+            option_key='nonlinear/newtonraphson/maxiterations'
+        )
+        self.add_spinbox(
+            dtype=int,
+            label='Tolerance',
+            prefix='10^',
+            minimum=-1,
+            maximum=-10,
+            option_key='nonlinear/newtonraphson/tolerance'
+        )
+
+class SolutionSettings(Widget):
+    def __init__(self, parent):
+        super(SolutionSettings, self).__init__(parent)
+
+        self.add_checkbox(
+            label='Det(K)',
+            option_key='nonlinear/solution/determinant'
+        )
+        self.add_checkbox(
+            label='Solve attendant eigenvalue analysis',
+            option_key='nonlinear/solution/eigenproblem'
+        )
+
+
+class LoadPredictorSettings(Widget):
+    def __init__(self, parent):
+        super(LoadPredictorSettings, self).__init__(parent)
+
+        self.add_spinbox(
+            dtype=float,
+            option_key='nonlinear/predictor/loadfactor'
+        )
+        self.add_stretch()
+
+class LoadIncrementPredictorSettings(Widget):
+    def __init__(self, parent):
+        super(LoadIncrementPredictorSettings, self).__init__(parent)
+
+        self.add_spinbox(
+            dtype=float,
+            option_key='nonlinear/predictor/loadfactor_increment'
+        )
+        self.add_stretch()
+
+class DofPredictorSettings(Widget):
+    def __init__(self, parent):
+        super(DofPredictorSettings, self).__init__(parent)
+
+        self.add_free_dof_combobox(
+            option_key='nonlinear/predictor/dof'
+        )
+
+        self.add_spinbox(
+            dtype=float,
+            option_key='nonlinear/predictor/dof_value'
+        )
+
+        self.add_stretch()
+
+class DofIncrementPredictorSettings(Widget):
+    def __init__(self, parent):
+        super(DofIncrementPredictorSettings, self).__init__(parent)
+
+        self.add_free_dof_combobox(
+            option_key='nonlinear/predictor/dof'
+        )
+
+        self.add_spinbox(
+            dtype=float,
+            option_key='nonlinear/predictor/dof_value_increment'
+        )
+
+        self.add_stretch()
+
+
+class LoadControlSettings(Widget):
+    def __init__(self, parent):
+        super(LoadControlSettings, self).__init__(parent)
+
+        self.add_stretch()
+
+class DisplacementControlSettings(Widget):
+    def __init__(self, parent):
+        super(DisplacementControlSettings, self).__init__(parent)
+
+        self.add_free_dof_combobox(
+            option_key='nonlinear/constraint/dof'
+        )
+
+        self.add_stretch()
+
+class ArcLengthSettings(Widget):
+    def __init__(self, parent):
+        super(ArcLengthSettings, self).__init__(parent)
+
+        self.add_spinbox(
+            option_key='nonlinear/constraint/arclength',
+            dtype=float
+        )
+
+        self.add_stretch()
+
+
+class AnimationWindow(QWidget):
     def __init__(self, parent, model):
-        super(_AnimationWindow, self).__init__()
+        super(AnimationWindow, self).__init__()
 
         self.setWindowTitle('Animation')
 
@@ -639,12 +769,9 @@ class _AnimationWindow(QWidget):
 
         self.show()
 
-def interact(model, dof):
-    app = QApplication([])
 
-    window = InteractiveWindow(model, dof=dof)
-    window.show()
+class Stream(QObject):
+    textWritten = QtCore.pyqtSignal(str)
 
-    app.exec_()
-
-    return window.model
+    def write(self, text):
+        self.textWritten.emit(str(text))
