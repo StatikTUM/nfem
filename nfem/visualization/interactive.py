@@ -121,6 +121,10 @@ class InteractiveWindow(QWidget):
         
         sys.stdout = Stream(textWritten=self.write_log)
 
+    def __del__(self):
+        # restore default output
+        sys.stdout = sys.__stdout__
+
     def _create_sidebar(self):
         sidebar = QWidget(self)
         sidebar.setFixedWidth(250)
