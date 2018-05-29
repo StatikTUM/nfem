@@ -663,14 +663,16 @@ class Model(object):
         self.det_k =  la.det(k[:free_count,:free_count])
         print("Det(K): {}".format(self.det_k))
 
-    def solve_eigenvalues(self, assembler=None):
+    def solve_eigenvalues(self, assembler=None, linearized_prebuckling=False):
         """Solves the eigenvalue problem
-           [ k_m + eigvals * k_g ] * eigvecs = 0
+           [ k_m + eigvals * k_g ] * eigvecs = 0 
 
         Parameters
         ----------
         assembler : Object (optional)
             assembler can be passed to speed up
+        linearized_prebuckling : bool (optional)
+            If True, linearized prebuckling assumption u=0 : k_m = k_e is used
         """
         # [ k_m + eigvals * k_g ] * eigvecs = 0
         if assembler is None:
@@ -682,22 +684,36 @@ class Model(object):
         # assemble matrices
         k_m = np.zeros((dof_count, dof_count))
         k_g = np.zeros((dof_count, dof_count))
-        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
+        if linearized_prebuckling:
+            assembler.assemble_matrix(k_m, lambda element: element.calculate_elastic_stiffness_matrix())
+        else:
+            assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
 
         # solve eigenvalue problem
         eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
+
+        # extract real parts of eigenvalues
+        eigvals = np.array([x.real for x in eigvals])
 
         # sort eigenvalues and vectors
         idx = eigvals.argsort()
         eigvals = eigvals[idx]
         eigvecs = eigvecs[:,idx]
 
-        print("First eigenvalue: {}".format(eigvals[0].real))
-        print("First eigenvalue * lambda: {}".format(eigvals[0].real * self.lam)) # this is printed in TRUSS
+        print("First eigenvalue: {}".format(eigvals[0]))
+        print("First eigenvalue * lambda: {}".format(eigvals[0] * self.lam)) # this is printed in TRUSS
         print("First eigenvector: {}".format(eigvecs[0]))
+        
+        # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
+        idx = (np.abs(eigvals - 1.0)).argmin()
 
-        self.first_eigenvalue = eigvals[0].real
+        if (idx != 0):
+            print("== Closest eigenvalue: {}".format(eigvals[idx]))
+            print("== Closest eigenvalue * lambda: {}".format(eigvals[idx] * self.lam)) # this is printed in TRUSS
+            print("== Closest eigenvector: {}".format(eigvecs[idx]))
+
+        self.first_eigenvalue = eigvals[idx]
 
         # store eigenvector as model
         model = self.get_duplicate()
@@ -710,7 +726,7 @@ class Model(object):
 
         for index, dof in enumerate(assembler.free_dofs):
 
-            value = eigvecs[0][index]
+            value = eigvecs[idx][index]
 
             model.set_dof_state(dof, value)
 
