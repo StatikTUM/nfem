@@ -7,11 +7,12 @@ import numpy as np
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.figure import Figure
-from matplotlib.collections import LineCollection
+from mpl_toolkits.mplot3d.art3d import Line3DCollection
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 
 from ..truss import Truss
+from ..model import ModelStatus
 
 class Plot2D(object):
 
@@ -69,13 +70,16 @@ class Plot2D(object):
     def show(self):
         """Shows the plot with all the curves that have been added.
         """
-        self.ax.legend(loc='upper left')
+        self.ax.legend(loc='best')
         plt.show()
 
 class Animation3D(object):
 
     def show(self, model, speed=200):
-        self.animation = show_history_animation(model, speed)
+        if model.status == ModelStatus.eigenvector:
+            self.animation = show_eigenvector_animation(model, speed)
+        else:
+            self.animation = show_history_animation(model, speed)
 
 class DeformationPlot3D(object):
 
@@ -83,8 +87,8 @@ class DeformationPlot3D(object):
         show_deformation_plot(model, step)
 
 
-def bounding_box(model):
-    nodes = [node for model in model.get_model_history() for node in model.nodes]
+def get_bounding_box(models):
+    nodes = [node for model in models for node in model.nodes]
 
     min_x = min(node.x for node in nodes)
     max_x = max(node.x for node in nodes)
@@ -98,37 +102,34 @@ def bounding_box(model):
     return min_x, max_x, min_y, max_y, min_z, max_z
 
 def plot_model(ax, model, color, initial):
-    xys = list()
-    zs = list()
+    lines = list()
 
     for element in model.elements:
         if type(element) == Truss:
             node_a = element.node_a
             node_b = element.node_b
 
-            a = (node_a.reference_x, node_a.reference_y) if initial else (node_a.x, node_a.y)
-            b = (node_b.reference_x, node_b.reference_y) if initial else (node_b.x, node_b.y)
-            z = node_b.reference_z if initial else node_b.z
+            a = [node_a.reference_x, node_a.reference_y, node_a.reference_z] if initial else [node_a.x, node_a.y, node_a.z]
+            b = [node_b.reference_x, node_b.reference_y, node_b.reference_z] if initial else [node_b.x, node_b.y, node_b.z]
 
-            xys.append([a, b])
-            zs.append(z)
+            lines.append([a, b])
 
-    lc = LineCollection(xys, colors=color, linewidths=2)
+    lc = Line3DCollection(lines, colors=color, linewidths=2)
 
-    ax.add_collection3d(lc, zs=zs)
+    ax.add_collection(lc)
 
-def animate_model(fig, ax, model, speed=200):
+def animate_model(fig, ax, models, speed=200):
 
-    history = model.get_model_history()
+    bounding_box = get_bounding_box(models)
 
     def update(step):
-        step_model = history[step]
+        step_model = models[step]
 
         ax.clear()
 
         ax.grid()
 
-        plot_bounding_cube(ax, model)
+        plot_bounding_cube(ax, bounding_box)
 
         ax.set_xlabel('x')
         ax.set_ylabel('y')
@@ -139,7 +140,7 @@ def animate_model(fig, ax, model, speed=200):
         plot_model(ax, step_model, 'gray', True)
         plot_model(ax, step_model, 'red', False)
 
-    a = anim.FuncAnimation(fig, update, frames=len(history), repeat=True, interval=speed)
+    a = anim.FuncAnimation(fig, update, frames=len(models), repeat=True, interval=speed)
 
     return a
 
@@ -208,8 +209,8 @@ def plot_history_curve(ax, model, xy_function, fmt, **kwargs):
 def plot_custom_curve(ax, *args, **kwargs):
     ax.plot(*args, **kwargs)
 
-def plot_bounding_cube(ax, model, color='w'):
-    min_x, max_x, min_y, max_y, min_z, max_z = bounding_box(model)
+def plot_bounding_cube(ax, bounding_box, color='w'):
+    min_x, max_x, min_y, max_y, min_z, max_z = bounding_box
 
     xyz_min = np.array([min_x, min_y, min_z])
     xyz_max = np.array([max_x, max_y, max_z])
@@ -247,7 +248,42 @@ def show_history_animation(model, speed=200):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    a = animate_model(fig, ax, model, speed=speed)
+    a = animate_model(fig, ax, history, speed=speed)
+
+    plt.show()
+
+    return a
+
+def show_eigenvector_animation(model, speed=200):
+    eigenvector = model
+    initial_model = model.get_initial_model()
+
+    models = [initial_model, eigenvector]
+
+    bounding_box = get_bounding_box(models)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    def update(step):
+        step_model = models[step]
+
+        ax.clear()
+
+        ax.grid()
+
+        plot_bounding_cube(ax, bounding_box)
+
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+
+        plt.title('Eigenvector of Structure \n{}'.format(step_model.name))
+
+        plot_model(ax, step_model, 'gray', True)
+        plot_model(ax, step_model, 'red', False)
+
+    a = anim.FuncAnimation(fig, update, frames=2, repeat=True, interval=speed)
 
     plt.show()
 
@@ -255,13 +291,15 @@ def show_history_animation(model, speed=200):
 
 def show_deformation_plot(model, step=None):
 
+    bounding_box = get_bounding_box([model])
+
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
     ax.clear()
 
     ax.grid()
-    plot_bounding_cube(ax, model)
+    plot_bounding_cube(ax, bounding_box)
 
     ax.set_xlabel('x')
     ax.set_ylabel('y')

@@ -29,15 +29,16 @@ class TestBranchSwitching(TestCase):
 
         predicted_model.combine_prediction_with_eigenvector(factor=1.0)
 
-        #predicted_model.scale_prediction(factor=2.0)
+        predicted_model.scale_prediction(factor=20000)
 
         predicted_model.perform_non_linear_solution_step(strategy='arc-length-control')
 
         # compare lambda
         actual = predicted_model.lam
-        expected = 0.1670167406713742
-        assert_almost_equal(actual, expected)
+        expected = 0.1673296703967696
+        assert_almost_equal(actual, expected, decimal=4)
 
         # compare horizontal displacement
         actual = predicted_model.get_dof_state(dof=('B','u'))
-        assert(actual!=0.0)
+        expected = 0.031161882052543888
+        assert_almost_equal(actual, expected)

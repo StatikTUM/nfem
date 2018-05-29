@@ -7,7 +7,7 @@ Author: Thomas Oberbichler
 from PyQt5 import Qt, QtCore, QtGui
 from PyQt5.QtCore import pyqtSignal, QObject
 from PyQt5.QtGui import QFontDatabase
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox, 
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
     QFrame, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox,
     QPushButton, QSpinBox, QStackedWidget, QTextEdit, QVBoxLayout, QWidget)
 
@@ -18,7 +18,7 @@ import sys
 
 from .plot import (plot_model, plot_load_displacement_curve, plot_bounding_cube,
     plot_history_curve)
-from .plot import animate_model
+from .plot import animate_model, get_bounding_box
 from ..assembler import Assembler
 
 def interact(model, dof):
@@ -109,7 +109,7 @@ class InteractiveWindow(QWidget):
                     model.increment_dof_state(dof, dof_value_increment)
                     print(model.get_dof_state(dof))
                 else:
-                    raise Exception(f'Unknown predictor {predictor}')
+                    raise Exception('Unknown predictor {}'.format(predictor))
 
                 constraint = self.options['nonlinear/constraint']
                 constraint_dof = self.options['nonlinear/constraint/dof']
@@ -127,7 +127,7 @@ class InteractiveWindow(QWidget):
                     solve_attendant_eigenvalue=eigenproblem
                 )
             else:
-                raise Exception(f'Unknown solver {solver}')
+                raise Exception('Unknown solver {}'.format(solver))
         except Exception as e:
             QMessageBox(QMessageBox.Critical, 'Error', str(e), QMessageBox.Ok, self).show()
             return
@@ -173,7 +173,7 @@ class InteractiveWindow(QWidget):
             self.animation_window.close()
         model = self.model
         self.animation_window = AnimationWindow(self, model)
-    
+
     def showEvent(self, event):
         # redirect console output
         sys.stdout = Stream(textWritten=self.write_log)
@@ -185,7 +185,7 @@ class InteractiveWindow(QWidget):
         if self.animation_window is not None:
             self.animation_window.close()
 
-        super(InteractiveWindow, self).closeEvent(event) 
+        super(InteractiveWindow, self).closeEvent(event)
 
     def write_log(self, text):
         cursor = self.logTextEdit.textCursor()
@@ -197,7 +197,7 @@ class InteractiveWindow(QWidget):
 
 def _dof_to_str(dof):
     node_id, dof_type = dof
-    return f'\'{dof_type}\' at \'{node_id}\''
+    return '\'{}\' at \'{}\''.format(dof_type, node_id)
 
 def _free_dof_items(model):
     # FIXME remove this function
@@ -213,16 +213,16 @@ class LoadDisplacementLogger(object):
     @property
     def title(self):
         node_id, dof_type = self.dof
-        return f'Load-displacement diagram for {dof_type} at node {node_id}'
+        return 'Load-displacement diagram for {} at node {}'.format(dof_type, node_id)
 
     @property
     def xlabel(self):
         node_id, dof_type = self.dof
-        return f'{dof_type} at node {node_id}'
+        return '{} at node {}'.format(dof_type, node_id)
 
     @property
     def ylabel(self):
-        return f'Load factor ($\lambda$)'
+        return 'Load factor ($\lambda$)'.format()
 
     def __call__(self, model):
         return model.get_dof_state(self.dof), model.lam
@@ -289,7 +289,7 @@ class Widget(WidgetBase):
 
     def add_widget(self, widget):
         self._layout.addWidget(widget)
-    
+
     def add_group(self, label, content=None):
         group = QGroupBox(label)
         self.add_widget(group)
@@ -317,7 +317,7 @@ class Widget(WidgetBase):
         if label is not None:
             widget = QLabel(label)
             self.add_widget(widget)
-        
+
         row = QWidget()
         row_layout = QHBoxLayout()
         row_layout.setContentsMargins(0, 0, 0, 0)
@@ -327,7 +327,7 @@ class Widget(WidgetBase):
         if prefix:
             widget = QLabel(prefix)
             row_layout.addWidget(widget)
-        
+
         if dtype is int:
             widget = QSpinBox()
             widget.setMinimum(minimum or -100)
@@ -339,7 +339,7 @@ class Widget(WidgetBase):
             widget.setMaximum(maximum or Qt.qInf())
             widget.setSingleStep(step or 0.1)
         else:
-            raise ValueError(f'Wrong dtype "{dtype.__name__}"')
+            raise ValueError('Wrong dtype "{}"'.format(dtype.__name__))
 
         widget.setValue(self.get_option(option_key))
         widget.valueChanged.connect(lambda value: self.set_option(option_key, value))
@@ -410,7 +410,7 @@ class StackWidget(WidgetBase):
 
         widget = content or Widget(self)
         self._stack.addWidget(widget)
-        
+
         return widget
 
     def selected_widget(self):
@@ -435,7 +435,7 @@ class Sidebar(Widget):
             option_value='nonlinear',
             content=NonlinearSettings(self)
         )
-        
+
         self.add_stretch()
 
         self.add_button(
@@ -518,7 +518,8 @@ class Canvas(WidgetBase):
         plot3d.clear()
         plot3d.grid()
 
-        plot_bounding_cube(plot3d, model)
+        bounding_box = get_bounding_box(model.get_model_history())
+        plot_bounding_cube(plot3d, bounding_box)
 
         plot_model(plot3d, model, 'gray', True)
         plot_model(plot3d, model, 'red', False)
@@ -590,12 +591,12 @@ class PredictorSettings(StackWidget):
             content=LoadIncrementPredictorSettings(self)
         )
         self.add_page(
-            label=f'Set Dof value',
+            label='Set Dof value',
             option_value='dof_value',
             content=DofPredictorSettings(self)
         )
         self.add_page(
-            label=f'Increment Dof value',
+            label='Increment Dof value',
             option_value='dof_value_increment',
             content=DofIncrementPredictorSettings(self)
         )
@@ -750,14 +751,14 @@ class AnimationWindow(QWidget):
 
         self.setWindowTitle('Animation')
 
-        layout = QVBoxLayout() 
+        layout = QVBoxLayout()
 
         figure = Figure(dpi=80)
         figure = figure
-        
+
         animation_canvas = FigureCanvasQTAgg(figure)
         animation_canvas.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(animation_canvas)  
+        layout.addWidget(animation_canvas)
 
         ax_3d = figure.add_subplot(1, 1, 1, projection='3d')
         ax_3d = ax_3d
@@ -765,7 +766,7 @@ class AnimationWindow(QWidget):
         self.setLayout(layout)
 
         # store the animation
-        self.a = animate_model(figure, ax_3d, model)
+        self.a = animate_model(figure, ax_3d, model.get_model_history())
 
         self.show()
 
