@@ -20,6 +20,7 @@ from .plot import (plot_model, plot_load_displacement_curve, plot_bounding_cube,
     plot_history_curve)
 from .plot import animate_model, get_bounding_box
 from ..assembler import Assembler
+from ..bracketing import bracketing
 
 def interact(model, dof):
     app = QApplication([])
@@ -136,6 +137,42 @@ class InteractiveWindow(QWidget):
 
         self.redraw()
 
+    def bracketing_click(self):
+
+        model = self.model
+        backup_model = model.get_duplicate()
+        backup_model._previous_model = model._previous_model
+
+        try:
+            tolerance = self.options['nonlinear/newtonraphson/tolerance']
+            max_iterations = self.options['nonlinear/newtonraphson/maxiterations']
+
+            determinant = self.options['nonlinear/solution/determinant']
+            eigenproblem = self.options['nonlinear/solution/eigenproblem']
+
+            bracketing_tolerance = self.options['nonlinear/bracketing/tolerance']
+            bracketing_maxiterations = self.options['nonlinear/bracketing/maxiterations']
+
+            model = bracketing(
+                model,
+                tol=10**bracketing_tolerance,
+                max_steps=bracketing_maxiterations,
+                raise_error=True,
+                tolerance=10**tolerance,
+                max_iterations=max_iterations,
+                solve_det_k=determinant,
+                solve_attendant_eigenvalue=eigenproblem
+            )
+
+        except Exception as e:
+            QMessageBox(QMessageBox.Critical, 'Error', str(e), QMessageBox.Ok, self).show()
+            model = backup_model
+            return
+
+        self.model = model
+
+        self.redraw()
+
     def go_back_click(self):
         if self.model.get_previous_model() is None:
             return
@@ -194,7 +231,6 @@ class InteractiveWindow(QWidget):
         self.logTextEdit.setTextCursor(cursor)
         self.logTextEdit.ensureCursorVisible()
 
-
 def _dof_to_str(dof):
     node_id, dof_type = dof
     return '\'{}\' at \'{}\''.format(dof_type, node_id)
@@ -236,17 +272,32 @@ class Options(QObject):
         self._root = ''
         self._data = dict()
 
+        # linear
         self['linear/loadfactor'] = 1.0
+
+        # predictor
         self['nonlinear/predictor/loadfactor'] = 0.0
         self['nonlinear/predictor/loadfactor_increment'] = 0.1
         self['nonlinear/predictor/dof_value'] = 0.0
         self['nonlinear/predictor/dof_value_increment'] = 0.1
+        self['nonlinear/predictor/arclength'] = 0.1
+        self['nonlinear/predictor/increment_length'] = 0.1
+
+        # constraint
         self['nonlinear/constraint/dof'] = None
         self['nonlinear/constraint/arclength'] = 0.1
+
+        # Newton-Raphson
         self['nonlinear/newtonraphson/maxiterations'] = 1000
         self['nonlinear/newtonraphson/tolerance'] = -5
+
+        # solution
         self['nonlinear/solution/determinant'] = False
         self['nonlinear/solution/eigenproblem'] = False
+
+        # bracketing
+        self['nonlinear/bracketing/tolerance'] = -7
+        self['nonlinear/bracketing/maxiterations'] = 100
 
     def __getitem__(self, key):
         return self._data[key]
@@ -313,7 +364,7 @@ class Widget(WidgetBase):
     def add_stretch(self):
         self._layout.addStretch(1)
 
-    def add_spinbox(self, label=None, dtype=int, prefix=None, postfix=None, step=None, minimum=None, maximum=None, option_key=None):
+    def add_spinbox(self, label=None, dtype=int, prefix=None, postfix=None, step=None, minimum=None, maximum=None, decimals=None, option_key=None):
         if label is not None:
             widget = QLabel(label)
             self.add_widget(widget)
@@ -338,6 +389,7 @@ class Widget(WidgetBase):
             widget.setMinimum(minimum or -Qt.qInf())
             widget.setMaximum(maximum or Qt.qInf())
             widget.setSingleStep(step or 0.1)
+            widget.setDecimals(decimals or 5)
         else:
             raise ValueError('Wrong dtype "{}"'.format(dtype.__name__))
 
@@ -563,12 +615,16 @@ class NonlinearSettings(Widget):
             content=ConstraintSettings(self)
         )
         self.add_group(
-            label='Newton-Raphson Solver',
+            label='Newton-Raphson',
             content=NewtonRaphsonSettings(self)
         )
         self.add_group(
             label='Solution',
             content=SolutionSettings(self)
+        )
+        self.add_group(
+            label='Bracketing',
+            content=BracketingSettings(self)
         )
 
         self.add_stretch()
@@ -599,6 +655,16 @@ class PredictorSettings(StackWidget):
             label='Increment Dof value',
             option_value='dof_value_increment',
             content=DofIncrementPredictorSettings(self)
+        )
+        self.add_page(
+            label='Arclength',
+            option_value='arc-length',
+            content=ArclengthPredictorSettings(self)
+        )
+        self.add_page(
+            label='Last Increment',
+            option_value='increment',
+            content=LastIncrementPredictorSettings(self)
         )
         # FIME add additional predictors
         # self.add_page(
@@ -647,8 +713,8 @@ class NewtonRaphsonSettings(Widget):
             dtype=int,
             label='Tolerance',
             prefix='10^',
-            minimum=-1,
-            maximum=-10,
+            minimum=-10,
+            maximum=-1,
             option_key='nonlinear/newtonraphson/tolerance'
         )
 
@@ -665,6 +731,31 @@ class SolutionSettings(Widget):
             option_key='nonlinear/solution/eigenproblem'
         )
 
+
+class BracketingSettings(Widget):
+    def __init__(self, parent):
+        super(BracketingSettings, self).__init__(parent)
+
+        self.add_spinbox(
+            dtype=int,
+            label='Maximum iterations',
+            minimum=1,
+            maximum=5000,
+            option_key='nonlinear/bracketing/maxiterations'
+        )
+        self.add_spinbox(
+            dtype=int,
+            label='Tolerance',
+            prefix='10^',
+            minimum=-10,
+            maximum=-1,
+            option_key='nonlinear/bracketing/tolerance'
+        )
+
+        self.add_button(
+            label="Solve Bracketing",
+            action=self.master().bracketing_click
+        )
 
 class LoadPredictorSettings(Widget):
     def __init__(self, parent):
@@ -712,6 +803,29 @@ class DofIncrementPredictorSettings(Widget):
         self.add_spinbox(
             dtype=float,
             option_key='nonlinear/predictor/dof_value_increment'
+        )
+
+        self.add_stretch()
+
+
+class ArclengthPredictorSettings(Widget):
+    def __init__(self, parent):
+        super(ArclengthPredictorSettings, self).__init__(parent)
+
+        self.add_spinbox(
+            dtype=float,
+            option_key='nonlinear/predictor/arc-length'
+        )
+
+        self.add_stretch()
+
+class LastIncrementPredictorSettings(Widget):
+    def __init__(self, parent):
+        super(LastIncrementPredictorSettings, self).__init__(parent)
+
+        self.add_spinbox(
+            dtype=float,
+            option_key='nonlinear/predictor/increment_length'
         )
 
         self.add_stretch()
