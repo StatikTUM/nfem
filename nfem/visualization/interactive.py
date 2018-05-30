@@ -450,7 +450,7 @@ class Widget(WidgetBase):
         widget = QCheckBox(label)
         widget.setChecked(self.get_option(option_key))
         widget.stateChanged.connect(lambda value: self.set_option(option_key, value != 0))
-        widget.showEvent=lambda value: widget.setChecked(self.get_option(option_key))
+        widget.showEvent=lambda _: widget.setChecked(self.get_option(option_key))
         self.add_widget(widget)
 
     def add_combobox(self, items, option_key):
