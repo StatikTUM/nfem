@@ -195,8 +195,8 @@ def plot_det_k_curve(ax, model, dof, label=None):
         label = 'det(K) : {} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
 
-def plot_history_curve(ax, model, xy_function, fmt, **kwargs):
-    history = model.get_model_history()
+def plot_history_curve(ax, model, xy_function, fmt, skip_iterations=True, **kwargs):
+    history = model.get_model_history(skip_iterations)
 
     x_data = np.zeros(len(history))
     y_data = np.zeros(len(history))

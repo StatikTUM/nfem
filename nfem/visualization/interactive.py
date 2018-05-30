@@ -583,14 +583,19 @@ class Canvas(WidgetBase):
         plot_model(plot3d, model, 'red', False)
 
         plot2d.clear()
-        plot2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
+        #plot2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
         plot2d.set_facecolor('white')
         plot2d.yaxis.tick_right()
-        plot2d.yaxis.set_label_position('right')
+        #plot2d.yaxis.set_label_position('right')
         plot2d.grid()
 
         for model in self.master().branches:
-            plot_history_curve(plot2d, model, logger, '-o')
+            label = logger.xlabel + " : " + logger.ylabel
+            plot_history_curve(plot2d, model, logger, '-o', label=label, skip_iterations=True)
+            label += " (iter)"
+            plot_history_curve(plot2d, model, logger, '--o', label=label, skip_iterations=False, linewidth=0.75, markersize=2.0)
+
+        plot2d.legend(loc='best')
 
         self.canvas3d.draw()
         self.canvas2d.draw()
