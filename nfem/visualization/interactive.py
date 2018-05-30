@@ -272,6 +272,9 @@ class WidgetBase(QWidget):
     def get_option(self, key):
         return self.master().options[key]
 
+    def options(self):
+        return self.master().options
+
     def set_option(self, key, value):
         self.master().options[key] = value
 
@@ -343,6 +346,12 @@ class Widget(WidgetBase):
 
         widget.setValue(self.get_option(option_key))
         widget.valueChanged.connect(lambda value: self.set_option(option_key, value))
+
+        def on_options_changed(key):
+            if key == option_key:
+                widget.setValue(self.get_option(option_key))
+
+        self.options().changed.connect(on_options_changed)
 
         row_layout.addWidget(widget, 1)
 
