@@ -4,12 +4,13 @@ Author: Thomas Oberbichler
 """
 
 
-from PyQt5 import Qt, QtCore, QtGui
+from PyQt5 import Qt
 from PyQt5.QtCore import pyqtSignal, QObject
-from PyQt5.QtGui import QFontDatabase
+from PyQt5.QtGui import QFontDatabase, QTextCursor
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
-    QFrame, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox,
-    QPushButton, QSpinBox, QStackedWidget, QTextEdit, QVBoxLayout, QWidget)
+                             QFrame, QGridLayout, QGroupBox, QHBoxLayout,
+                             QLabel, QMessageBox, QPushButton, QSpinBox,
+                             QStackedWidget, QTextEdit, QVBoxLayout, QWidget)
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -17,7 +18,7 @@ from matplotlib.figure import Figure
 import sys
 
 from .plot import (plot_model, plot_load_displacement_curve, plot_bounding_cube,
-    plot_history_curve)
+                   plot_history_curve)
 from .plot import animate_model, get_bounding_box
 from ..assembler import Assembler
 
@@ -189,7 +190,7 @@ class InteractiveWindow(QWidget):
 
     def write_log(self, text):
         cursor = self.logTextEdit.textCursor()
-        cursor.movePosition(QtGui.QTextCursor.End)
+        cursor.movePosition(QTextCursor.End)
         cursor.insertText(text)
         self.logTextEdit.setTextCursor(cursor)
         self.logTextEdit.ensureCursorVisible()
@@ -781,7 +782,7 @@ class AnimationWindow(QWidget):
 
 
 class Stream(QObject):
-    textWritten = QtCore.pyqtSignal(str)
+    textWritten = pyqtSignal(str)
 
     def write(self, text):
         self.textWritten.emit(str(text))
