@@ -91,25 +91,39 @@ class InteractiveWindow(QWidget):
             solver = self.options['solver']
 
             if solver == 'linear':
-                model.lam = self.options['linear/loadfactor']
+                model.lam = self.options['linear/lambda']
                 model.perform_linear_solution_step()
             elif solver == 'nonlinear':
                 predictor = self.options['nonlinear/predictor']
 
-                if predictor == 'loadfactor':
-                    model.lam = self.options['nonlinear/predictor/loadfactor']
-                elif predictor == 'loadfactor_increment':
-                    model.lam += self.options['nonlinear/predictor/loadfactor_increment']
-                elif predictor == 'dof_value':
+                tangential_flag = self.options['nonlinear/predictor/tangential_flag']
+
+                if predictor == 'lambda':
+                    value = self.options['nonlinear/predictor/lambda']
+                    if tangential_flag:
+                        model.predict_tangential(strategy=predictor, value=value)
+                    else:
+                        model.lam = value
+                elif predictor == 'delta-lambda':
+                    value = self.options['nonlinear/predictor/delta-lambda']
+                    if tangential_flag:
+                        model.predict_tangential(strategy=predictor, value=value)
+                    else:
+                        model.lam += value
+                elif predictor == 'dof':
                     dof = self.options['nonlinear/predictor/dof']
                     dof_value = self.options['nonlinear/predictor/dof_value']
-                    model.set_dof_state(dof, dof_value)
-                    print(model.get_dof_state(dof))
-                elif predictor == 'dof_value_increment':
+                    if tangential_flag:
+                        model.predict_tangential(strategy=predictor, dof=dof, value=dof_value)
+                    else:
+                        model.set_dof_state(dof, dof_value)
+                elif predictor == 'delta-dof':
                     dof = self.options['nonlinear/predictor/dof']
-                    dof_value_increment = self.options['nonlinear/predictor/dof_value_increment']
-                    model.increment_dof_state(dof, dof_value_increment)
-                    print(model.get_dof_state(dof))
+                    dof_value_increment = self.options['nonlinear/predictor/delta-dof']
+                    if tangential_flag:
+                        model.predict_tangential(strategy=predictor, dof=dof, value=dof_value_increment)
+                    else:
+                        model.increment_dof_state(dof, dof_value_increment)
                 elif predictor == 'arc-length':
                     arclength = self.options['nonlinear/predictor/increment_length']
                     model.predict_tangential(strategy=predictor, value=arclength)
@@ -282,13 +296,15 @@ class Options(QObject):
         self._data = dict()
 
         # linear
-        self['linear/loadfactor'] = 1.0
+        self['linear/lambda'] = 1.0
 
         # predictor
-        self['nonlinear/predictor/loadfactor'] = 0.0
-        self['nonlinear/predictor/loadfactor_increment'] = 0.1
+        self['nonlinear/predictor/lambda'] = 0.0
+        self['nonlinear/predictor/delta-lambda'] = 0.1
+        self['nonlinear/predictor/dof'] = None
         self['nonlinear/predictor/dof_value'] = 0.0
-        self['nonlinear/predictor/dof_value_increment'] = 0.1
+        self['nonlinear/predictor/delta-dof'] = 0.1
+        self['nonlinear/predictor/tangential_flag'] = True
         self['nonlinear/predictor/increment_length'] = 0.0
 
         # constraint
@@ -424,6 +440,7 @@ class Widget(WidgetBase):
         widget = QCheckBox(label)
         widget.setChecked(self.get_option(option_key))
         widget.stateChanged.connect(lambda value: self.set_option(option_key, value != 0))
+        widget.showEvent=lambda value: widget.setChecked(self.get_option(option_key))
         self.add_widget(widget)
 
     def add_combobox(self, items, option_key):
@@ -618,7 +635,7 @@ class LinearSettings(Widget):
         settings = self.add_group('Load factor (λ)')
         settings.add_spinbox(
             dtype=float,
-            option_key='linear/loadfactor'
+            option_key='linear/lambda'
         )
 
         self.add_stretch()
@@ -659,22 +676,22 @@ class PredictorSettings(StackWidget):
 
         self.add_page(
             label='Set load factor (λ)',
-            option_value='loadfactor',
+            option_value='lambda',
             content=LoadPredictorSettings(self)
         )
         self.add_page(
             label='Increment load factor (λ)',
-            option_value='loadfactor_increment',
+            option_value='delta-lambda',
             content=LoadIncrementPredictorSettings(self)
         )
         self.add_page(
             label='Set Dof value',
-            option_value='dof_value',
+            option_value='dof',
             content=DofPredictorSettings(self)
         )
         self.add_page(
             label='Increment Dof value',
-            option_value='dof_value_increment',
+            option_value='delta-dof',
             content=DofIncrementPredictorSettings(self)
         )
         self.add_page(
@@ -773,9 +790,11 @@ class LoadPredictorSettings(Widget):
     def __init__(self, parent):
         super(LoadPredictorSettings, self).__init__(parent)
 
+        self.add_checkbox(label='Tangential direction', option_key='nonlinear/predictor/tangential_flag')
+
         self.add_spinbox(
             dtype=float,
-            option_key='nonlinear/predictor/loadfactor'
+            option_key='nonlinear/predictor/lambda'
         )
         self.add_stretch()
 
@@ -783,9 +802,11 @@ class LoadIncrementPredictorSettings(Widget):
     def __init__(self, parent):
         super(LoadIncrementPredictorSettings, self).__init__(parent)
 
+        self.add_checkbox(label='Tangential direction', option_key='nonlinear/predictor/tangential_flag')
+
         self.add_spinbox(
             dtype=float,
-            option_key='nonlinear/predictor/loadfactor_increment'
+            option_key='nonlinear/predictor/delta-lambda'
         )
         self.add_stretch()
 
@@ -796,6 +817,8 @@ class DofPredictorSettings(Widget):
         self.add_free_dof_combobox(
             option_key='nonlinear/predictor/dof'
         )
+
+        self.add_checkbox(label='Tangential direction', option_key='nonlinear/predictor/tangential_flag')
 
         self.add_spinbox(
             dtype=float,
@@ -812,9 +835,11 @@ class DofIncrementPredictorSettings(Widget):
             option_key='nonlinear/predictor/dof'
         )
 
+        self.add_checkbox(label='Tangential direction', option_key='nonlinear/predictor/tangential_flag')
+
         self.add_spinbox(
             dtype=float,
-            option_key='nonlinear/predictor/dof_value_increment'
+            option_key='nonlinear/predictor/delta-dof'
         )
 
         self.add_stretch()
