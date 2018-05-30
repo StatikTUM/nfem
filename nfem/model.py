@@ -975,13 +975,13 @@ class Model(object):
         self.lam += tangent[-1]
 
 
-    def combine_prediction_with_eigenvector(self, factor):
+    def combine_prediction_with_eigenvector(self, beta):
         """Combine the prediciton with the first eigenvector
 
         Parameters
         ----------
-        factor : float
-            factor between 0.0 and 1.0 used for a linear combination of the
+        beta : float
+            factor between -1.0 and 1.0 used for a linear combination of the
             prediction with the eigenvector
 
         Raises
@@ -989,18 +989,18 @@ class Model(object):
         RuntimeError
             If the model is not in prediction status
         ValueError
-            If the factor is not between 0.0 and 1.0
+            If the beta is not between -1.0 and 1.0
         """
         if self.status != ModelStatus.prediction:
             raise RuntimeError('Model is not a predictor. Cannot combine with eigenvector!')
 
-        if factor < 0.0 or factor > 1.0:
-            raise ValueError('factor needs to be between 0.0 and 1.0')
+        if beta < -1.0 or beta > 1.0:
+            raise ValueError('beta needs to be between -1.0 and 1.0')
 
         previous_model = self.get_previous_model()
         if previous_model.first_eigenvector_model is None:
             print('WARNING: solving eigenvalue problem in order to do branch switching')
-            self.solve_eigenvalues()
+            previous_model.solve_eigenvalues()
 
         eigenvector_model = previous_model.first_eigenvector_model
 
@@ -1015,7 +1015,7 @@ class Model(object):
         #scale eigenvector to the length of the prediction
         eigenvector *= (1.0/(la.norm(eigenvector)/prediction_length))
 
-        prediction = u_prediction * (1.0 - factor) + eigenvector * factor
+        prediction = u_prediction * (1.0 - abs(beta)) + eigenvector * beta
 
         delta_prediction = prediction - u_prediction
 
