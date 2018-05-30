@@ -109,6 +109,12 @@ class InteractiveWindow(QWidget):
                     dof_value_increment = self.options['nonlinear/predictor/dof_value_increment']
                     model.increment_dof_state(dof, dof_value_increment)
                     print(model.get_dof_state(dof))
+                elif predictor == 'arc-length':
+                    arclength = self.options['nonlinear/predictor/increment_length']
+                    model.predict_tangential(strategy=predictor, value=arclength)
+                elif predictor == 'increment':
+                    increment_length = self.options['nonlinear/predictor/increment_length']
+                    model.predict_with_last_increment(value=increment_length)
                 else:
                     raise Exception('Unknown predictor {}'.format(predictor))
 
@@ -134,6 +140,8 @@ class InteractiveWindow(QWidget):
             return
 
         self.model = model
+
+        self.options['nonlinear/predictor/increment_length'] = model.get_increment_norm()
 
         self.redraw()
 
@@ -280,12 +288,10 @@ class Options(QObject):
         self['nonlinear/predictor/loadfactor_increment'] = 0.1
         self['nonlinear/predictor/dof_value'] = 0.0
         self['nonlinear/predictor/dof_value_increment'] = 0.1
-        self['nonlinear/predictor/arclength'] = 0.1
-        self['nonlinear/predictor/increment_length'] = 0.1
+        self['nonlinear/predictor/increment_length'] = 0.0
 
         # constraint
         self['nonlinear/constraint/dof'] = None
-        self['nonlinear/constraint/arclength'] = 0.1
 
         # Newton-Raphson
         self['nonlinear/newtonraphson/maxiterations'] = 1000
@@ -666,15 +672,6 @@ class PredictorSettings(StackWidget):
             option_value='increment',
             content=LastIncrementPredictorSettings(self)
         )
-        # FIME add additional predictors
-        # self.add_page(
-        #     label='Set prediction',
-        #     content=SetPredictorSettings(self)
-        # )
-        # self.add_page(
-        #     label='Set direction',
-        #     content=SetPredictorDirectionSettings(self)
-        # )
 
 class ConstraintSettings(StackWidget):
     def __init__(self, parent):
@@ -814,7 +811,7 @@ class ArclengthPredictorSettings(Widget):
 
         self.add_spinbox(
             dtype=float,
-            option_key='nonlinear/predictor/arc-length'
+            option_key='nonlinear/predictor/increment_length'
         )
 
         self.add_stretch()
@@ -850,11 +847,6 @@ class DisplacementControlSettings(Widget):
 class ArcLengthSettings(Widget):
     def __init__(self, parent):
         super(ArcLengthSettings, self).__init__(parent)
-
-        self.add_spinbox(
-            option_key='nonlinear/constraint/arclength',
-            dtype=float
-        )
 
         self.add_stretch()
 

@@ -383,6 +383,10 @@ class Model(object):
 
         return increment
 
+    def get_increment_norm(self, assembler=None):
+        increment = self.get_increment_vector(assembler)
+        return la.norm(increment)
+
     # === model history
 
     def get_initial_model(self):
@@ -665,7 +669,7 @@ class Model(object):
 
     def solve_eigenvalues(self, assembler=None, linearized_prebuckling=False):
         """Solves the eigenvalue problem
-           [ k_m + eigvals * k_g ] * eigvecs = 0 
+           [ k_m + eigvals * k_g ] * eigvecs = 0
 
         Parameters
         ----------
@@ -704,7 +708,7 @@ class Model(object):
         print("First eigenvalue: {}".format(eigvals[0]))
         print("First eigenvalue * lambda: {}".format(eigvals[0] * self.lam)) # this is printed in TRUSS
         print("First eigenvector: {}".format(eigvecs[0]))
-        
+
         # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
         idx = (np.abs(eigvals - 1.0)).argmin()
 
@@ -828,9 +832,14 @@ class Model(object):
         self.status = ModelStatus.prediction
         self.increment_dof_state(dof, value)
 
-    def predict_with_last_increment(self):
+    def predict_with_last_increment(self, value=None):
         """Predicts the solution by incrementing lambda and all dofs with the
            increment of the last solution step
+
+        Parameters
+        ----------
+        value : float (optional)
+            Length of the increment
 
         Raises
         ------
@@ -844,6 +853,15 @@ class Model(object):
         assembler = Assembler(self)
 
         last_increment = self.get_previous_model().get_increment_vector(assembler)
+
+        length = la.norm(last_increment)
+
+        if value is not None and length != 0.0:
+            last_increment *= value/length
+            length *= value
+
+        if length == 0.0:
+            print("WARNING: The length of the prescribed increment is 0.0!")
 
         # update dofs at model
         for index, dof in enumerate(assembler.dofs):
@@ -872,7 +890,7 @@ class Model(object):
             - 'arc-length'
         options
             value : float
-                prescribed value according to the strategy (not needed for 'arc-length')
+                prescribed value according to the strategy
             dof : Object
                 specifies the controlled dof for 'dof' and 'delta-dof' strategy
         """
@@ -919,20 +937,27 @@ class Model(object):
         elif strategy == 'arc-length':
             previous_model = self.get_previous_model()
 
-            if previous_model.get_previous_model() is None:
-                raise RuntimeError('Tangential arc-length predictor can only be'
-                                   'used after the first step!')
+            if previous_model.get_previous_model() is not None:
+                previous_increment = previous_model.get_increment_vector(assembler)
 
-            previous_increment = previous_model.get_increment_vector(assembler)
+            if 'value' in options.keys():
+                prescribed_length = options['value']
+            elif previous_model.get_previous_model() is not None:
+                prescribed_length = la.norm(previous_increment)
+            else:
+                prescribed_length = 0.0
 
-            prescribed_length = la.norm(previous_increment)
+            if prescribed_length == 0.0:
+                print("WARNING: The length of the prescribed increment is 0.0!")
+
             current_length = la.norm(tangent)
 
             factor = prescribed_length / current_length
 
             # tangent should point in a similar direction as the last increment
-            if previous_increment @ tangent < 0:
-                factor = -factor
+            if previous_model.get_previous_model() is not None:
+                if previous_increment @ tangent < 0:
+                    factor = -factor
 
         else:
             raise ValueError('Invalid strategy for prediction: {}'
@@ -952,11 +977,11 @@ class Model(object):
 
     def combine_prediction_with_eigenvector(self, factor):
         """Combine the prediciton with the first eigenvector
-        
+
         Parameters
         ----------
         factor : float
-            factor between 0.0 and 1.0 used for a linear combination of the 
+            factor between 0.0 and 1.0 used for a linear combination of the
             prediction with the eigenvector
 
         Raises
@@ -984,17 +1009,17 @@ class Model(object):
         u_prediction = self.get_delta_dof_vector(model_b=previous_model, assembler=assembler)
 
         prediction_length = la.norm(u_prediction)
-        
+
         eigenvector = eigenvector_model.get_delta_dof_vector(assembler=assembler)
 
         #scale eigenvector to the length of the prediction
-        eigenvector *= (1.0/(la.norm(eigenvector)/prediction_length)) 
+        eigenvector *= (1.0/(la.norm(eigenvector)/prediction_length))
 
         prediction = u_prediction * (1.0 - factor) + eigenvector * factor
 
         delta_prediction = prediction - u_prediction
 
-        # lambda = 0 for the eigenvector. Note: TRUSS.xls uses the same value as for the last increment 
+        # lambda = 0 for the eigenvector. Note: TRUSS.xls uses the same value as for the last increment
         delta_lam = - self.get_lam_increment()
 
         # update dofs at model
@@ -1007,7 +1032,7 @@ class Model(object):
 
     def scale_prediction(self, factor):
         """scale the prediction with a factor
-        
+
         Parameters
         ----------
         factor : float
@@ -1049,17 +1074,17 @@ class Model(object):
 
     def get_delta_dof_vector(self, model_b=None, assembler=None):
         """gets the delta dof between this and a given model_b as a numpy array
-        
+
         Parameters
         ----------
         model_b : Model
-            Model that is used as reference for the delta dof calculation. If 
+            Model that is used as reference for the delta dof calculation. If
             not given, the initial model is used as reference.
         assembler: Assembler
-            Assembler is used to order the dofs in the vector. If not given, a 
+            Assembler is used to order the dofs in the vector. If not given, a
             new assembler is created
 
-            
+
         Returns
         ------
         delta : np.ndarray
