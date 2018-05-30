@@ -16,6 +16,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
 import sys
+import traceback
 
 from .plot import (plot_model, plot_load_displacement_curve, plot_bounding_cube,
                    plot_history_curve)
@@ -130,6 +131,11 @@ class InteractiveWindow(QWidget):
                 elif predictor == 'increment':
                     increment_length = self.options['nonlinear/predictor/increment_length']
                     model.predict_with_last_increment(value=increment_length)
+                elif predictor == 'arclength_eigenvector':
+                    arclength = self.options['nonlinear/predictor/increment_length']
+                    model.predict_tangential(strategy='arc-length', value=arclength)
+                    beta = self.options['nonlinear/predictor/beta']
+                    model.combine_prediction_with_eigenvector(beta)
                 else:
                     raise Exception('Unknown predictor {}'.format(predictor))
 
@@ -151,6 +157,7 @@ class InteractiveWindow(QWidget):
             else:
                 raise Exception('Unknown solver {}'.format(solver))
         except Exception as e:
+            traceback.print_exc()
             QMessageBox(QMessageBox.Critical, 'Error', str(e), QMessageBox.Ok, self).show()
             return
 
@@ -193,6 +200,8 @@ class InteractiveWindow(QWidget):
             return
 
         self.model = model
+
+        self.options['nonlinear/predictor/increment_length'] = model.get_increment_norm()
 
         self.redraw()
 
@@ -306,6 +315,7 @@ class Options(QObject):
         self['nonlinear/predictor/delta-dof'] = 0.1
         self['nonlinear/predictor/tangential_flag'] = True
         self['nonlinear/predictor/increment_length'] = 0.0
+        self['nonlinear/predictor/beta'] = 1.0
 
         # constraint
         self['nonlinear/constraint/dof'] = None
@@ -704,6 +714,11 @@ class PredictorSettings(StackWidget):
             option_value='increment',
             content=LastIncrementPredictorSettings(self)
         )
+        self.add_page(
+            label='Arclength + Eigenvector',
+            option_value='arclength_eigenvector',
+            content=ArclengthEigenvectorPredictorSettings(self)
+        )
 
 class ConstraintSettings(StackWidget):
     def __init__(self, parent):
@@ -863,6 +878,26 @@ class LastIncrementPredictorSettings(Widget):
         self.add_spinbox(
             dtype=float,
             option_key='nonlinear/predictor/increment_length'
+        )
+
+        self.add_stretch()
+
+
+class ArclengthEigenvectorPredictorSettings(Widget):
+    def __init__(self, parent):
+        super(ArclengthEigenvectorPredictorSettings, self).__init__(parent)
+
+        self.add_spinbox(
+            dtype=float,
+            option_key='nonlinear/predictor/increment_length'
+        )
+
+        self.add_spinbox(
+            dtype=float,
+            label='Beta',
+            minimum=-1.0,
+            maximum=1.0,
+            option_key='nonlinear/predictor/beta'
         )
 
         self.add_stretch()
