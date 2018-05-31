@@ -663,14 +663,16 @@ class Model(object):
         self.det_k =  la.det(k[:free_count,:free_count])
         print("Det(K): {}".format(self.det_k))
 
-    def solve_eigenvalues(self, assembler=None):
+    def solve_eigenvalues(self, assembler=None, linearized_prebuckling=False):
         """Solves the eigenvalue problem
-           [ k_m + eigvals * k_g ] * eigvecs = 0
+           [ k_m + eigvals * k_g ] * eigvecs = 0 
 
         Parameters
         ----------
         assembler : Object (optional)
             assembler can be passed to speed up
+        linearized_prebuckling : bool (optional)
+            If True, linearized prebuckling assumption u=0 : k_m = k_e is used
         """
         # [ k_m + eigvals * k_g ] * eigvecs = 0
         if assembler is None:
@@ -682,22 +684,36 @@ class Model(object):
         # assemble matrices
         k_m = np.zeros((dof_count, dof_count))
         k_g = np.zeros((dof_count, dof_count))
-        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
+        if linearized_prebuckling:
+            assembler.assemble_matrix(k_m, lambda element: element.calculate_elastic_stiffness_matrix())
+        else:
+            assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
 
         # solve eigenvalue problem
         eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
+
+        # extract real parts of eigenvalues
+        eigvals = np.array([x.real for x in eigvals])
 
         # sort eigenvalues and vectors
         idx = eigvals.argsort()
         eigvals = eigvals[idx]
         eigvecs = eigvecs[:,idx]
 
-        print("First eigenvalue: {}".format(eigvals[0].real))
-        print("First eigenvalue * lambda: {}".format(eigvals[0].real * self.lam)) # this is printed in TRUSS
+        print("First eigenvalue: {}".format(eigvals[0]))
+        print("First eigenvalue * lambda: {}".format(eigvals[0] * self.lam)) # this is printed in TRUSS
         print("First eigenvector: {}".format(eigvecs[0]))
+        
+        # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
+        idx = (np.abs(eigvals - 1.0)).argmin()
 
-        self.first_eigenvalue = eigvals[0].real
+        if (idx != 0):
+            print("== Closest eigenvalue: {}".format(eigvals[idx]))
+            print("== Closest eigenvalue * lambda: {}".format(eigvals[idx] * self.lam)) # this is printed in TRUSS
+            print("== Closest eigenvector: {}".format(eigvecs[idx]))
+
+        self.first_eigenvalue = eigvals[idx]
 
         # store eigenvector as model
         model = self.get_duplicate()
@@ -710,7 +726,7 @@ class Model(object):
 
         for index, dof in enumerate(assembler.free_dofs):
 
-            value = eigvecs[0][index]
+            value = eigvecs[idx][index]
 
             model.set_dof_state(dof, value)
 
@@ -935,12 +951,30 @@ class Model(object):
 
 
     def combine_prediction_with_eigenvector(self, factor):
+        """Combine the prediciton with the first eigenvector
+        
+        Parameters
+        ----------
+        factor : float
+            factor between 0.0 and 1.0 used for a linear combination of the 
+            prediction with the eigenvector
+
+        Raises
+        ------
+        RuntimeError
+            If the model is not in prediction status
+        ValueError
+            If the factor is not between 0.0 and 1.0
+        """
+        if self.status != ModelStatus.prediction:
+            raise RuntimeError('Model is not a predictor. Cannot combine with eigenvector!')
+
         if factor < 0.0 or factor > 1.0:
             raise ValueError('factor needs to be between 0.0 and 1.0')
 
         previous_model = self.get_previous_model()
-        if previous_model.first_eigenvector_model == None:
-            print('WARNING: solve eigenvalue problem in order to do branch switching')
+        if previous_model.first_eigenvector_model is None:
+            print('WARNING: solving eigenvalue problem in order to do branch switching')
             self.solve_eigenvalues()
 
         eigenvector_model = previous_model.first_eigenvector_model
@@ -949,13 +983,15 @@ class Model(object):
 
         u_prediction = self.get_delta_dof_vector(model_b=previous_model, assembler=assembler)
 
+        prediction_length = la.norm(u_prediction)
+        
         eigenvector = eigenvector_model.get_delta_dof_vector(assembler=assembler)
+
+        #scale eigenvector to the length of the prediction
+        eigenvector *= (1.0/(la.norm(eigenvector)/prediction_length)) 
 
         prediction = u_prediction * (1.0 - factor) + eigenvector * factor
 
-        # make new prediction of the same length as before
-        old_l = la.norm(u_prediction)
-        prediction = prediction/(la.norm(prediction)/old_l)
         delta_prediction = prediction - u_prediction
 
         # lambda = 0 for the eigenvector. Note: TRUSS.xls uses the same value as for the last increment 
@@ -969,8 +1005,73 @@ class Model(object):
         # update lambda at model
         self.lam += delta_lam
 
+    def scale_prediction(self, factor):
+        """scale the prediction with a factor
+        
+        Parameters
+        ----------
+        factor : float
+            factor used to scale the prediction
+
+
+        Raises
+        ------
+        RuntimeError
+            If the model is not in prediction status
+        RuntimeError
+            If the model has no previous model
+        """
+        if self.status != ModelStatus.prediction:
+            raise RuntimeError('Model is not a predictor. Can only scale predictor!')
+
+        if factor == 1.0:
+            return
+
+        previous_model = self.get_previous_model()
+
+        if previous_model is None:
+            raise RuntimeError('Previous Model is None!')
+
+        assembler = Assembler(self)
+
+        delta_dof_vector = self.get_delta_dof_vector(previous_model, assembler=assembler)
+
+        delta_lambda = self.lam - previous_model.lam
+
+        delta_dof_vector *= (factor - 1.0)
+        delta_lambda *= (factor - 1.0)
+
+        for i, dof in enumerate(assembler.free_dofs):
+            self.increment_dof_state(dof, delta_dof_vector[i])
+
+        self.lam += delta_lambda
+
 
     def get_delta_dof_vector(self, model_b=None, assembler=None):
+        """gets the delta dof between this and a given model_b as a numpy array
+        
+        Parameters
+        ----------
+        model_b : Model
+            Model that is used as reference for the delta dof calculation. If 
+            not given, the initial model is used as reference.
+        assembler: Assembler
+            Assembler is used to order the dofs in the vector. If not given, a 
+            new assembler is created
+
+            
+        Returns
+        ------
+        delta : np.ndarray
+            vector with the delta of all dofs
+
+        Raises
+        ------
+        RuntimeError
+            If the model is not in prediction status
+        RuntimeError
+            If the model has no previous model
+        """
         if model_b == None:
             model_b = self.get_initial_model()
 

@@ -289,7 +289,8 @@ class InteractiveWindow(QWidget):
         plot_3d.clear()
         plot_3d.grid()
 
-        plot_bounding_cube(plot_3d, model)
+        bounding_box = get_bounding_box(model.get_model_history())
+        plot_bounding_cube(plot_3d, bounding_box)
 
         plot_model(plot_3d, model, 'gray', True)
         plot_model(plot_3d, model, 'red', False)
