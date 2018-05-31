@@ -101,7 +101,7 @@ def bounding_box(model):
 
     return min_x, max_x, min_y, max_y, min_z, max_z
 
-def plot_model(ax, model, color, initial):
+def plot_model(ax, model, color, initial, **options):
     lines = list()
 
     for element in model.elements:
@@ -118,8 +118,10 @@ def plot_model(ax, model, color, initial):
 
     ax.add_collection(lc)
     
-    plot_boundary_conditions(ax, model, initial)
-    plot_forces(ax, model, initial)
+    if options.get('plot/dirichlet', False):
+        plot_boundary_conditions(ax, model, initial, **options)
+    if options.get('plot/neumann', False):
+        plot_forces(ax, model, initial, **options)
 
 def get_max_axes_delta(ax):
     x_lim = ax.get_xlim()
@@ -127,7 +129,7 @@ def get_max_axes_delta(ax):
     z_lim = ax.get_zlim()
     return max([x_lim[1]-x_lim[0], y_lim[1]-y_lim[0], z_lim[1]-z_lim[0]])
 
-def plot_forces(ax, model, initial):
+def plot_forces(ax, model, initial, **options):
     size = get_max_axes_delta(ax)/5.0
     
     for element in model.elements:
@@ -141,7 +143,7 @@ def plot_forces(ax, model, initial):
 
             ax.add_artist(a)
 
-def plot_boundary_conditions(ax, model, initial): 
+def plot_boundary_conditions(ax, model, initial, **options): 
     size = get_max_axes_delta(ax)/20.0
 
     polygons = list()
