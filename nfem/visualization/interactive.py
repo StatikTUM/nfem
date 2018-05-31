@@ -5,12 +5,13 @@ Author: Thomas Oberbichler
 
 
 from PyQt5 import Qt
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5.QtCore import pyqtSignal, QObject, Qt as CoreQt
 from PyQt5.QtGui import QFontDatabase, QTextCursor
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                              QLabel, QMessageBox, QPushButton, QSpinBox,
-                             QStackedWidget, QTextEdit, QVBoxLayout, QWidget)
+                             QStackedWidget, QTextEdit, QVBoxLayout, QWidget, 
+                             QListWidget, QListWidgetItem, QSlider)
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -295,6 +296,19 @@ class LoadDisplacementLogger(object):
     def __call__(self, model):
         return model.get_dof_state(self.dof), model.lam
 
+class CustomLogger(object):
+    def __init__(self, x_fct, y_fct, x_label, y_label):
+        self.x_fct = x_fct
+        self.y_fct = y_fct
+        self.xlabel = x_label
+        self.ylabel = y_label
+
+    @property
+    def title(self):
+        return '{} : {}'.format(self.xlabel, self.ylabel) 
+
+    def __call__(self, model):
+        return self.x_fct(model), self.y_fct(model)
 
 class Options(QObject):
     changed = pyqtSignal(str)
@@ -325,12 +339,24 @@ class Options(QObject):
         self['nonlinear/newtonraphson/tolerance'] = -5
 
         # solution
-        self['nonlinear/solution/determinant'] = False
+        self['nonlinear/solution/determinant'] = True
         self['nonlinear/solution/eigenproblem'] = False
 
         # bracketing
         self['nonlinear/bracketing/tolerance'] = -7
         self['nonlinear/bracketing/maxiterations'] = 100
+
+        # plot
+        self['plot/dof'] = None
+        self['plot/load_disp_curve'] = True
+        self['plot/load_disp_curve_iter'] = True
+        self['plot/det_k'] = True
+        self['plot/eigenvalue'] = True
+        
+        self['plot/dirichlet'] = True
+        self['plot/neumann'] = True
+        self['plot/highlight_dof'] = True
+        self['plot/bc_size'] = 5
 
     def __getitem__(self, key):
         return self._data[key]
@@ -452,6 +478,7 @@ class Widget(WidgetBase):
         widget.stateChanged.connect(lambda value: self.set_option(option_key, value != 0))
         widget.showEvent=lambda _: widget.setChecked(self.get_option(option_key))
         self.add_widget(widget)
+        return widget
 
     def add_combobox(self, items, option_key):
         widget = QComboBox()
@@ -463,6 +490,7 @@ class Widget(WidgetBase):
         widget.setCurrentIndex(0)
 
         self.add_widget(widget)
+        return widget
 
     def add_free_dof_combobox(self, option_key):
         assembler = Assembler(self.master().model)
@@ -478,6 +506,16 @@ class Widget(WidgetBase):
         self._layout.addWidget(button)
 
         return button
+
+    def add_slider(self, option_key, minimum=None, maximum=None, interval=None):
+        slider = QSlider(CoreQt.Horizontal)
+        slider.setMinimum(minimum or 1)
+        slider.setMaximum(maximum or 10)
+        slider.setTickInterval(interval or 1)
+        slider.valueChanged.connect(lambda value: self.set_option(option_key, value))
+        self._layout.addWidget(slider)
+        return slider
+
 
 class StackWidget(WidgetBase):
     def __init__(self, parent, option_key=None):
@@ -510,6 +548,79 @@ class StackWidget(WidgetBase):
 
     def selected_widget(self):
         return self._stack.currentWidget()
+
+
+class Plot2DSettings(Widget):
+    def __init__(self, parent):
+        super(Plot2DSettings, self).__init__(parent)
+
+        settings = self.add_group('Plot Settings')   
+
+        combo = settings.add_free_dof_combobox(option_key='plot/dof')
+        self.set_option('plot/dof', combo.currentData()) 
+        combo.currentIndexChanged.connect(lambda _: parent.redraw())
+
+        check_box = settings.add_checkbox(
+            label='Load displacement curve',
+            option_key='plot/load_disp_curve'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        check_box = settings.add_checkbox(
+            label='Load displacement curve with iterations',
+            option_key='plot/load_disp_curve_iter'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        check_box = settings.add_checkbox(
+            label='Det(K)',
+            option_key='plot/det_k'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        check_box = settings.add_checkbox(
+            label='Eigenvalue',
+            option_key='plot/eigenvalue'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        settings.add_stretch()
+
+class Plot3DSettings(Widget):
+    def __init__(self, parent):
+        super(Plot3DSettings, self).__init__(parent)
+
+        settings = self.add_group('3D Plot')   
+
+        settings.add_button(
+            label='Show animation',
+            action=self.master().show_animation_click
+        )
+
+        check_box = settings.add_checkbox(
+            label='Highlight Dof',
+            option_key='plot/highlight_dof'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+        
+        check_box = settings.add_checkbox(
+            label='Show Dirichlet BCs',
+            option_key='plot/dirichlet'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        check_box = settings.add_checkbox(
+            label='Show Neumann BCs',
+            option_key='plot/neumann'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        slider = settings.add_slider(
+            option_key='plot/bc_size'
+        )
+        slider.valueChanged.connect(lambda _: parent.redraw())
+
+        settings.add_stretch()
 
 
 class Sidebar(Widget):
@@ -553,10 +664,6 @@ class Sidebar(Widget):
             label='Reset all',
             action=self.master().reset_all_click
         )
-        self.add_button(
-            label='Show animation',
-            action=self.master().show_animation_click
-        )
 
 class Canvas(WidgetBase):
     def __init__(self, parent):
@@ -567,14 +674,22 @@ class Canvas(WidgetBase):
         layout.setSpacing(0)
         self.setLayout(layout)
 
+        # left
+        plot3d_settings = Plot3DSettings(self)
+        layout.addWidget(plot3d_settings, 1, 1, 1, 1)
+
         figure3d = Figure(dpi=80)
         canvas3d = FigureCanvasQTAgg(figure3d)
         canvas3d.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(canvas3d, 1, 1, 2, 1)
+        layout.addWidget(canvas3d, 2, 1, 1, 1)
         self.canvas3d = canvas3d
 
         plot3d = figure3d.add_subplot(111, projection='3d')
         self.plot3d = plot3d
+
+        # right
+        plot2d_settings = Plot2DSettings(self)
+        layout.addWidget(plot2d_settings, 1, 2, 1, 1)
 
         figure2d = Figure(dpi=80)
         canvas2d = FigureCanvasQTAgg(figure2d)
@@ -585,27 +700,10 @@ class Canvas(WidgetBase):
         plot2d = figure2d.add_subplot(111)
         self.plot2d = plot2d
 
-        assembler = Assembler(self.master().model)
-
-        # FIXME make this cleaner...
-        dof_selector = QComboBox()
-        for dof in assembler.free_dofs:
-            logger = LoadDisplacementLogger(dof)
-            dof_selector.addItem(logger.title, logger)
-        layout.addWidget(dof_selector, 1, 2, 1, 1)
-        dof_selector.currentIndexChanged.connect(lambda _: self.set_option('plot/logger', dof_selector.currentData()))
-        dof_selector.currentIndexChanged.connect(lambda _: self.redraw())
-        dof_selector.setCurrentIndex(1)
-        dof_selector.setCurrentIndex(0)
-
         self.redraw()
 
     def redraw(self):
         model = self.master().model
-
-        logger = self.get_option('plot/logger')
-
-        node_id, dof_type = logger.dof
 
         plot3d = self.plot3d
         plot2d = self.plot2d
@@ -626,11 +724,48 @@ class Canvas(WidgetBase):
         #plot2d.yaxis.set_label_position('right')
         plot2d.grid()
 
-        for model in self.master().branches:
-            label = logger.xlabel + " : " + logger.ylabel
-            plot_history_curve(plot2d, model, logger, '-o', label=label, skip_iterations=True)
-            label += " (iter)"
-            plot_history_curve(plot2d, model, logger, '--o', label=label, skip_iterations=False, linewidth=0.75, markersize=2.0)
+        dof = self.get_option('plot/dof')
+        model = self.master().branches[-1]
+        
+        # load displacement plot
+        logger = LoadDisplacementLogger(dof)
+        label = logger.xlabel + " : " + logger.ylabel
+        if self.get_option('plot/load_disp_curve'):
+            # other branches at first level
+            n_branches = len(self.master().branches)
+            for i, model in enumerate(self.master().branches[:-1]):
+                if self.get_option('plot/load_disp_curve'):
+                    grey_level = i/float(n_branches)
+                    print(grey_level)
+                    plot_history_curve(plot2d, model, logger, '--x', label='Branch {} of {}'.format(i+1, n_branches), color=str(grey_level))
+            # main branch
+            plot_history_curve(plot2d, model, logger, '-o', label=label, color='tab:blue')
+
+        # load displacement iteration plot
+        if self.get_option('plot/load_disp_curve_iter'):
+            plot_history_curve(plot2d, model, logger, '--o', label=label, skip_iterations=False, linewidth=0.75, markersize=2.0, color='tab:orange')
+
+        # det_k plot
+        if self.get_option('plot/det_k'):      
+            logger = CustomLogger(
+                x_fct=lambda model: model.get_dof_state(dof=dof),            
+                y_fct=lambda model: model.det_k,            
+                x_label='B-v',         
+                y_label='Det(K)'
+                )
+            plot_history_curve(plot2d, model, logger, '-o', label=logger.title, color='tab:green')
+
+        # eigenvalue plot
+        if self.get_option('plot/eigenvalue'):      
+            logger = CustomLogger(
+                x_fct=lambda model: model.get_dof_state(dof=dof),            
+                y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.lam,            
+                x_label='B-v',         
+                y_label='Eigenvalue'
+                )
+            plot_history_curve(plot2d, model, logger, '-o', label=logger.title, color='tab:red')
+
+
 
         plot2d.legend(loc='best')
 
