@@ -556,14 +556,14 @@ class Sidebar(Widget):
 
         stack = self.add_stack(option_key='solver')
         stack.add_page(
-            label='Linear',
-            option_value='linear',
-            content=LinearSettings(self)
-        )
-        stack.add_page(
             label='Nonlinear',
             option_value='nonlinear',
             content=NonlinearSettings(self)
+        )
+        stack.add_page(
+            label='Linear',
+            option_value='linear',
+            content=LinearSettings(self)
         )
 
         self.add_stretch()
@@ -1065,7 +1065,8 @@ class AnimationWindow(QWidget):
 
         self.setWindowTitle('Animation')
 
-        layout = QVBoxLayout()
+        layout = QVBoxLayout()        
+        layout.setContentsMargins(0, 0, 0, 0)
 
         figure = Figure(dpi=80)
         figure = figure
