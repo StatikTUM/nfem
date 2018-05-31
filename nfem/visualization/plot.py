@@ -134,7 +134,7 @@ def get_max_axes_delta(ax):
     return max([x_lim[1]-x_lim[0], y_lim[1]-y_lim[0], z_lim[1]-z_lim[0]])
 
 def plot_forces(ax, model, initial, **options):
-    size = get_max_axes_delta(ax)/5.0
+    size = get_max_axes_delta(ax)/25 * options.get('plot/bc_size', 5)
     
     for element in model.elements:
         if type(element) == SingleLoad:
@@ -148,7 +148,7 @@ def plot_forces(ax, model, initial, **options):
             ax.add_artist(a)
 
 def plot_boundary_conditions(ax, model, initial, **options): 
-    size = get_max_axes_delta(ax)/20.0
+    size = get_max_axes_delta(ax)/100.0 * options.get('plot/bc_size', 5)
 
     polygons = list()
 
@@ -164,7 +164,7 @@ def plot_boundary_conditions(ax, model, initial, **options):
     pc.set_facecolor(color) # needs to be defined outside otherwhise alpha is not working
     ax.add_collection3d(pc)
 
-def animate_model(fig, ax, models, speed=200):
+def animate_model(fig, ax, models, speed=200, **options):
 
     bounding_box = get_bounding_box(models)
 
@@ -183,8 +183,8 @@ def animate_model(fig, ax, models, speed=200):
 
         ax.set_title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
 
-        plot_model(ax, step_model, 'gray', True)
-        plot_model(ax, step_model, 'red', False)
+        plot_model(ax, step_model, 'gray', True, **options)
+        plot_model(ax, step_model, 'red', False, **options)
 
     a = anim.FuncAnimation(fig, update, frames=len(models), repeat=True, interval=speed)
 

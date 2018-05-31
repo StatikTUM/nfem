@@ -714,8 +714,13 @@ class Canvas(WidgetBase):
         bounding_box = get_bounding_box(model.get_model_history())
         plot_bounding_cube(plot3d, bounding_box)
 
-        plot_model(plot3d, model, 'gray', True)
-        plot_model(plot3d, model, 'red', False)
+        options={}
+        options['plot/dirichlet'] = self.get_option('plot/dirichlet')
+        options['plot/neumann'] = self.get_option('plot/neumann')
+        options['plot/bc_size'] = self.get_option('plot/bc_size')
+
+        plot_model(plot3d, model, 'gray', True, **options)
+        plot_model(plot3d, model, 'red', False, **options)
 
         plot2d.clear()
         #plot2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
@@ -1081,8 +1086,13 @@ class AnimationWindow(QWidget):
 
         self.setLayout(layout)
 
-        # store the animation
-        self.a = animate_model(figure, ax_3d, model.get_model_history())
+        # store the animation        
+        options={}
+        options['plot/dirichlet'] = parent.options['plot/dirichlet']
+        options['plot/neumann'] = parent.options['plot/neumann']        
+        options['plot/bc_size'] = parent.options['plot/bc_size']
+
+        self.a = animate_model(figure, ax_3d, model.get_model_history(), **options)
 
         self.show()
 
