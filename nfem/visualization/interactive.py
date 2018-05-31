@@ -94,6 +94,12 @@ class InteractiveWindow(QWidget):
             if solver == 'linear':
                 model.lam = self.options['linear/lambda']
                 model.perform_linear_solution_step()
+            elif solver == 'LPB':
+                if model.get_previous_model().get_previous_model() is not None:
+                    raise RuntimeError('LPB can only be done on the initial model')
+                model.lam = self.options['linear/lambda']
+                model.perform_linear_solution_step()
+                model.solve_eigenvalues(linearized_prebuckling=True)
             elif solver == 'nonlinear':
                 predictor = self.options['nonlinear/predictor']
 
@@ -561,6 +567,11 @@ class Sidebar(Widget):
             content=NonlinearSettings(self)
         )
         stack.add_page(
+            label='Linearized Pre-Buckling (LPB)',
+            option_value='LPB',
+            content=LPBSettings(self)
+        )
+        stack.add_page(
             label='Linear',
             option_value='linear',
             content=LinearSettings(self)
@@ -786,6 +797,10 @@ class LinearSettings(Widget):
         )
 
         self.add_stretch()
+
+class LPBSettings(LinearSettings):
+    def __init__(self, parent):
+        super(LPBSettings, self).__init__(parent)
 
 class NonlinearSettings(Widget):
     def __init__(self, parent):

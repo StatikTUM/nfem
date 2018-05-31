@@ -689,8 +689,12 @@ class Model(object):
         k_m = np.zeros((dof_count, dof_count))
         k_g = np.zeros((dof_count, dof_count))
         if linearized_prebuckling:
+            print("=================================")
+            print('Linearized prebuckling (LPB) analysis ...')
             assembler.assemble_matrix(k_m, lambda element: element.calculate_elastic_stiffness_matrix())
-        else:
+        else:            
+            print("=================================")
+            print('Attendant eigenvalue analysis ...')
             assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
 
