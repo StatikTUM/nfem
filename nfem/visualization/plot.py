@@ -6,12 +6,16 @@ Authors: Klaus Sautter, Thomas Oberbichler, Armin Geiser
 import numpy as np
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 
+from .plot_symbols import get_force_arrow, get_tet4_polygons
+
 from ..truss import Truss
+from ..single_load import SingleLoad
 from ..model import ModelStatus
 
 class Plot2D(object):
@@ -101,7 +105,7 @@ def get_bounding_box(models):
 
     return min_x, max_x, min_y, max_y, min_z, max_z
 
-def plot_model(ax, model, color, initial):
+def plot_model(ax, model, color, initial, **options):
     lines = list()
 
     for element in model.elements:
@@ -117,6 +121,48 @@ def plot_model(ax, model, color, initial):
     lc = Line3DCollection(lines, colors=color, linewidths=2)
 
     ax.add_collection(lc)
+    
+    if options.get('plot/dirichlet', False):
+        plot_boundary_conditions(ax, model, initial, **options)
+    if options.get('plot/neumann', False):
+        plot_forces(ax, model, initial, **options)
+
+def get_max_axes_delta(ax):
+    x_lim = ax.get_xlim()
+    y_lim = ax.get_ylim()
+    z_lim = ax.get_zlim()
+    return max([x_lim[1]-x_lim[0], y_lim[1]-y_lim[0], z_lim[1]-z_lim[0]])
+
+def plot_forces(ax, model, initial, **options):
+    size = get_max_axes_delta(ax)/5.0
+    
+    for element in model.elements:
+        if type(element) == SingleLoad:
+            node = element.node
+            color = 'lightgray' if initial else 'lightcoral'
+            if initial:
+                a = get_force_arrow(node.reference_x, node.reference_y, node.reference_z, element.fu, element.fv, element.fw, size, color=color)
+            else:
+                a = get_force_arrow(node.x, node.y, node.z, element.fu, element.fv, element.fw, size, color=color)
+
+            ax.add_artist(a)
+
+def plot_boundary_conditions(ax, model, initial, **options): 
+    size = get_max_axes_delta(ax)/20.0
+
+    polygons = list()
+
+    for dof in model.dirichlet_conditions.keys():
+        node = model.get_node(dof[0])
+        if initial:
+            polygons.extend(get_tet4_polygons(node.reference_x, node.reference_y, node.reference_z, size, dof[1]))
+        else:
+            polygons.extend(get_tet4_polygons(node.x, node.y, node.z, size, dof[1]))
+
+    color = 'lightgray' if initial else 'lightcoral'
+    pc = Poly3DCollection(polygons, edgecolor=color, linewidth=0.5, alpha=0.25)
+    pc.set_facecolor(color) # needs to be defined outside otherwhise alpha is not working
+    ax.add_collection3d(pc)
 
 def animate_model(fig, ax, models, speed=200):
 
