@@ -35,7 +35,6 @@ def interact(model, dof):
 
     return window.model
 
-
 class InteractiveWindow(QWidget):
     def __init__(self, model, dof):
         super(InteractiveWindow, self).__init__()
@@ -268,12 +267,7 @@ def _dof_to_str(dof):
     node_id, dof_type = dof
     return '\'{}\' at \'{}\''.format(dof_type, node_id)
 
-def _free_dof_items(model):
-    # FIXME remove this function
-    assembler = Assembler(model)
-
-    return [(_dof_to_str(dof), dof) for dof in assembler.free_dofs]
-
+# --- Logger
 
 class LoadDisplacementLogger(object):
     def __init__(self, dof):
@@ -309,6 +303,8 @@ class CustomLogger(object):
 
     def __call__(self, model):
         return self.x_fct(model), self.y_fct(model)
+
+# --- Options
 
 class Options(QObject):
     changed = pyqtSignal(str)
@@ -366,6 +362,7 @@ class Options(QObject):
 
         self.changed.emit(key)
 
+# --- Custom widgets classes
 
 class WidgetBase(QWidget):
     def __init__(self, parent):
@@ -516,7 +513,6 @@ class Widget(WidgetBase):
         self._layout.addWidget(slider)
         return slider
 
-
 class StackWidget(WidgetBase):
     def __init__(self, parent, option_key=None):
         super(StackWidget, self).__init__(parent)
@@ -549,79 +545,7 @@ class StackWidget(WidgetBase):
     def selected_widget(self):
         return self._stack.currentWidget()
 
-
-class Plot2DSettings(Widget):
-    def __init__(self, parent):
-        super(Plot2DSettings, self).__init__(parent)
-
-        settings = self.add_group('Plot Settings')   
-
-        combo = settings.add_free_dof_combobox(option_key='plot/dof')
-        self.set_option('plot/dof', combo.currentData()) 
-        combo.currentIndexChanged.connect(lambda _: parent.redraw())
-
-        check_box = settings.add_checkbox(
-            label='Load displacement curve',
-            option_key='plot/load_disp_curve'
-        )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
-
-        check_box = settings.add_checkbox(
-            label='Load displacement curve with iterations',
-            option_key='plot/load_disp_curve_iter'
-        )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
-
-        check_box = settings.add_checkbox(
-            label='Det(K)',
-            option_key='plot/det_k'
-        )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
-
-        check_box = settings.add_checkbox(
-            label='Eigenvalue',
-            option_key='plot/eigenvalue'
-        )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
-
-        settings.add_stretch()
-
-class Plot3DSettings(Widget):
-    def __init__(self, parent):
-        super(Plot3DSettings, self).__init__(parent)
-
-        settings = self.add_group('3D Plot')   
-
-        settings.add_button(
-            label='Show animation',
-            action=self.master().show_animation_click
-        )
-
-        check_box = settings.add_checkbox(
-            label='Highlight Dof',
-            option_key='plot/highlight_dof'
-        )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
-        
-        check_box = settings.add_checkbox(
-            label='Show Dirichlet BCs',
-            option_key='plot/dirichlet'
-        )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
-
-        check_box = settings.add_checkbox(
-            label='Show Neumann BCs',
-            option_key='plot/neumann'
-        )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
-
-        slider = settings.add_slider(
-            option_key='plot/bc_size'
-        )
-        slider.valueChanged.connect(lambda _: parent.redraw())
-
-        settings.add_stretch()
-
+# --- Global layout
 
 class Sidebar(Widget):
     def __init__(self, parent):
@@ -777,6 +701,79 @@ class Canvas(WidgetBase):
         self.canvas3d.draw()
         self.canvas2d.draw()
 
+class Plot2DSettings(Widget):
+    def __init__(self, parent):
+        super(Plot2DSettings, self).__init__(parent)
+
+        settings = self.add_group('Plot Settings')   
+
+        combo = settings.add_free_dof_combobox(option_key='plot/dof')
+        self.set_option('plot/dof', combo.currentData()) 
+        combo.currentIndexChanged.connect(lambda _: parent.redraw())
+
+        check_box = settings.add_checkbox(
+            label='Load displacement curve',
+            option_key='plot/load_disp_curve'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        check_box = settings.add_checkbox(
+            label='Load displacement curve with iterations',
+            option_key='plot/load_disp_curve_iter'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        check_box = settings.add_checkbox(
+            label='Det(K)',
+            option_key='plot/det_k'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        check_box = settings.add_checkbox(
+            label='Eigenvalue',
+            option_key='plot/eigenvalue'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        settings.add_stretch()
+
+class Plot3DSettings(Widget):
+    def __init__(self, parent):
+        super(Plot3DSettings, self).__init__(parent)
+
+        settings = self.add_group('3D Plot')   
+
+        settings.add_button(
+            label='Show animation',
+            action=self.master().show_animation_click
+        )
+
+        check_box = settings.add_checkbox(
+            label='Highlight Dof',
+            option_key='plot/highlight_dof'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+        
+        check_box = settings.add_checkbox(
+            label='Show Dirichlet BCs',
+            option_key='plot/dirichlet'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        check_box = settings.add_checkbox(
+            label='Show Neumann BCs',
+            option_key='plot/neumann'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+
+        slider = settings.add_slider(
+            option_key='plot/bc_size'
+        )
+        slider.valueChanged.connect(lambda _: parent.redraw())
+
+        settings.add_stretch()
+
+# --- Analysis settings
 
 class LinearSettings(Widget):
     def __init__(self, parent):
@@ -816,7 +813,6 @@ class NonlinearSettings(Widget):
         )
 
         self.add_stretch()
-
 
 class PredictorSettings(StackWidget):
     def __init__(self, parent):
@@ -915,7 +911,6 @@ class SolutionSettings(Widget):
             option_key='nonlinear/solution/eigenproblem'
         )
 
-
 class BracketingSettings(Widget):
     def __init__(self, parent):
         super(BracketingSettings, self).__init__(parent)
@@ -999,7 +994,6 @@ class DofIncrementPredictorSettings(Widget):
 
         self.add_stretch()
 
-
 class ArclengthPredictorSettings(Widget):
     def __init__(self, parent):
         super(ArclengthPredictorSettings, self).__init__(parent)
@@ -1022,7 +1016,6 @@ class LastIncrementPredictorSettings(Widget):
 
         self.add_stretch()
 
-
 class ArclengthEigenvectorPredictorSettings(Widget):
     def __init__(self, parent):
         super(ArclengthEigenvectorPredictorSettings, self).__init__(parent)
@@ -1041,7 +1034,6 @@ class ArclengthEigenvectorPredictorSettings(Widget):
         )
 
         self.add_stretch()
-
 
 class LoadControlSettings(Widget):
     def __init__(self, parent):
@@ -1065,6 +1057,7 @@ class ArcLengthSettings(Widget):
 
         self.add_stretch()
 
+# --- Animation
 
 class AnimationWindow(QWidget):
     def __init__(self, parent, model):
@@ -1096,6 +1089,7 @@ class AnimationWindow(QWidget):
 
         self.show()
 
+# --- Log Window
 
 class Stream(QObject):
     textWritten = pyqtSignal(str)
