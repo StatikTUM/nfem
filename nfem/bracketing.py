@@ -44,6 +44,9 @@ def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
     model_2 = None
     initial_model = model_0
 
+    if model_1 is None:
+        raise RuntimeError('One step has to be solved before using the bracketing function.')
+
     if model_0.det_k is None:
         model_0.solve_det_k()
     det_k_0 = model_0.det_k
