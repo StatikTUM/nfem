@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QStackedWidget, QTextEdit, QVBoxLayout, QWidget, 
                              QListWidget, QListWidgetItem, QSlider, QSizePolicy)
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
 import sys
@@ -619,6 +619,9 @@ class Canvas(WidgetBase):
         layout.addWidget(canvas3d, 2, 1, 1, 1)
         self.canvas3d = canvas3d
 
+        toolbar = NavigationToolbar2QT(self.canvas3d, self)
+        layout.addWidget(toolbar, 3, 1, 1, 1)
+
         plot3d = figure3d.add_subplot(111, projection='3d')
         plot3d.set_aspect('equal')
         self.plot3d = plot3d
@@ -633,6 +636,9 @@ class Canvas(WidgetBase):
         canvas2d.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         layout.addWidget(canvas2d, 2, 2, 1, 1)
         self.canvas2d = canvas2d
+
+        toolbar = NavigationToolbar2QT(self.canvas2d, self)
+        layout.addWidget(toolbar, 3, 2, 1, 1)
 
         plot2d = figure2d.add_subplot(111)
         self.plot2d = plot2d
