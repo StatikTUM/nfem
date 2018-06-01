@@ -715,7 +715,8 @@ class Model(object):
 
         print("First eigenvalue: {}".format(eigvals[0]))
         print("First eigenvalue * lambda: {}".format(eigvals[0] * self.lam)) # this is printed in TRUSS
-        print("First eigenvector: {}".format(eigvecs[0]))
+        if len(eigvecs[0]) < 10:
+            print("First eigenvector: {}".format(eigvecs[0]))
 
         # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
         idx = (np.abs(eigvals - 1.0)).argmin()
@@ -723,7 +724,8 @@ class Model(object):
         if (idx != 0):
             print("== Closest eigenvalue: {}".format(eigvals[idx]))
             print("== Closest eigenvalue * lambda: {}".format(eigvals[idx] * self.lam)) # this is printed in TRUSS
-            print("== Closest eigenvector: {}".format(eigvecs[idx]))
+            if len(eigvecs[idx]) < 10:
+                print("== Closest eigenvector: {}".format(eigvecs[idx]))
 
         self.first_eigenvalue = eigvals[idx]
 
