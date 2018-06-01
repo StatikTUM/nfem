@@ -165,8 +165,9 @@ def plot_dof_higlight(ax, model, initial, **options):
         z = node.z
     a = get_dof_arrow(x, y, z, dx, dy, dz, size*0.75, color=color)
     ax.add_artist(a)
-    a = get_sphere(x, y, z, size/300, color=color)
-    ax.add_artist(a)
+    # TODO fix size of spere...
+    #a = get_sphere(x, y, z, size/300, color=color)
+    #ax.add_artist(a)
 
 
 def plot_forces(ax, model, initial, **options):
