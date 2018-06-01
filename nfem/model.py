@@ -484,6 +484,10 @@ class Model(object):
             The results are stored at the dofs and used to update the current
             coordinates of the nodes.
         """
+        
+        print("\n=================================")
+        print("Start linear solution step...")
+        print("lambda : {}".format(self.lam))
 
         assembler = Assembler(self)
 
@@ -544,7 +548,7 @@ class Model(object):
             - solve_attendant_eigenvalue=True: for solving the attendant eigenvalue problem at convergence
         """
 
-        print("=================================")
+        print("\n=================================")
         print("Start non linear solution step...")
 
         if strategy == 'load-control':

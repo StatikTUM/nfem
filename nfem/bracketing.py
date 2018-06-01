@@ -27,7 +27,7 @@ def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
         additional options for the nonlinear solution
     """
 
-    print("=================================")
+    print("\n=================================")
     print("Starting bracketing to search for next critical point.")
 
     if 'solve_attendant_eigenvalue' not in options:
@@ -69,20 +69,23 @@ def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
 
         # check if critical point has been found
         if abs(det_k_0) < tol:
+            print('\n=================================')
             print('Converged to Det(K) = {}'.format(det_k_0))
             success = True
             break
         elif abs(det_k_0 / initial_model.det_k) < tol:
+            print('\n=================================')
             print('Converged to relative value Det(K)/Det(K)_initial = {}'.format(det_k_0 / initial_model.det_k))
             success = True
             break
         elif abs(det_k_0 - det_k_1) < tol:
+            print('\n=================================')
             print('WARNING: Converged at stationary point for Det(K)!')
             success = True
             break
 
         step += 1
-        print('=================================')
+        print('\n=================================')
         print('Bracketing step {}'.format(step))
 
         if not in_min_max and np.sign(det_k_0) == np.sign(det_k_1) and np.sign(delta_0) == np.sign(delta_1):
