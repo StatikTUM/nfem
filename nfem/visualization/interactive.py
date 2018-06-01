@@ -621,6 +621,7 @@ class Canvas(WidgetBase):
         self.canvas3d = canvas3d
 
         plot3d = figure3d.add_subplot(111, projection='3d')
+        plot3d.set_aspect('equal')
         self.plot3d = plot3d
 
         # right
@@ -1094,7 +1095,8 @@ class AnimationWindow(QWidget):
         layout.addWidget(animation_canvas)
 
         ax_3d = figure.add_subplot(1, 1, 1, projection='3d')
-        ax_3d = ax_3d
+        
+        ax_3d.set_aspect('equal')
 
         self.setLayout(layout)
 
