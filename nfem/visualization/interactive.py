@@ -1092,13 +1092,13 @@ class AnimationWindow(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         figure = Figure(dpi=80)
-        figure = figure
 
         animation_canvas = FigureCanvasQTAgg(figure)
         animation_canvas.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(animation_canvas)
 
         ax_3d = figure.add_subplot(1, 1, 1, projection='3d')
+        figure.tight_layout()
         
         ax_3d.set_aspect('equal')
 
