@@ -623,6 +623,7 @@ class Canvas(WidgetBase):
         layout.addWidget(toolbar, 3, 1, 1, 1)
 
         plot3d = figure3d.add_subplot(111, projection='3d')
+        figure3d.tight_layout()
         plot3d.set_aspect('equal')
         self.plot3d = plot3d
 
