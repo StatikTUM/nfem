@@ -294,6 +294,13 @@ def plot_history_curve(ax, model, xy_function, fmt, skip_iterations=True, **kwar
 
     ax.plot(x_data, y_data, fmt, **kwargs)
 
+def plot_crosshair(ax, x, y, **kwargs):
+    lx = ax.axvline(**kwargs)
+    lx.set_xdata(x)
+
+    ly = ax.axhline(**kwargs)
+    ly.set_ydata(y)
+
 def plot_custom_curve(ax, *args, **kwargs):
     ax.plot(*args, **kwargs)
 

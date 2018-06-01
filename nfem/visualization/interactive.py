@@ -20,7 +20,7 @@ import sys
 import traceback
 
 from .plot import (plot_model, plot_load_displacement_curve, plot_bounding_cube,
-                   plot_history_curve)
+                   plot_history_curve, plot_crosshair)
 from .plot import animate_model, get_bounding_box
 from ..assembler import Assembler
 from ..bracketing import bracketing
@@ -678,10 +678,12 @@ class Canvas(WidgetBase):
         dof = self.get_option('plot/dof')
         model = self.master().branches[-1]
         
+
         # load displacement plot
         logger = LoadDisplacementLogger(dof)
         label = logger.xlabel + " : " + logger.ylabel
         if self.get_option('plot/load_disp_curve'):
+            plot_crosshair(plot2d, model.get_dof_state(dof), model.lam, linestyle='-.', color='tab:blue', linewidth=0.75)
             # other branches at first level
             n_branches = len(self.master().branches)
             for i, branch_model in enumerate(self.master().branches[:-1]):
