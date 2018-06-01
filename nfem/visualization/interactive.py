@@ -271,7 +271,7 @@ class InteractiveWindow(QWidget):
 
 def _dof_to_str(dof):
     node_id, dof_type = dof
-    return '\'{}\' at \'{}\''.format(dof_type, node_id)
+    return '{} at node {}'.format(dof_type, node_id)
 
 # --- Logger
 
@@ -687,14 +687,14 @@ class Canvas(WidgetBase):
 
         # load displacement iteration plot
         if self.get_option('plot/load_disp_curve_iter'):
-            plot_history_curve(plot2d, model, logger, '--o', label=label, skip_iterations=False, linewidth=0.75, markersize=2.0, color='tab:orange')
+            plot_history_curve(plot2d, model, logger, '--o', label='{} (iter)'.format(label), skip_iterations=False, linewidth=0.75, markersize=2.0, color='tab:orange')
 
         # det_k plot
         if self.get_option('plot/det_k'):      
             logger = CustomLogger(
                 x_fct=lambda model: model.get_dof_state(dof=dof),            
                 y_fct=lambda model: model.det_k,            
-                x_label='B-v',         
+                x_label=_dof_to_str(dof),         
                 y_label='Det(K)'
                 )
             plot_history_curve(plot2d, model, logger, '-o', label=logger.title, color='tab:green')
@@ -704,7 +704,7 @@ class Canvas(WidgetBase):
             logger = CustomLogger(
                 x_fct=lambda model: model.get_dof_state(dof=dof),            
                 y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.lam,            
-                x_label='B-v',         
+                x_label=_dof_to_str(dof),         
                 y_label='Eigenvalue'
                 )
             plot_history_curve(plot2d, model, logger, '-o', label=logger.title, color='tab:red')
