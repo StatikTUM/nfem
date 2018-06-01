@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                              QLabel, QMessageBox, QPushButton, QSpinBox,
                              QStackedWidget, QTextEdit, QVBoxLayout, QWidget, 
-                             QListWidget, QListWidgetItem, QSlider)
+                             QListWidget, QListWidgetItem, QSlider, QSizePolicy)
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -417,8 +417,6 @@ class Widget(WidgetBase):
 
         layout.addWidget(widget)
 
-        layout.addStretch(1)
-
         return widget
 
     def add_stack(self, *args, **kwargs):
@@ -617,6 +615,7 @@ class Canvas(WidgetBase):
         figure3d = Figure(dpi=80)
         canvas3d = FigureCanvasQTAgg(figure3d)
         canvas3d.setContentsMargins(0, 0, 0, 0)
+        canvas3d.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         layout.addWidget(canvas3d, 2, 1, 1, 1)
         self.canvas3d = canvas3d
 
@@ -631,6 +630,7 @@ class Canvas(WidgetBase):
         figure2d = Figure(dpi=80)
         canvas2d = FigureCanvasQTAgg(figure2d)
         canvas2d.setContentsMargins(0, 0, 0, 0)
+        canvas2d.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         layout.addWidget(canvas2d, 2, 2, 1, 1)
         self.canvas2d = canvas2d
 
@@ -750,8 +750,6 @@ class Plot2DSettings(Widget):
         )
         check_box.stateChanged.connect(lambda _: parent.redraw())
 
-        settings.add_stretch()
-
 class Plot3DSettings(Widget):
     def __init__(self, parent):
         super(Plot3DSettings, self).__init__(parent)
@@ -785,8 +783,6 @@ class Plot3DSettings(Widget):
             option_key='plot/symbol_size'
         )
         slider.valueChanged.connect(lambda _: parent.redraw())
-
-        settings.add_stretch()
 
 # --- Analysis settings
 
