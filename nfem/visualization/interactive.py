@@ -358,7 +358,7 @@ class Options(QObject):
         self['plot/dirichlet'] = True
         self['plot/neumann'] = True
         self['plot/highlight_dof'] = True
-        self['plot/bc_size'] = 5
+        self['plot/symbol_size'] = 5
 
     def __getitem__(self, key):
         return self._data[key]
@@ -515,6 +515,7 @@ class Widget(WidgetBase):
         slider.setMinimum(minimum or 1)
         slider.setMaximum(maximum or 10)
         slider.setTickInterval(interval or 1)
+        slider.setValue(self.get_option(option_key))
         slider.valueChanged.connect(lambda value: self.set_option(option_key, value))
         self._layout.addWidget(slider)
         return slider
@@ -652,7 +653,9 @@ class Canvas(WidgetBase):
         options={}
         options['plot/dirichlet'] = self.get_option('plot/dirichlet')
         options['plot/neumann'] = self.get_option('plot/neumann')
-        options['plot/bc_size'] = self.get_option('plot/bc_size')
+        options['plot/symbol_size'] = self.get_option('plot/symbol_size')
+        options['plot/highlight_dof'] = self.get_option('plot/highlight_dof')
+        options['plot/highlighted_dof'] = self.get_option('plot/dof')
 
         plot_model(plot3d, model, 'gray', True, **options)
         plot_model(plot3d, model, 'red', False, **options)
@@ -778,7 +781,7 @@ class Plot3DSettings(Widget):
         check_box.stateChanged.connect(lambda _: parent.redraw())
 
         slider = settings.add_slider(
-            option_key='plot/bc_size'
+            option_key='plot/symbol_size'
         )
         slider.valueChanged.connect(lambda _: parent.redraw())
 
@@ -1099,7 +1102,9 @@ class AnimationWindow(QWidget):
         options={}
         options['plot/dirichlet'] = parent.options['plot/dirichlet']
         options['plot/neumann'] = parent.options['plot/neumann']        
-        options['plot/bc_size'] = parent.options['plot/bc_size']
+        options['plot/symbol_size'] = parent.options['plot/symbol_size']
+        options['plot/highlight_dof'] = parent.options['plot/highlight_dof']
+        options['plot/highlighted_dof'] = parent.options['plot/dof']
 
         self.a = animate_model(figure, ax_3d, model.get_model_history(), **options)
 

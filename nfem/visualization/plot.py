@@ -12,7 +12,7 @@ from mpl_toolkits.mplot3d.art3d import Line3DCollection
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 
-from .plot_symbols import get_force_arrow, get_tet4_polygons
+from .plot_symbols import get_force_arrow, get_tet4_polygons, get_dof_arrow, get_sphere
 
 from ..truss import Truss
 from ..single_load import SingleLoad
@@ -126,6 +126,8 @@ def plot_model(ax, model, color, initial, **options):
         plot_boundary_conditions(ax, model, initial, **options)
     if options.get('plot/neumann', False):
         plot_forces(ax, model, initial, **options)
+    if options.get('plot/highlight_dof', False):
+        plot_dof_higlight(ax, model, initial, **options)
 
 def get_max_axes_delta(ax):
     x_lim = ax.get_xlim()
@@ -133,22 +135,61 @@ def get_max_axes_delta(ax):
     z_lim = ax.get_zlim()
     return max([x_lim[1]-x_lim[0], y_lim[1]-y_lim[0], z_lim[1]-z_lim[0]])
 
+def plot_dof_higlight(ax, model, initial, **options):
+    size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5)
+
+    dof = options.get('plot/highlighted_dof', None)
+    if dof is None:
+        return
+    
+    node_id, dof_type = dof
+
+    node = model.get_node(node_id)
+    
+    dx, dy, dz = 0, 0, 0
+    if dof_type == 'u':
+        dx = 1
+    if dof_type == 'v':
+        dy = 1
+    if dof_type == 'w':
+        dz = 1
+
+    color = 'lightgray' if initial else 'tab:blue'
+    if initial:
+        x = node.reference_x
+        y = node.reference_y
+        z = node.reference_z
+    else:
+        x = node.x
+        y = node.y
+        z = node.z
+    a = get_dof_arrow(x, y, z, dx, dy, dz, size*0.75, color=color)
+    ax.add_artist(a)
+    a = get_sphere(x, y, z, size/300, color=color)
+    ax.add_artist(a)
+
+
 def plot_forces(ax, model, initial, **options):
-    size = get_max_axes_delta(ax)/25 * options.get('plot/bc_size', 5)
+    size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5)
     
     for element in model.elements:
         if type(element) == SingleLoad:
             node = element.node
             color = 'lightgray' if initial else 'lightcoral'
             if initial:
-                a = get_force_arrow(node.reference_x, node.reference_y, node.reference_z, element.fu, element.fv, element.fw, size, color=color)
+                x = node.reference_x
+                y = node.reference_y
+                z = node.reference_z
             else:
-                a = get_force_arrow(node.x, node.y, node.z, element.fu, element.fv, element.fw, size, color=color)
+                x = node.x
+                y = node.y
+                z = node.z
+            a = get_force_arrow(x, y, z, element.fu, element.fv, element.fw, size, color=color)
 
             ax.add_artist(a)
 
 def plot_boundary_conditions(ax, model, initial, **options): 
-    size = get_max_axes_delta(ax)/100.0 * options.get('plot/bc_size', 5)
+    size = get_max_axes_delta(ax)/100.0 * options.get('plot/symbol_size', 5)
 
     polygons = list()
 
