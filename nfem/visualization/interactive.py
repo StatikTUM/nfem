@@ -683,11 +683,10 @@ class Canvas(WidgetBase):
         if self.get_option('plot/load_disp_curve'):
             # other branches at first level
             n_branches = len(self.master().branches)
-            for i, model in enumerate(self.master().branches[:-1]):
-                if self.get_option('plot/load_disp_curve'):
-                    grey_level = i/float(n_branches)
-                    print(grey_level)
-                    plot_history_curve(plot2d, model, logger, '--x', label='Branch {} of {}'.format(i+1, n_branches), color=str(grey_level))
+            for i, branch_model in enumerate(self.master().branches[:-1]):
+                grey_level = i/float(n_branches)
+                print(grey_level)
+                plot_history_curve(plot2d, branch_model, logger, '--x', label='Branch {} of {}'.format(i+1, n_branches), color=str(grey_level))
             # main branch
             plot_history_curve(plot2d, model, logger, '-o', label=label, color='tab:blue')
 
