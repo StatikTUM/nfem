@@ -496,10 +496,13 @@ class Widget(WidgetBase):
     def add_free_dof_combobox(self, option_key):
         assembler = Assembler(self.master().model)
 
-        return self.add_combobox(
+        combo =  self.add_combobox(
             items=[(_dof_to_str(dof), dof) for dof in assembler.free_dofs],
             option_key=option_key
         )
+        idx = combo.findText( _dof_to_str(self.master().dof) )
+        combo.setCurrentIndex(idx)
+        return combo
 
     def add_button(self, label, action):
         button = QPushButton(label)
