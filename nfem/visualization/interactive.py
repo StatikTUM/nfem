@@ -337,11 +337,11 @@ class Options(QObject):
         self['nonlinear/constraint/dof'] = None
 
         # Newton-Raphson
-        self['nonlinear/newtonraphson/maxiterations'] = 1000
-        self['nonlinear/newtonraphson/tolerance'] = -5
+        self['nonlinear/newtonraphson/maxiterations'] = 100
+        self['nonlinear/newtonraphson/tolerance'] = -7
 
         # solution
-        self['nonlinear/solution/determinant'] = True
+        self['nonlinear/solution/determinant'] = False
         self['nonlinear/solution/eigenproblem'] = False
 
         # bracketing
@@ -351,9 +351,9 @@ class Options(QObject):
         # plot
         self['plot/dof'] = None
         self['plot/load_disp_curve'] = True
-        self['plot/load_disp_curve_iter'] = True
-        self['plot/det_k'] = True
-        self['plot/eigenvalue'] = True
+        self['plot/load_disp_curve_iter'] = False
+        self['plot/det_k'] = False
+        self['plot/eigenvalue'] = False
         
         self['plot/dirichlet'] = True
         self['plot/neumann'] = True
