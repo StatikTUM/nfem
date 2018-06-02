@@ -676,6 +676,7 @@ class Canvas(WidgetBase):
         plot_model(plot3d, model, 'red', False, **options)
 
         plot2d.clear()
+        plot2d.autoscale()        
         #plot2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
         plot2d.set_facecolor('white')
         plot2d.yaxis.tick_right()
@@ -684,21 +685,19 @@ class Canvas(WidgetBase):
 
         dof = self.get_option('plot/dof')
         model = self.master().branches[-1]
-        
 
         # load displacement plot
         logger = LoadDisplacementLogger(dof)
         label = logger.xlabel + " : " + logger.ylabel
         if self.get_option('plot/load_disp_curve'):
-            plot_crosshair(plot2d, model.get_dof_state(dof), model.lam, linestyle='-.', color='tab:blue', linewidth=0.75)
             # other branches at first level
             n_branches = len(self.master().branches)
             for i, branch_model in enumerate(self.master().branches[:-1]):
                 grey_level = i/float(n_branches)
-                print(grey_level)
                 plot_history_curve(plot2d, branch_model, logger, '--x', label='Branch {} of {}'.format(i+1, n_branches), color=str(grey_level))
             # main branch
             plot_history_curve(plot2d, model, logger, '-o', label=label, color='tab:blue')
+            plot_crosshair(plot2d, model.get_dof_state(dof), model.lam, linestyle='-.', color='tab:blue', linewidth=0.75)
 
         # load displacement iteration plot
         if self.get_option('plot/load_disp_curve_iter'):
@@ -723,8 +722,6 @@ class Canvas(WidgetBase):
                 y_label='Eigenvalue'
                 )
             plot_history_curve(plot2d, model, logger, '-o', label=logger.title, color='tab:red')
-
-
 
         plot2d.legend(loc='best')
 
