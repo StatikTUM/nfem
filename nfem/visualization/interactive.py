@@ -5,7 +5,7 @@ Author: Thomas Oberbichler
 
 
 from PyQt5 import Qt
-from PyQt5.QtCore import pyqtSignal, QObject, Qt as CoreQt
+from PyQt5.QtCore import pyqtSignal, QObject, Qt as CoreQt, QSize
 from PyQt5.QtGui import QFontDatabase, QTextCursor
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QFrame, QGridLayout, QGroupBox, QHBoxLayout,
@@ -623,6 +623,8 @@ class Canvas(WidgetBase):
         self.canvas3d = canvas3d
 
         toolbar = NavigationToolbar2QT(self.canvas3d, self)
+        toolbar.setMaximumHeight(20)
+        toolbar.setIconSize(QSize(20,20))
         layout.addWidget(toolbar, 3, 1, 1, 1)
 
         plot3d = figure3d.add_subplot(111, projection='3d')
@@ -642,6 +644,8 @@ class Canvas(WidgetBase):
         self.canvas2d = canvas2d
 
         toolbar = NavigationToolbar2QT(self.canvas2d, self)
+        toolbar.setMaximumHeight(20)
+        toolbar.setIconSize(QSize(20,20))
         layout.addWidget(toolbar, 3, 2, 1, 1)
 
         plot2d = figure2d.add_subplot(111)
