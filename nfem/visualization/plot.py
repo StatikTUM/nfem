@@ -105,6 +105,37 @@ def get_bounding_box(models):
 
     return min_x, max_x, min_y, max_y, min_z, max_z
 
+def plot_scaled_model(ax, model, color, **options):
+    scaling_factor = options.get('plot/scaling_factor', None)
+    if not scaling_factor:
+        # autoscaling max u to 10% of bounding_box
+        bounding_box = get_bounding_box([model.get_initial_model()])        
+        min_x, max_x, min_y, max_y, min_z, max_z = bounding_box
+        max_delta = max(max_x-min_x, max_y-min_y, max_z-min_z) 
+        max_u = max(abs(node.u) for node in model.nodes)
+        max_v = max(abs(node.v) for node in model.nodes)
+        max_w = max(abs(node.w) for node in model.nodes)
+        max_def = max(max_u, max_v, max_w)
+        scaling_factor = max_delta / max_def * 0.1
+
+    lines = list()
+
+    for element in model.elements:
+        if type(element) == Truss:
+            node_a = element.node_a
+            node_b = element.node_b
+
+            b = [node_b.reference_x+scaling_factor*node_b.u, node_b.reference_y+scaling_factor*node_b.v, node_b.reference_z+scaling_factor*node_b.w]
+            a = [node_a.reference_x+scaling_factor*node_a.u, node_a.reference_y+scaling_factor*node_a.v, node_a.reference_z+scaling_factor*node_a.w]
+
+            lines.append([a, b])
+
+    lc = Line3DCollection(lines, colors=color, linewidths=2)
+
+    ax.add_collection(lc)
+
+    plot_symbols(ax, model, color, initial=False, **options)
+
 def plot_model(ax, model, color, initial, **options):
     lines = list()
 
@@ -121,7 +152,10 @@ def plot_model(ax, model, color, initial, **options):
     lc = Line3DCollection(lines, colors=color, linewidths=2)
 
     ax.add_collection(lc)
-    
+
+    plot_symbols(ax, model, color, initial, **options)
+
+def plot_symbols(ax, model, color, initial, **options):    
     if options.get('plot/dirichlet', False):
         plot_boundary_conditions(ax, model, initial, **options)
     if options.get('plot/neumann', False):

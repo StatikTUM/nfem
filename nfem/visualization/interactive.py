@@ -20,7 +20,7 @@ import sys
 import traceback
 
 from .plot import (plot_model, plot_load_displacement_curve, plot_bounding_cube,
-                   plot_history_curve, plot_crosshair)
+                   plot_history_curve, plot_crosshair, plot_scaled_model)
 from .plot import animate_model, get_bounding_box
 from ..assembler import Assembler
 from ..bracketing import bracketing
@@ -359,6 +359,7 @@ class Options(QObject):
         self['plot/neumann'] = True
         self['plot/highlight_dof'] = True
         self['plot/symbol_size'] = 5
+        self['plot/eigenvector'] = False
 
     def __getitem__(self, key):
         return self._data[key]
@@ -674,6 +675,8 @@ class Canvas(WidgetBase):
 
         plot_model(plot3d, model, 'gray', True, **options)
         plot_model(plot3d, model, 'red', False, **options)
+        if self.get_option('plot/eigenvector') and model.first_eigenvector_model is not None:
+            plot_scaled_model(plot3d, model.first_eigenvector_model, 'green')
 
         plot2d.clear()
         plot2d.autoscale()        
