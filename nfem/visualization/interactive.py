@@ -398,8 +398,10 @@ class Widget(WidgetBase):
 
         if horizontal:
             layout = QHBoxLayout()
+            layout.setAlignment(CoreQt.AlignLeft)
         else:
             layout = QVBoxLayout()
+            layout.setAlignment(CoreQt.AlignTop)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
         self._layout = layout
@@ -792,8 +794,6 @@ class Plot3DSettings(Widget):
         )
         check_box.stateChanged.connect(lambda _: parent.redraw())
         
-        other.add_stretch()
-
         check_box = symbols.add_checkbox(
             label='Highlight Dof',
             option_key='plot/highlight_dof'
