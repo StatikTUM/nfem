@@ -138,6 +138,8 @@ class Truss(ElementBase):
         reference_length = self.get_reference_length()
 
         e_gl = self.calculate_green_lagrange_strain()
+        # TODO for LPB, linear strain has to be used...
+        #e_gl = self.calculate_linear_strain()
 
         k_g = e * a / reference_length * e_gl + prestress * a / reference_length
 
@@ -165,6 +167,21 @@ class Truss(ElementBase):
         e_gl = (actual_length**2 - reference_length**2) / (2 * reference_length**2)
 
         return e_gl
+        
+    def calculate_linear_strain(self):
+        """FIXME"""
+
+        reference_vec = self.get_reference_vector()
+        actual_vec = self.get_actual_vector()
+
+        reference_length = self.get_reference_length()
+
+        #project actual on reference
+        projected_l = reference_vec @ actual_vec / reference_length
+
+        e_lin = projected_l  -  reference_length
+
+        return e_lin
 
     def calculate_internal_forces(self):
         """FIXME"""
