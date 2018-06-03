@@ -719,7 +719,9 @@ class Model(object):
             print("First eigenvector: {}".format(eigvecs[0]))
 
         # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
-        idx = (np.abs(eigvals - 1.0)).argmin()
+        if not linearized_prebuckling:
+            idx = (np.abs(eigvals - 1.0)).argmin()
+        else: idx = 0
 
         if (idx != 0):
             print("== Closest eigenvalue: {}".format(eigvals[idx]))
