@@ -466,7 +466,7 @@ class Widget(WidgetBase):
             raise ValueError('Wrong dtype "{}"'.format(dtype.__name__))
 
         widget.setValue(self.get_option(option_key))
-        widget.valueChanged.connect(lambda value: self.set_option(option_key, value))
+        widget.editingFinished.connect(lambda: self.set_option(option_key, widget.value()))
 
         def on_options_changed(key):
             if key == option_key:
