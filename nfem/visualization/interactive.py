@@ -11,7 +11,8 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                              QLabel, QMessageBox, QPushButton, QSpinBox,
                              QStackedWidget, QTextEdit, QVBoxLayout, QWidget, 
-                             QListWidget, QListWidgetItem, QSlider, QSizePolicy)
+                             QListWidget, QListWidgetItem, QScrollArea, QSlider,
+                             QSizePolicy)
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
@@ -58,8 +59,16 @@ class InteractiveWindow(QWidget):
 
         # --- sidebar
 
+        scrollarea = QScrollArea()
+
         sidebar = Sidebar(self)
-        layout.addWidget(sidebar, 1, 1, 2, 1)
+        scrollarea.setWidget(sidebar)
+        scrollarea.horizontalScrollBar().setEnabled(False)
+        scrollarea.setHorizontalScrollBarPolicy(CoreQt.ScrollBarAlwaysOff)
+        scrollarea.setWidgetResizable(True)
+        scrollarea.setFixedWidth(250)
+
+        layout.addWidget(scrollarea, 1, 1, 2, 1)
 
         # --- plot_canvas
 
