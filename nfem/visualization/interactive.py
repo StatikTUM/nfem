@@ -393,10 +393,13 @@ class WidgetBase(QWidget):
         self.master().options[key] = value
 
 class Widget(WidgetBase):
-    def __init__(self, parent, widgets=[]):
+    def __init__(self, parent, widgets=[], horizontal=False):
         super(Widget, self).__init__(parent)
 
-        layout = QVBoxLayout()
+        if horizontal:
+            layout = QHBoxLayout()
+        else:
+            layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
         self._layout = layout
@@ -407,14 +410,17 @@ class Widget(WidgetBase):
     def add_widget(self, widget):
         self._layout.addWidget(widget)
 
-    def add_group(self, label, content=None):
+    def add_group(self, label, content=None, horizontal=False):
         group = QGroupBox(label)
         self.add_widget(group)
 
-        layout = QVBoxLayout()
+        if horizontal:
+            layout = QHBoxLayout()
+        else:
+            layout = QVBoxLayout()
         group.setLayout(layout)
 
-        widget = content or Widget(self)
+        widget = content or Widget(self, horizontal=horizontal)
 
         layout.addWidget(widget)
 
@@ -769,32 +775,44 @@ class Plot3DSettings(Widget):
     def __init__(self, parent):
         super(Plot3DSettings, self).__init__(parent)
 
-        settings = self.add_group('3D Plot')   
+        settings = self.add_group('3D Plot', horizontal=True)   
 
-        settings.add_button(
+        symbols = settings.add_group('Symbols')
+
+        other = settings.add_group('Model')
+
+        other.add_button(
             label='Show animation',
             action=self.master().show_animation_click
         )
 
-        check_box = settings.add_checkbox(
+        check_box = other.add_checkbox(
+            label='Show Eigenvector',
+            option_key='plot/eigenvector'
+        )
+        check_box.stateChanged.connect(lambda _: parent.redraw())
+        
+        other.add_stretch()
+
+        check_box = symbols.add_checkbox(
             label='Highlight Dof',
             option_key='plot/highlight_dof'
         )
         check_box.stateChanged.connect(lambda _: parent.redraw())
         
-        check_box = settings.add_checkbox(
+        check_box = symbols.add_checkbox(
             label='Show Dirichlet BCs',
             option_key='plot/dirichlet'
         )
         check_box.stateChanged.connect(lambda _: parent.redraw())
 
-        check_box = settings.add_checkbox(
+        check_box = symbols.add_checkbox(
             label='Show Neumann BCs',
             option_key='plot/neumann'
         )
         check_box.stateChanged.connect(lambda _: parent.redraw())
 
-        slider = settings.add_slider(
+        slider = symbols.add_slider(
             option_key='plot/symbol_size'
         )
         slider.valueChanged.connect(lambda _: parent.redraw())
