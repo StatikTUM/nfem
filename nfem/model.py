@@ -671,18 +671,89 @@ class Model(object):
         self.det_k =  la.det(k[:free_count,:free_count])
         print("Det(K): {}".format(self.det_k))
 
-    def solve_eigenvalues(self, assembler=None, linearized_prebuckling=False):
-        """Solves the eigenvalue problem
-           [ k_m + eigvals * k_g ] * eigvecs = 0
+    def solve_linear_eigenvalues(self, assembler=None):
+        """Solves the linearized eigenvalue problem
+           [ k_e + eigvals * k_g(linear strain) ] * eigvecs = 0
+           Stores the first positive eigenvalue and vector
 
         Parameters
         ----------
         assembler : Object (optional)
             assembler can be passed to speed up
-        linearized_prebuckling : bool (optional)
-            If True, linearized prebuckling assumption u=0 : k_m = k_e is used
         """
-        # [ k_m + eigvals * k_g ] * eigvecs = 0
+        if assembler is None:
+            assembler = Assembler(self)
+
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+
+        # assemble matrices
+        k_e = np.zeros((dof_count, dof_count))
+        k_g = np.zeros((dof_count, dof_count))
+        print("=================================")
+        print('Linearized prebuckling (LPB) analysis ...')
+        assembler.assemble_matrix(k_e, lambda element: element.calculate_elastic_stiffness_matrix())
+        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix(linear=True))
+        
+        # solve eigenvalue problem
+        eigvals, eigvecs = eig((k_e[:free_count,:free_count]), -k_g[:free_count,:free_count])
+
+        # extract real parts of eigenvalues
+        eigvals = np.array([x.real for x in eigvals])
+
+        # sort eigenvalues and vectors
+        idx = eigvals.argsort()
+        eigvals = eigvals[idx]
+        eigvecs = eigvecs[:,idx]
+
+        # remove negative eigenvalues
+        for i, eigenvalue in enumerate(eigvals):
+            if eigenvalue > 0.0:
+                break
+            else:
+                i+=1
+
+        if i == len(eigvals):
+            print('System has no positive eigenvalues!')
+            return
+
+        eigvals = eigvals[i:]
+        eigvecs = eigvecs[:,i:]
+
+        print('First linear eigenvalue: {}'.format(eigvals[0]))
+        print('First linear eigenvalue * lambda: {}'.format(eigvals[0] * self.lam)) # this is printed in TRUSS
+        if len(eigvecs[0]) < 10:
+            print('First linear eigenvector: {}'.format(eigvecs[0]))
+
+        self.first_eigenvalue = eigvals[0]
+
+        # store eigenvector as model
+        model = self.get_duplicate()
+        model._previous_model = self
+        model.status = ModelStatus.eigenvector
+        model.det_k = None
+        model.first_eigenvalue = None
+        model.first_eigenvector_model = None
+        model.lam = None
+
+        for index, dof in enumerate(assembler.free_dofs):
+
+            value = eigvecs[index][0]
+
+            model.set_dof_state(dof, value)
+
+        self.first_eigenvector_model = model
+
+    def solve_eigenvalues(self, assembler=None):
+        """Solves the eigenvalue problem
+           [ k_m + eigvals * k_g ] * eigvecs = 0
+           Stores the closest (most critical) eigenvalue and vector
+
+        Parameters
+        ----------
+        assembler : Object (optional)
+            assembler can be passed to speed up
+        """
         if assembler is None:
             assembler = Assembler(self)
 
@@ -692,14 +763,9 @@ class Model(object):
         # assemble matrices
         k_m = np.zeros((dof_count, dof_count))
         k_g = np.zeros((dof_count, dof_count))
-        if linearized_prebuckling:
-            print("=================================")
-            print('Linearized prebuckling (LPB) analysis ...')
-            assembler.assemble_matrix(k_m, lambda element: element.calculate_elastic_stiffness_matrix())
-        else:            
-            print("=================================")
-            print('Attendant eigenvalue analysis ...')
-            assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
+        print("=================================")
+        print('Attendant eigenvalue analysis ...')
+        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
 
         # solve eigenvalue problem
@@ -713,21 +779,13 @@ class Model(object):
         eigvals = eigvals[idx]
         eigvecs = eigvecs[:,idx]
 
-        print("First eigenvalue: {}".format(eigvals[0]))
-        print("First eigenvalue * lambda: {}".format(eigvals[0] * self.lam)) # this is printed in TRUSS
-        if len(eigvecs[0]) < 10:
-            print("First eigenvector: {}".format(eigvecs[0]))
-
         # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
-        if not linearized_prebuckling:
-            idx = (np.abs(eigvals - 1.0)).argmin()
-        else: idx = 0
+        idx = (np.abs(eigvals - 1.0)).argmin()
 
-        if (idx != 0):
-            print("== Closest eigenvalue: {}".format(eigvals[idx]))
-            print("== Closest eigenvalue * lambda: {}".format(eigvals[idx] * self.lam)) # this is printed in TRUSS
-            if len(eigvecs[idx]) < 10:
-                print("== Closest eigenvector: {}".format(eigvecs[idx]))
+        print('Closest eigenvalue: {}'.format(eigvals[idx]))
+        print('Closest eigenvalue * lambda: {}'.format(eigvals[idx] * self.lam)) # this is printed in TRUSS
+        if len(eigvecs[idx]) < 10:
+            print('Closest eigenvector: {}'.format(eigvecs[idx]))
 
         self.first_eigenvalue = eigvals[idx]
 

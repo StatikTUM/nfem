@@ -23,7 +23,7 @@ class ElementBase(object):
         """FIXME"""
         return None
 
-    def calculate_geometric_stiffness_matrix(self):
+    def calculate_geometric_stiffness_matrix(self, linear=False):
         """FIXME"""
         return None
 

@@ -131,17 +131,19 @@ class Truss(ElementBase):
 
         return k_m - k_e
 
-    def calculate_geometric_stiffness_matrix(self):
+    def calculate_geometric_stiffness_matrix(self, linear=False):
         e = self.youngs_modulus
         a = self.area
         prestress = self.prestress
         reference_length = self.get_reference_length()
 
-        e_gl = self.calculate_green_lagrange_strain()
-        # TODO for LPB, linear strain has to be used...
-        #e_gl = self.calculate_linear_strain()
+        if linear:
+            # FIXME this is not a clean solution to solve the LPB issue
+            epsilon = self.calculate_linear_strain()
+        else:
+            epsilon = self.calculate_green_lagrange_strain()
 
-        k_g = e * a / reference_length * e_gl + prestress * a / reference_length
+        k_g = e * a / reference_length * epsilon + prestress * a / reference_length
 
         return np.array([[ k_g,    0,    0, -k_g,    0,    0],
                          [   0,  k_g,    0,    0, -k_g,    0],
@@ -179,7 +181,7 @@ class Truss(ElementBase):
         #project actual on reference
         projected_l = reference_vec @ actual_vec / reference_length
 
-        e_lin = projected_l  -  reference_length
+        e_lin = (projected_l  -  reference_length) / reference_length
 
         return e_lin
 
