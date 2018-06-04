@@ -49,7 +49,7 @@ class InteractiveWindow(QWidget):
 
         # --- setup window
 
-        self.resize(1000, 400)
+        self.resize(1200, 800)
         self.setWindowTitle('NFEM Teaching Tool')
 
         layout = QGridLayout()
