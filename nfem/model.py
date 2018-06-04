@@ -742,7 +742,7 @@ class Model(object):
 
         for index, dof in enumerate(assembler.free_dofs):
 
-            value = eigvecs[idx][index]
+            value = eigvecs[index][idx]
 
             model.set_dof_state(dof, value)
 
