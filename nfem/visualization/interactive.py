@@ -108,7 +108,7 @@ class InteractiveWindow(QWidget):
                     raise RuntimeError('LPB can only be done on the initial model')
                 model.lam = self.options['linear/lambda']
                 model.perform_linear_solution_step()
-                model.solve_eigenvalues(linearized_prebuckling=True)
+                model.solve_linear_eigenvalues()
             elif solver == 'nonlinear':
                 predictor = self.options['nonlinear/predictor']
 
