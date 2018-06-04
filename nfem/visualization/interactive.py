@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QLabel, QMessageBox, QPushButton, QSpinBox,
                              QStackedWidget, QTextEdit, QVBoxLayout, QWidget, 
                              QListWidget, QListWidgetItem, QScrollArea, QSlider,
-                             QSizePolicy)
+                             QSizePolicy, QTabWidget)
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
@@ -442,6 +442,11 @@ class Widget(WidgetBase):
         self.add_widget(stack)
         return stack
 
+    def add_tab_widget(self):
+        tabs = TabWidget(self)
+        self.add_widget(tabs)
+        return tabs
+
     def add_stretch(self):
         self._layout.addStretch(1)
 
@@ -571,6 +576,22 @@ class StackWidget(WidgetBase):
     def selected_widget(self):
         return self._stack.currentWidget()
 
+class TabWidget(WidgetBase):
+    def __init__(self, parent):
+        super(TabWidget, self).__init__(parent)
+        
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        self._tabs = QTabWidget()
+        layout.addWidget(self._tabs)
+
+    def add_tab(self, label, content=None):
+        widget = content or Widget(self)
+        self._tabs.addTab(widget, label)
+        return widget
+
 # --- Global layout
 
 class Sidebar(Widget):
@@ -579,6 +600,38 @@ class Sidebar(Widget):
 
         self.setFixedWidth(250)
         self._layout.setContentsMargins(8, 8, 8, 8)
+
+        tabs = self.add_tab_widget()
+        tabs.add_tab(
+            label='Analysis', 
+            content=AnalysisTab(self)
+        )
+               
+        tabs.add_tab(
+            label='Visualization', 
+            content=VisualizationTab(self)
+        )
+
+class VisualizationTab(Widget):
+    def __init__(self, parent):
+        super(VisualizationTab, self).__init__(parent)
+
+        settings_3d = Plot3DSettings(parent)
+        self.add_widget(settings_3d)
+
+        settings_2d = Plot2DSettings(parent)
+        self.add_widget(settings_2d)
+
+        self.add_stretch()
+
+        self.add_button(
+            label='Show animation',
+            action=self.master().show_animation_click
+        )
+
+class AnalysisTab(Widget):
+    def __init__(self, parent):
+        super(AnalysisTab, self).__init__(parent)
 
         stack = self.add_stack(option_key='solver')
         stack.add_page(
@@ -630,20 +683,17 @@ class Canvas(WidgetBase):
         self.setLayout(layout)
 
         # left
-        plot3d_settings = Plot3DSettings(self)
-        layout.addWidget(plot3d_settings, 1, 1, 1, 1)
-
         figure3d = Figure(dpi=80)
         canvas3d = FigureCanvasQTAgg(figure3d)
         canvas3d.setContentsMargins(0, 0, 0, 0)
         canvas3d.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
-        layout.addWidget(canvas3d, 2, 1, 1, 1)
+        layout.addWidget(canvas3d, 1, 1, 1, 1)
         self.canvas3d = canvas3d
 
         toolbar = NavigationToolbar2QT(self.canvas3d, self)
         toolbar.setMaximumHeight(20)
         toolbar.setIconSize(QSize(20,20))
-        layout.addWidget(toolbar, 3, 1, 1, 1)
+        layout.addWidget(toolbar, 2, 1, 1, 1)
 
         plot3d = figure3d.add_subplot(111, projection='3d')
         figure3d.tight_layout()
@@ -651,20 +701,17 @@ class Canvas(WidgetBase):
         self.plot3d = plot3d
 
         # right
-        plot2d_settings = Plot2DSettings(self)
-        layout.addWidget(plot2d_settings, 1, 2, 1, 1)
-
         figure2d = Figure(dpi=80)
         canvas2d = FigureCanvasQTAgg(figure2d)
         canvas2d.setContentsMargins(0, 0, 0, 0)
         canvas2d.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
-        layout.addWidget(canvas2d, 2, 2, 1, 1)
+        layout.addWidget(canvas2d, 1, 2, 1, 1)
         self.canvas2d = canvas2d
 
         toolbar = NavigationToolbar2QT(self.canvas2d, self)
         toolbar.setMaximumHeight(20)
         toolbar.setIconSize(QSize(20,20))
-        layout.addWidget(toolbar, 3, 2, 1, 1)
+        layout.addWidget(toolbar, 2, 2, 1, 1)
 
         plot2d = figure2d.add_subplot(111)
         self.plot2d = plot2d
@@ -752,79 +799,72 @@ class Plot2DSettings(Widget):
     def __init__(self, parent):
         super(Plot2DSettings, self).__init__(parent)
 
-        settings = self.add_group('Plot Settings')   
+        settings = self.add_group('2D Plot Settings')   
 
         combo = settings.add_free_dof_combobox(option_key='plot/dof')
         self.set_option('plot/dof', combo.currentData()) 
-        combo.currentIndexChanged.connect(lambda _: parent.redraw())
+        combo.currentIndexChanged.connect(lambda _: self.master().redraw())
 
         check_box = settings.add_checkbox(
             label='Load displacement curve',
             option_key='plot/load_disp_curve'
         )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
+        check_box.stateChanged.connect(lambda _: self.master().redraw())
 
         check_box = settings.add_checkbox(
             label='Load displacement curve with iterations',
             option_key='plot/load_disp_curve_iter'
         )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
+        check_box.stateChanged.connect(lambda _: self.master().redraw())
 
         check_box = settings.add_checkbox(
             label='Det(K)',
             option_key='plot/det_k'
         )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
+        check_box.stateChanged.connect(lambda _: self.master().redraw())
 
         check_box = settings.add_checkbox(
             label='Eigenvalue',
             option_key='plot/eigenvalue'
         )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
+        check_box.stateChanged.connect(lambda _: self.master().redraw())
 
 class Plot3DSettings(Widget):
     def __init__(self, parent):
         super(Plot3DSettings, self).__init__(parent)
 
-        settings = self.add_group('3D Plot', horizontal=True)   
+        symbols = self.add_group('3D Plot Settings')
 
-        symbols = settings.add_group('Symbols')
 
-        other = settings.add_group('Model')
-
-        other.add_button(
-            label='Show animation',
-            action=self.master().show_animation_click
-        )
-
-        check_box = other.add_checkbox(
-            label='Show Eigenvector',
-            option_key='plot/eigenvector'
-        )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
         
         check_box = symbols.add_checkbox(
             label='Highlight Dof',
             option_key='plot/highlight_dof'
         )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
+        check_box.stateChanged.connect(lambda _: self.master().redraw())
         
         check_box = symbols.add_checkbox(
             label='Show Dirichlet BCs',
             option_key='plot/dirichlet'
         )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
+        check_box.stateChanged.connect(lambda _: self.master().redraw())
 
         check_box = symbols.add_checkbox(
             label='Show Neumann BCs',
             option_key='plot/neumann'
         )
-        check_box.stateChanged.connect(lambda _: parent.redraw())
+        check_box.stateChanged.connect(lambda _: self.master().redraw())
 
         slider = symbols.add_slider(
             option_key='plot/symbol_size'
         )
-        slider.valueChanged.connect(lambda _: parent.redraw())
+        slider.valueChanged.connect(lambda _: self.master().redraw())
+
+        check_box = symbols.add_checkbox(
+            label='Show Eigenvector',
+            option_key='plot/eigenvector'
+        )
+        check_box.stateChanged.connect(lambda _: self.master().redraw())
 
 # --- Analysis settings
 
