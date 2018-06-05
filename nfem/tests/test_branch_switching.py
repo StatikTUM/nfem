@@ -27,7 +27,7 @@ class TestBranchSwitching(TestCase):
 
         predicted_model.predict_tangential(strategy='arc-length')
 
-        predicted_model.combine_prediction_with_eigenvector(factor=1.0)
+        predicted_model.combine_prediction_with_eigenvector(beta=1.0)
 
         predicted_model.scale_prediction(factor=20000)
 

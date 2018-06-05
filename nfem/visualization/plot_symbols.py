@@ -1,4 +1,4 @@
-from matplotlib.patches import FancyArrowPatch
+from matplotlib.patches import FancyArrowPatch, Circle
 from mpl_toolkits.mplot3d import proj3d
 
 import numpy as np
@@ -15,10 +15,29 @@ class Arrow3D(FancyArrowPatch):
         self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
         FancyArrowPatch.draw(self, renderer)
 
+class Circle3D(Circle):
+    def __init__(self, x, y, z, r, *args, **kwargs):
+        Circle.__init__(self, (0,0), r, *args, **kwargs)
+        self._verts3d = x, y, z
+
+    def draw(self, renderer):
+        x3d, y3d, z3d = self._verts3d
+        x, y, z = proj3d.proj_transform(x3d, y3d, z3d, renderer.M)
+        self.center = x, y
+        Circle.draw(self, renderer)
+
 def get_force_arrow(x, y, z, fx, fy, fz, length, *args, **kwargs):
     delta = np.array([fx, fy, fz])
     delta = delta/np.linalg.norm(delta)*length
     return Arrow3D([x, x-delta[0]],[y, y-delta[1]],[z, z-delta[2]], *args, mutation_scale=15, lw=1.5, arrowstyle="<|-", **kwargs)
+
+def get_dof_arrow(x, y, z, dx, dy, dz, length, *args, **kwargs):
+    delta = np.array([dx, dy, dz])
+    delta = delta/np.linalg.norm(delta)*length
+    return Arrow3D([x, x+delta[0]],[y, y+delta[1]],[z, z+delta[2]], *args, mutation_scale=15, lw=1.5, arrowstyle="-|>", **kwargs)
+
+def get_sphere(x, y, z, r, *args, **kwargs):
+    return Circle3D(x, y, z, r, *args, **kwargs)
 
 def get_tet4_polygons(x, y, z, h, direction):
     d = h/2

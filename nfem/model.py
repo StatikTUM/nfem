@@ -383,6 +383,10 @@ class Model(object):
 
         return increment
 
+    def get_increment_norm(self, assembler=None):
+        increment = self.get_increment_vector(assembler)
+        return la.norm(increment)
+
     # === model history
 
     def get_initial_model(self):
@@ -480,6 +484,10 @@ class Model(object):
             The results are stored at the dofs and used to update the current
             coordinates of the nodes.
         """
+        
+        print("\n=================================")
+        print("Start linear solution step...")
+        print("lambda : {}".format(self.lam))
 
         assembler = Assembler(self)
 
@@ -540,7 +548,7 @@ class Model(object):
             - solve_attendant_eigenvalue=True: for solving the attendant eigenvalue problem at convergence
         """
 
-        print("=================================")
+        print("\n=================================")
         print("Start non linear solution step...")
 
         if strategy == 'load-control':
@@ -663,18 +671,89 @@ class Model(object):
         self.det_k =  la.det(k[:free_count,:free_count])
         print("Det(K): {}".format(self.det_k))
 
-    def solve_eigenvalues(self, assembler=None, linearized_prebuckling=False):
-        """Solves the eigenvalue problem
-           [ k_m + eigvals * k_g ] * eigvecs = 0 
+    def solve_linear_eigenvalues(self, assembler=None):
+        """Solves the linearized eigenvalue problem
+           [ k_e + eigvals * k_g(linear strain) ] * eigvecs = 0
+           Stores the first positive eigenvalue and vector
 
         Parameters
         ----------
         assembler : Object (optional)
             assembler can be passed to speed up
-        linearized_prebuckling : bool (optional)
-            If True, linearized prebuckling assumption u=0 : k_m = k_e is used
         """
-        # [ k_m + eigvals * k_g ] * eigvecs = 0
+        if assembler is None:
+            assembler = Assembler(self)
+
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+
+        # assemble matrices
+        k_e = np.zeros((dof_count, dof_count))
+        k_g = np.zeros((dof_count, dof_count))
+        print("=================================")
+        print('Linearized prebuckling (LPB) analysis ...')
+        assembler.assemble_matrix(k_e, lambda element: element.calculate_elastic_stiffness_matrix())
+        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix(linear=True))
+        
+        # solve eigenvalue problem
+        eigvals, eigvecs = eig((k_e[:free_count,:free_count]), -k_g[:free_count,:free_count])
+
+        # extract real parts of eigenvalues
+        eigvals = np.array([x.real for x in eigvals])
+
+        # sort eigenvalues and vectors
+        idx = eigvals.argsort()
+        eigvals = eigvals[idx]
+        eigvecs = eigvecs[:,idx]
+
+        # remove negative eigenvalues
+        for i, eigenvalue in enumerate(eigvals):
+            if eigenvalue > 0.0:
+                break
+            else:
+                i+=1
+
+        if i == len(eigvals):
+            print('System has no positive eigenvalues!')
+            return
+
+        eigvals = eigvals[i:]
+        eigvecs = eigvecs[:,i:]
+
+        print('First linear eigenvalue: {}'.format(eigvals[0]))
+        print('First linear eigenvalue * lambda: {}'.format(eigvals[0] * self.lam)) # this is printed in TRUSS
+        if len(eigvecs[0]) < 10:
+            print('First linear eigenvector: {}'.format(eigvecs[0]))
+
+        self.first_eigenvalue = eigvals[0]
+
+        # store eigenvector as model
+        model = self.get_duplicate()
+        model._previous_model = self
+        model.status = ModelStatus.eigenvector
+        model.det_k = None
+        model.first_eigenvalue = None
+        model.first_eigenvector_model = None
+        model.lam = None
+
+        for index, dof in enumerate(assembler.free_dofs):
+
+            value = eigvecs[index][0]
+
+            model.set_dof_state(dof, value)
+
+        self.first_eigenvector_model = model
+
+    def solve_eigenvalues(self, assembler=None):
+        """Solves the eigenvalue problem
+           [ k_m + eigvals * k_g ] * eigvecs = 0
+           Stores the closest (most critical) eigenvalue and vector
+
+        Parameters
+        ----------
+        assembler : Object (optional)
+            assembler can be passed to speed up
+        """
         if assembler is None:
             assembler = Assembler(self)
 
@@ -684,10 +763,9 @@ class Model(object):
         # assemble matrices
         k_m = np.zeros((dof_count, dof_count))
         k_g = np.zeros((dof_count, dof_count))
-        if linearized_prebuckling:
-            assembler.assemble_matrix(k_m, lambda element: element.calculate_elastic_stiffness_matrix())
-        else:
-            assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
+        print("=================================")
+        print('Attendant eigenvalue analysis ...')
+        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
 
         # solve eigenvalue problem
@@ -701,17 +779,13 @@ class Model(object):
         eigvals = eigvals[idx]
         eigvecs = eigvecs[:,idx]
 
-        print("First eigenvalue: {}".format(eigvals[0]))
-        print("First eigenvalue * lambda: {}".format(eigvals[0] * self.lam)) # this is printed in TRUSS
-        print("First eigenvector: {}".format(eigvecs[0]))
-        
         # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
         idx = (np.abs(eigvals - 1.0)).argmin()
 
-        if (idx != 0):
-            print("== Closest eigenvalue: {}".format(eigvals[idx]))
-            print("== Closest eigenvalue * lambda: {}".format(eigvals[idx] * self.lam)) # this is printed in TRUSS
-            print("== Closest eigenvector: {}".format(eigvecs[idx]))
+        print('Closest eigenvalue: {}'.format(eigvals[idx]))
+        print('Closest eigenvalue * lambda: {}'.format(eigvals[idx] * self.lam)) # this is printed in TRUSS
+        if len(eigvecs[idx]) < 10:
+            print('Closest eigenvector: {}'.format(eigvecs[idx]))
 
         self.first_eigenvalue = eigvals[idx]
 
@@ -726,7 +800,7 @@ class Model(object):
 
         for index, dof in enumerate(assembler.free_dofs):
 
-            value = eigvecs[idx][index]
+            value = eigvecs[index][idx]
 
             model.set_dof_state(dof, value)
 
@@ -828,9 +902,14 @@ class Model(object):
         self.status = ModelStatus.prediction
         self.increment_dof_state(dof, value)
 
-    def predict_with_last_increment(self):
+    def predict_with_last_increment(self, value=None):
         """Predicts the solution by incrementing lambda and all dofs with the
            increment of the last solution step
+
+        Parameters
+        ----------
+        value : float (optional)
+            Length of the increment
 
         Raises
         ------
@@ -844,6 +923,15 @@ class Model(object):
         assembler = Assembler(self)
 
         last_increment = self.get_previous_model().get_increment_vector(assembler)
+
+        length = la.norm(last_increment)
+
+        if value is not None and length != 0.0:
+            last_increment *= value/length
+            length *= value
+
+        if length == 0.0:
+            print("WARNING: The length of the prescribed increment is 0.0!")
 
         # update dofs at model
         for index, dof in enumerate(assembler.dofs):
@@ -872,7 +960,7 @@ class Model(object):
             - 'arc-length'
         options
             value : float
-                prescribed value according to the strategy (not needed for 'arc-length')
+                prescribed value according to the strategy
             dof : Object
                 specifies the controlled dof for 'dof' and 'delta-dof' strategy
         """
@@ -919,20 +1007,27 @@ class Model(object):
         elif strategy == 'arc-length':
             previous_model = self.get_previous_model()
 
-            if previous_model.get_previous_model() is None:
-                raise RuntimeError('Tangential arc-length predictor can only be'
-                                   'used after the first step!')
+            if previous_model.get_previous_model() is not None:
+                previous_increment = previous_model.get_increment_vector(assembler)
 
-            previous_increment = previous_model.get_increment_vector(assembler)
+            if 'value' in options.keys():
+                prescribed_length = options['value']
+            elif previous_model.get_previous_model() is not None:
+                prescribed_length = la.norm(previous_increment)
+            else:
+                prescribed_length = 0.0
 
-            prescribed_length = la.norm(previous_increment)
+            if prescribed_length == 0.0:
+                print("WARNING: The length of the prescribed increment is 0.0!")
+
             current_length = la.norm(tangent)
 
             factor = prescribed_length / current_length
 
             # tangent should point in a similar direction as the last increment
-            if previous_increment @ tangent < 0:
-                factor = -factor
+            if previous_model.get_previous_model() is not None:
+                if previous_increment @ tangent < 0:
+                    factor = -factor
 
         else:
             raise ValueError('Invalid strategy for prediction: {}'
@@ -950,13 +1045,13 @@ class Model(object):
         self.lam += tangent[-1]
 
 
-    def combine_prediction_with_eigenvector(self, factor):
+    def combine_prediction_with_eigenvector(self, beta):
         """Combine the prediciton with the first eigenvector
-        
+
         Parameters
         ----------
-        factor : float
-            factor between 0.0 and 1.0 used for a linear combination of the 
+        beta : float
+            factor between -1.0 and 1.0 used for a linear combination of the
             prediction with the eigenvector
 
         Raises
@@ -964,18 +1059,18 @@ class Model(object):
         RuntimeError
             If the model is not in prediction status
         ValueError
-            If the factor is not between 0.0 and 1.0
+            If the beta is not between -1.0 and 1.0
         """
         if self.status != ModelStatus.prediction:
             raise RuntimeError('Model is not a predictor. Cannot combine with eigenvector!')
 
-        if factor < 0.0 or factor > 1.0:
-            raise ValueError('factor needs to be between 0.0 and 1.0')
+        if beta < -1.0 or beta > 1.0:
+            raise ValueError('beta needs to be between -1.0 and 1.0')
 
         previous_model = self.get_previous_model()
         if previous_model.first_eigenvector_model is None:
             print('WARNING: solving eigenvalue problem in order to do branch switching')
-            self.solve_eigenvalues()
+            previous_model.solve_eigenvalues()
 
         eigenvector_model = previous_model.first_eigenvector_model
 
@@ -984,17 +1079,17 @@ class Model(object):
         u_prediction = self.get_delta_dof_vector(model_b=previous_model, assembler=assembler)
 
         prediction_length = la.norm(u_prediction)
-        
+
         eigenvector = eigenvector_model.get_delta_dof_vector(assembler=assembler)
 
         #scale eigenvector to the length of the prediction
-        eigenvector *= (1.0/(la.norm(eigenvector)/prediction_length)) 
+        eigenvector *= (1.0/(la.norm(eigenvector)/prediction_length))
 
-        prediction = u_prediction * (1.0 - factor) + eigenvector * factor
+        prediction = u_prediction * (1.0 - abs(beta)) + eigenvector * beta
 
         delta_prediction = prediction - u_prediction
 
-        # lambda = 0 for the eigenvector. Note: TRUSS.xls uses the same value as for the last increment 
+        # lambda = 0 for the eigenvector. Note: TRUSS.xls uses the same value as for the last increment
         delta_lam = - self.get_lam_increment()
 
         # update dofs at model
@@ -1007,7 +1102,7 @@ class Model(object):
 
     def scale_prediction(self, factor):
         """scale the prediction with a factor
-        
+
         Parameters
         ----------
         factor : float
@@ -1049,17 +1144,17 @@ class Model(object):
 
     def get_delta_dof_vector(self, model_b=None, assembler=None):
         """gets the delta dof between this and a given model_b as a numpy array
-        
+
         Parameters
         ----------
         model_b : Model
-            Model that is used as reference for the delta dof calculation. If 
+            Model that is used as reference for the delta dof calculation. If
             not given, the initial model is used as reference.
         assembler: Assembler
-            Assembler is used to order the dofs in the vector. If not given, a 
+            Assembler is used to order the dofs in the vector. If not given, a
             new assembler is created
 
-            
+
         Returns
         ------
         delta : np.ndarray

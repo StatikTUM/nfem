@@ -51,3 +51,16 @@ class TestEigenvalueAnalysis(TestCase):
         v_actual = eigenvector_model.get_dof_state(('B','v'))
         v_expected = 0.0
         assert_almost_equal(v_actual, v_expected)
+        
+    def test_LPB_limit_point(self):
+        lpb_model = self.model.get_duplicate()
+        lpb_model.lam = 0.1
+        lpb_model.perform_linear_solution_step()
+        lpb_model.solve_linear_eigenvalues()
+
+        lam_crit_actual = lpb_model.first_eigenvalue * lpb_model.lam
+        lam_crit_expected = 0.7071067811865452
+        assert_almost_equal(lam_crit_actual, lam_crit_expected)
+
+        # FIXME eigenvector shows bifurcation instead of limit for h>=1.0...
+
