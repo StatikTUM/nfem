@@ -169,6 +169,9 @@ class InteractiveWindow(QWidget):
                     solve_det_k=determinant,
                     solve_attendant_eigenvalue=eigenproblem
                 )
+            elif solver == 'bracketing':
+                self.solve_bracketing()
+                model = self.model
             else:
                 raise Exception('Unknown solver {}'.format(solver))
         except Exception as e:
@@ -182,7 +185,7 @@ class InteractiveWindow(QWidget):
 
         self.redraw()
 
-    def bracketing_click(self):
+    def solve_bracketing(self):
 
         model = self.model
         backup_model = model.get_duplicate()
@@ -421,6 +424,10 @@ class Widget(WidgetBase):
     def add_widget(self, widget):
         self._layout.addWidget(widget)
 
+    def add_label(self, label):
+        widget = QLabel(label)
+        self.add_widget(widget)
+
     def add_group(self, label, content=None, horizontal=False):
         group = QGroupBox(label)
         self.add_widget(group)
@@ -622,7 +629,6 @@ class Sidebar(Widget):
         super(Sidebar, self).__init__(parent)
 
         self.setFixedWidth(250)
-        self._layout.setContentsMargins(8, 8, 8, 8)
 
         tabs = self.add_tab_widget()
         tabs.add_tab(
@@ -638,6 +644,8 @@ class Sidebar(Widget):
 class VisualizationTab(Widget):
     def __init__(self, parent):
         super(VisualizationTab, self).__init__(parent)
+
+        self._layout.setContentsMargins(8, 8, 8, 8)
 
         settings_3d = Plot3DSettings(parent)
         self.add_widget(settings_3d)
@@ -655,6 +663,8 @@ class VisualizationTab(Widget):
 class AnalysisTab(Widget):
     def __init__(self, parent):
         super(AnalysisTab, self).__init__(parent)
+        
+        self._layout.setContentsMargins(8, 8, 8, 8)
 
         stack = self.add_stack(option_key='solver')
         stack.add_page(
@@ -671,6 +681,11 @@ class AnalysisTab(Widget):
             label='Linear',
             option_value='linear',
             content=LinearSettings(self)
+        )
+        stack.add_page(
+            label='Bracketing',
+            option_value='bracketing',
+            content=BracketingSettingsPage(self)
         )
 
         self.add_stretch()
@@ -927,6 +942,25 @@ class NonlinearSettings(Widget):
             label='Solution',
             content=SolutionSettings(self)
         )
+
+        self.add_stretch()
+
+class BracketingSettingsPage(Widget):
+    def __init__(self, parent):
+        super(BracketingSettingsPage, self).__init__(parent)
+
+        group = self.add_group(label="Predefined Settings")
+        group.add_label(label="Predictor: Arclength")
+        group.add_label(label="Constraint: Arclength")
+
+        self.add_group(
+            label='Newton-Raphson',
+            content=NewtonRaphsonSettings(self)
+        )
+        self.add_group(
+            label='Solution',
+            content=SolutionSettings(self)
+        )
         self.add_group(
             label='Bracketing',
             content=BracketingSettings(self)
@@ -993,7 +1027,7 @@ class ConstraintSettings(StackWidget):
             content=DisplacementControlSettings(parent)
         )
         self.add_page(
-            label='Arc-length',
+            label='Arclength',
             option_value='arc-length-control',
             content=ArcLengthSettings(parent)
         )
@@ -1049,11 +1083,6 @@ class BracketingSettings(Widget):
             minimum=-10,
             maximum=-1,
             option_key='nonlinear/bracketing/tolerance'
-        )
-
-        self.add_button(
-            label="Solve Bracketing",
-            action=self.master().bracketing_click
         )
 
 class LoadPredictorSettings(Widget):
