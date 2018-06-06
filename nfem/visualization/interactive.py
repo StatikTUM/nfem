@@ -560,15 +560,26 @@ class StackWidget(WidgetBase):
         layout.addWidget(stack)
         self._stack = stack
 
-        combobox.currentIndexChanged.connect(stack.setCurrentIndex)
+        combobox.currentIndexChanged.connect(self._on_current_changed)
         combobox.currentIndexChanged.connect(lambda value: self.set_option(option_key, combobox.currentData()))
 
         layout.addStretch(1)
 
+    def _on_current_changed(self, index):
+        if self._stack.currentWidget():
+            self._stack.currentWidget().setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        self._stack.setCurrentIndex(index)
+        if self._stack.currentWidget():
+            self._stack.currentWidget().setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+
     def add_page(self, label, option_value=None, content=None):
+        widget = content or Widget(self)
+
+        if self._stack.count() != 0:
+            content.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+
         self._combobox.addItem(label, option_value)
 
-        widget = content or Widget(self)
         self._stack.addWidget(widget)
 
         return widget
@@ -587,8 +598,20 @@ class TabWidget(WidgetBase):
         self._tabs = QTabWidget()
         layout.addWidget(self._tabs)
 
+        self._tabs.currentChanged.connect(self._on_current_changed)
+
+    def _on_current_changed(self, index):
+        for i in range(self._tabs.count()):
+            self._tabs.widget(i).setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+
+        self._tabs.widget(index).setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+
     def add_tab(self, label, content=None):
         widget = content or Widget(self)
+
+        if self._tabs.count() != 0:
+            widget.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+
         self._tabs.addTab(widget, label)
         return widget
 
