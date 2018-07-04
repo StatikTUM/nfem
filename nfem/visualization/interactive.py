@@ -10,7 +10,7 @@ from PyQt5.QtGui import QFontDatabase, QTextCursor
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
                              QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                              QLabel, QMessageBox, QPushButton, QSpinBox,
-                             QStackedWidget, QTextEdit, QVBoxLayout, QWidget, 
+                             QStackedWidget, QTextEdit, QVBoxLayout, QWidget,
                              QListWidget, QListWidgetItem, QScrollArea, QSlider,
                              QSizePolicy, QTabWidget)
 
@@ -317,7 +317,7 @@ class CustomLogger(object):
 
     @property
     def title(self):
-        return '{} : {}'.format(self.xlabel, self.ylabel) 
+        return '{} : {}'.format(self.xlabel, self.ylabel)
 
     def __call__(self, model):
         return self.x_fct(model), self.y_fct(model)
@@ -366,7 +366,7 @@ class Options(QObject):
         self['plot/load_disp_curve_iter'] = False
         self['plot/det_k'] = False
         self['plot/eigenvalue'] = False
-        
+
         self['plot/dirichlet'] = True
         self['plot/neumann'] = True
         self['plot/highlight_dof'] = True
@@ -532,6 +532,7 @@ class Widget(WidgetBase):
         )
         idx = combo.findText( _dof_to_str(self.master().dof) )
         combo.setCurrentIndex(idx)
+        self.set_option(option_key, combo.currentData())
         return combo
 
     def add_button(self, label, action):
@@ -597,7 +598,7 @@ class StackWidget(WidgetBase):
 class TabWidget(WidgetBase):
     def __init__(self, parent):
         super(TabWidget, self).__init__(parent)
-        
+
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
@@ -632,12 +633,12 @@ class Sidebar(Widget):
 
         tabs = self.add_tab_widget()
         tabs.add_tab(
-            label='Analysis', 
+            label='Analysis',
             content=AnalysisTab(self)
         )
-               
+
         tabs.add_tab(
-            label='Visualization', 
+            label='Visualization',
             content=VisualizationTab(self)
         )
 
@@ -663,7 +664,7 @@ class VisualizationTab(Widget):
 class AnalysisTab(Widget):
     def __init__(self, parent):
         super(AnalysisTab, self).__init__(parent)
-        
+
         self._layout.setContentsMargins(8, 8, 8, 8)
 
         stack = self.add_stack(option_key='solver')
@@ -781,7 +782,7 @@ class Canvas(WidgetBase):
             plot_scaled_model(plot3d, model.first_eigenvector_model, 'green')
 
         plot2d.clear()
-        plot2d.autoscale()        
+        plot2d.autoscale()
         #plot2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
         plot2d.set_facecolor('white')
         plot2d.yaxis.tick_right()
@@ -809,21 +810,21 @@ class Canvas(WidgetBase):
             plot_history_curve(plot2d, model, logger, '--o', label='{} (iter)'.format(label), skip_iterations=False, linewidth=0.75, markersize=2.0, color='tab:orange')
 
         # det_k plot
-        if self.get_option('plot/det_k'):      
+        if self.get_option('plot/det_k'):
             logger = CustomLogger(
-                x_fct=lambda model: model.get_dof_state(dof=dof),            
-                y_fct=lambda model: model.det_k,            
-                x_label=_dof_to_str(dof),         
+                x_fct=lambda model: model.get_dof_state(dof=dof),
+                y_fct=lambda model: model.det_k,
+                x_label=_dof_to_str(dof),
                 y_label='Det(K)'
                 )
             plot_history_curve(plot2d, model, logger, '-o', label=logger.title, color='tab:green')
 
         # eigenvalue plot
-        if self.get_option('plot/eigenvalue'):      
+        if self.get_option('plot/eigenvalue'):
             logger = CustomLogger(
-                x_fct=lambda model: model.get_dof_state(dof=dof),            
-                y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.lam,            
-                x_label=_dof_to_str(dof),         
+                x_fct=lambda model: model.get_dof_state(dof=dof),
+                y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.lam,
+                x_label=_dof_to_str(dof),
                 y_label='Eigenvalue'
                 )
             plot_history_curve(plot2d, model, logger, '-o', label=logger.title, color='tab:red')
@@ -837,10 +838,10 @@ class Plot2DSettings(Widget):
     def __init__(self, parent):
         super(Plot2DSettings, self).__init__(parent)
 
-        settings = self.add_group('2D Plot Settings')   
+        settings = self.add_group('2D Plot Settings')
 
         combo = settings.add_free_dof_combobox(option_key='plot/dof')
-        self.set_option('plot/dof', combo.currentData()) 
+        self.set_option('plot/dof', combo.currentData())
         combo.currentIndexChanged.connect(lambda _: self.master().redraw())
 
         check_box = settings.add_checkbox(
@@ -874,13 +875,13 @@ class Plot3DSettings(Widget):
         symbols = self.add_group('3D Plot Settings')
 
 
-        
+
         check_box = symbols.add_checkbox(
             label='Highlight Dof',
             option_key='plot/highlight_dof'
         )
         check_box.stateChanged.connect(lambda _: self.master().redraw())
-        
+
         check_box = symbols.add_checkbox(
             label='Show Dirichlet BCs',
             option_key='plot/dirichlet'
@@ -1214,7 +1215,7 @@ class AnimationWindow(QWidget):
 
         self.setWindowTitle('Animation')
 
-        layout = QVBoxLayout()        
+        layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
 
         figure = Figure(dpi=80)
@@ -1225,15 +1226,15 @@ class AnimationWindow(QWidget):
 
         ax_3d = figure.add_subplot(1, 1, 1, projection='3d')
         figure.tight_layout()
-        
+
         ax_3d.set_aspect('equal')
 
         self.setLayout(layout)
 
-        # store the animation        
+        # store the animation
         options={}
         options['plot/dirichlet'] = parent.options['plot/dirichlet']
-        options['plot/neumann'] = parent.options['plot/neumann']        
+        options['plot/neumann'] = parent.options['plot/neumann']
         options['plot/symbol_size'] = parent.options['plot/symbol_size']
         options['plot/highlight_dof'] = parent.options['plot/highlight_dof']
         options['plot/highlighted_dof'] = parent.options['plot/dof']
