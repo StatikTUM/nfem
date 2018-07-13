@@ -565,6 +565,7 @@ class Model(object):
         assembler = Assembler(self)
 
         dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
 
         u = np.zeros(dof_count)
 
@@ -734,8 +735,8 @@ class Model(object):
 
         print("=================================")
         print('Linearized prebuckling (LPB) analysis ...')
-        k_e = self.calculate_current_system(assembler=assembler, elastic=True, initial_displacement=False, geometric=False, force=False)
-        k_g = self.calculate_current_system(assembler=assembler, elastic=False, initial_displacement=False, geometric=True, force=False)
+        k_e = self.calculate_current_stiffness(assembler=assembler, elastic=True, initial_displacement=False, geometric=False)
+        k_g = self.calculate_current_stiffness(assembler=assembler, elastic=False, initial_displacement=False, geometric=True)
         
         # solve eigenvalue problem
         eigvals, eigvecs = eig(k_e, -k_g)
@@ -801,8 +802,8 @@ class Model(object):
 
         print("=================================")
         print('Attendant eigenvalue analysis ...')
-        k_m = self.calculate_current_system(assembler=assembler, elastic=True, initial_displacement=True, geometric=False, force=False)
-        k_g = self.calculate_current_system(assembler=assembler, elastic=False, initial_displacement=False, geometric=True, force=False)
+        k_m = self.calculate_current_stiffness(assembler=assembler, elastic=True, initial_displacement=True, geometric=False)
+        k_g = self.calculate_current_stiffness(assembler=assembler, elastic=False, initial_displacement=False, geometric=True)
         
         # solve eigenvalue problem
         eigvals, eigvecs = eig(k_m, -k_g)
