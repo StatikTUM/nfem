@@ -478,6 +478,79 @@ class Model(object):
 
     # === solving
 
+    def calculate_current_stiffness(self, assembler=None, elastic=True, initial_displacement=True, geometric=True):
+        if assembler is None:
+            assembler = Assembler(self)
+
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+
+        k = np.zeros((dof_count, dof_count))
+
+        if elastic:
+            assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
+        if initial_displacement:
+            assembler.assemble_matrix(k, lambda element: element.calculate_initial_displacement_stiffness_matrix())
+        if geometric:
+            assembler.assemble_matrix(k, lambda element: element.calculate_geometric_stiffness_matrix())
+
+        return k[:free_count, :free_count]
+
+    def calculate_current_system(self, assembler=None, elastic=True, initial_displacement=True, geometric=True):
+        if assembler is None:
+            assembler = Assembler(self)
+
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+
+        # initialize with zeros
+        k = np.zeros((dof_count, dof_count))
+        f = np.zeros(dof_count)
+
+        # assemble
+        if elastic:
+            assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
+        if initial_displacement:
+            assembler.assemble_matrix(k, lambda element: element.calculate_initial_displacement_stiffness_matrix())
+        if geometric:
+            assembler.assemble_matrix(k, lambda element: element.calculate_geometric_stiffness_matrix())
+
+        assembler.assemble_vector(f, lambda element: element.calculate_external_forces())
+
+        # extract relevant dofs
+        a = k[:free_count, :free_count]
+
+        u = np.zeros(dof_count)
+        for dof, value in self.dirichlet_conditions.items():
+            index = assembler.index_of_dof(dof)
+            u[index] = value
+
+        b = f[:free_count] - k[:free_count, free_count:] @ u[free_count:]
+
+        return a, b
+
+    def calculate_current_residual_vector(self, assembler=None):       
+        if assembler is None:
+            assembler = Assembler(self)
+
+        dof_count = assembler.dof_count
+        free_count = assembler.free_dof_count
+
+        # initialize with zeros
+        external_f = np.zeros(dof_count)
+        internal_f = np.zeros(dof_count)
+
+        # assemble force
+        assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
+        assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
+
+        rhs = internal_f[:free_count] - self.lam * external_f[:free_count]
+
+        print("Residual vector:")
+        print(rhs)
+
+        return rhs
+
     def perform_linear_solution_step(self):
         """Performs a linear solution step on the model.
             It uses the member variable `lam` as load factor.
@@ -499,20 +572,9 @@ class Model(object):
             index = assembler.index_of_dof(dof)
             u[index] = value
 
-        k = np.zeros((dof_count, dof_count))
-        f = np.zeros(dof_count)
+        k, f = self.calculate_current_system(assembler=assembler, elastic=True, initial_displacement=False, geometric=False)
 
-        assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
-        assembler.assemble_vector(f, lambda element: element.calculate_external_forces())
-
-        f *= self.lam
-
-        free_count = assembler.free_dof_count
-
-        a = k[:free_count, :free_count]
-        b = f[:free_count] - k[:free_count, free_count:] @ u[free_count:]
-
-        u[:free_count] = la.solve(a, b)
+        u[:free_count] = la.solve(k, f*self.lam)
 
         for index, dof in enumerate(assembler.dofs):
 
@@ -602,25 +664,16 @@ class Model(object):
             self.lam = x[-1]
 
             # initialize with zeros
-            k = np.zeros((dof_count, dof_count))
-            external_f = np.zeros(dof_count)
-            internal_f = np.zeros(dof_count)
-
-            # assemble stiffness
-            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
-
-            # assemble force
-            assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
-            assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
+            k, external_f = self.calculate_current_system(assembler=assembler)
 
             # assemble left and right hand side for newton raphson
             lhs = np.zeros((free_count + 1, free_count + 1))
             rhs = np.zeros(free_count + 1)
 
             # mechanical system
-            lhs[:free_count, :free_count] = k[:free_count, :free_count]
-            lhs[:free_count, -1] = -external_f[:free_count]
-            rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
+            lhs[:free_count, :free_count] = k
+            lhs[:free_count, -1] = -external_f
+            rhs[:free_count] = self.calculate_current_residual_vector(assembler=assembler)
 
             # assemble contribution from constraint
             constraint.calculate_derivatives(self, lhs[-1, :])
@@ -662,13 +715,8 @@ class Model(object):
             assembler can be passed to speed up if k is not given
         """
         if k is None:
-            if assembler is None:
-                assembler = Assembler(self)
-            dof_count = assembler.dof_count
-            free_count = assembler.free_dof_count
-            k = np.zeros((dof_count, dof_count))
-            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
-        self.det_k =  la.det(k[:free_count,:free_count])
+            k, f = self.calculate_current_system(assembler=assembler)
+        self.det_k =  la.det(k)
         print("Det(K): {}".format(self.det_k))
 
     def solve_linear_eigenvalues(self, assembler=None):
@@ -684,19 +732,13 @@ class Model(object):
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.dof_count
-        free_count = assembler.free_dof_count
-
-        # assemble matrices
-        k_e = np.zeros((dof_count, dof_count))
-        k_g = np.zeros((dof_count, dof_count))
         print("=================================")
         print('Linearized prebuckling (LPB) analysis ...')
-        assembler.assemble_matrix(k_e, lambda element: element.calculate_elastic_stiffness_matrix())
-        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix(linear=True))
+        k_e = self.calculate_current_system(assembler=assembler, elastic=True, initial_displacement=False, geometric=False, force=False)
+        k_g = self.calculate_current_system(assembler=assembler, elastic=False, initial_displacement=False, geometric=True, force=False)
         
         # solve eigenvalue problem
-        eigvals, eigvecs = eig((k_e[:free_count,:free_count]), -k_g[:free_count,:free_count])
+        eigvals, eigvecs = eig(k_e, -k_g)
 
         # extract real parts of eigenvalues
         eigvals = np.array([x.real for x in eigvals])
@@ -757,19 +799,13 @@ class Model(object):
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.dof_count
-        free_count = assembler.free_dof_count
-
-        # assemble matrices
-        k_m = np.zeros((dof_count, dof_count))
-        k_g = np.zeros((dof_count, dof_count))
         print("=================================")
         print('Attendant eigenvalue analysis ...')
-        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
-        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
-
+        k_m = self.calculate_current_system(assembler=assembler, elastic=True, initial_displacement=True, geometric=False, force=False)
+        k_g = self.calculate_current_system(assembler=assembler, elastic=False, initial_displacement=False, geometric=True, force=False)
+        
         # solve eigenvalue problem
-        eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
+        eigvals, eigvecs = eig(k_m, -k_g)
 
         # extract real parts of eigenvalues
         eigvals = np.array([x.real for x in eigvals])
@@ -829,23 +865,10 @@ class Model(object):
             index = assembler.index_of_dof(dof)
             v[index] = value
 
-        k = np.zeros((dof_count, dof_count))
-        external_f = np.zeros(dof_count)
-
         # assemble stiffness
-        assembler.assemble_matrix(k,
-            lambda element: element.calculate_stiffness_matrix()
-        )
+        k, external_f = self.calculate_current_system(assembler=assembler)
 
-        # assemble force
-        assembler.assemble_vector(external_f,
-            lambda element: element.calculate_external_forces()
-        )
-
-        lhs = k[:free_count, :free_count]
-        rhs = external_f[:free_count] - k[:free_count, free_count:] @ v[free_count:]
-
-        v[:free_count] = la.solve(lhs, rhs)
+        v[:free_count] = la.solve(k, external_f)
 
         # lambda = 1
         tangent[-1] = 1
