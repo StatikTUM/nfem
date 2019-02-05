@@ -681,6 +681,7 @@ class ApplicationWindow(QtWidgets.QWidget):
         vsplitter.addWidget(self.console)
         vsplitter.setStretchFactor(0, 1)
         vsplitter.setStretchFactor(1, 0)
+        self.vsplitter = vsplitter
 
         hsplitter = QtWidgets.QSplitter()
         hsplitter.addWidget(self.sidebar)
@@ -704,6 +705,8 @@ class ApplicationWindow(QtWidgets.QWidget):
         widget._started()
 
         app.exec_()
+
+        return widget
 
     def show_dialog(self, widget_type, title='', size=None, modal=True,
                     action=None):
