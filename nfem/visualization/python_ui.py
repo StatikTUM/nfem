@@ -326,6 +326,20 @@ class WidgetBuilder(object):
         option.connect(checkbox_widget.setChecked)
         checkbox_widget.clicked.connect(option.change)
 
+    def add_slider(self, label, option, minimum=None, maximum=None, interval=None):
+        if label:
+            label_widget = QtWidgets.QLabel(label)
+            self._add_widget(label_widget)
+
+        slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        slider.setMinimum(minimum or 1)
+        slider.setMaximum(maximum or 10)
+        slider.setTickInterval(interval or 1)
+        slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        slider.setValue(option.value)
+        slider.valueChanged.connect(option.change)
+        self._add_widget(slider)
+    
     def add_combobox(self, items, option, label=None):
         if label:
             label_widget = QtWidgets.QLabel(label)
@@ -614,7 +628,7 @@ class Sidebar(QtWidgets.QScrollArea):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.setWidgetResizable(True)
-        self.setMinimumWidth(400)
+        self.setMinimumWidth(300)
 
 
 class PlotCanvas(QtWidgets.QWidget):
