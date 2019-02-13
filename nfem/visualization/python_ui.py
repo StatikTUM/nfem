@@ -326,7 +326,7 @@ class WidgetBuilder(object):
         option.connect(checkbox_widget.setChecked)
         checkbox_widget.clicked.connect(option.change)
 
-    def add_slider(self, label, option, minimum=None, maximum=None, interval=None):
+    def add_slider(self, label, option, minimum=None, maximum=None, ticks=None):
         if label:
             label_widget = QtWidgets.QLabel(label)
             self._add_widget(label_widget)
@@ -334,7 +334,8 @@ class WidgetBuilder(object):
         slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         slider.setMinimum(minimum or 1)
         slider.setMaximum(maximum or 10)
-        slider.setTickInterval(interval or 1)
+        if ticks:
+            slider.setTickInterval(ticks)
         slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
         slider.setValue(option.value)
         slider.valueChanged.connect(option.change)
@@ -675,7 +676,7 @@ class PlotCanvas(QtWidgets.QWidget):
 
 
 class ApplicationWindow(QtWidgets.QWidget):
-    def __init__(self, title='', size=(1200, 800)):
+    def __init__(self, title='', size=(1200, 800), content=None):
         super(ApplicationWindow, self).__init__()
 
         self.resize(*size)
@@ -686,7 +687,13 @@ class ApplicationWindow(QtWidgets.QWidget):
         layout.setSpacing(0)
         self.setLayout(layout)
 
-        self.content = PlotCanvas(self._draw)
+        if not content:
+            self.content = PlotCanvas(self._draw)
+        elif isinstance(content, QtWidgets.QWidget):
+            self.content = content
+        else:
+            raise ValueError('content is not an object of the class PyQt.QtWidgets.QWidget')
+
         self.console = Console()
         self.sidebar = Sidebar()
 
@@ -695,7 +702,6 @@ class ApplicationWindow(QtWidgets.QWidget):
         vsplitter.addWidget(self.console)
         vsplitter.setStretchFactor(0, 1)
         vsplitter.setStretchFactor(1, 0)
-        self.vsplitter = vsplitter
 
         hsplitter = QtWidgets.QSplitter()
         hsplitter.addWidget(self.sidebar)
