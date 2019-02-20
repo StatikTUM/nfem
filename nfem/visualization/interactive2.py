@@ -7,6 +7,7 @@ import traceback
 
 from .python_ui import ApplicationWindow, Option, Widget, Fore, Back, Style, QtWidgets, QtCore
 from ..assembler import Assembler
+from ..bracketing import bracketing
 from .plot import (plot_model, plot_load_displacement_curve, plot_bounding_cube,
                    plot_history_curve, plot_crosshair, plot_scaled_model)
 from .plot import animate_model, get_bounding_box
@@ -25,6 +26,12 @@ class MainWindow(ApplicationWindow):
 
         self.branches = [model]
         self.dof = dof
+        for i, free_dof in enumerate(model.free_dofs):
+            if free_dof == dof:
+                break
+            # raise ValueError(f'dof {dof} is not a free dof in the model. free dofs are: {model.free_dofs}')
+
+        self.animation_window = None
 
         self.options = dict()
         # == analysis options
@@ -37,13 +44,14 @@ class MainWindow(ApplicationWindow):
         self.options['nonlinear/predictor/tangential_flag'] = Option(True)
         self.options['nonlinear/predictor/lambda'] = Option(0.0)
         self.options['nonlinear/predictor/delta_lambda'] = Option(0.0)
-        self.options['nonlinear/predictor/dof_idx'] = Option(0)
+        self.options['nonlinear/predictor/dof_idx'] = Option(i)
         self.options['nonlinear/predictor/dof_value'] = Option(0.0)
+        self.options['nonlinear/predictor/delta-dof'] = Option(0.0)
         self.options['nonlinear/predictor/increment_length'] = Option(0.0)
-        self.options['nonlinear/predictor/beta'] = Option(0.0)
+        self.options['nonlinear/predictor/beta'] = Option(1.0)
 
         self.options['nonlinear/constraint_idx'] = Option(0)
-        self.options['nonlinear/constraint/dof_idx'] = Option(0)
+        self.options['nonlinear/constraint/dof_idx'] = Option(i)
 
         self.options['nonlinear/newtonraphson/maxiterations'] = Option(100)
         self.options['nonlinear/newtonraphson/tolerance_power'] = Option(-7)
@@ -59,7 +67,7 @@ class MainWindow(ApplicationWindow):
         self.options['plot/neumann'] = Option(True, self.redraw)
         self.options['plot/symbol_size'] = Option(5, self.redraw)
         self.options['plot/eigenvector_flag'] = Option(False, self.redraw)
-        self.options['plot/dof_idx'] = Option(0, self.redraw) #TODO: make use of self.dof
+        self.options['plot/dof_idx'] = Option(i, self.redraw)
         self.options['plot/load_disp_curve_flag'] = Option(True, self.redraw)
         self.options['plot/load_disp_curve_iter_flag'] = Option(False, self.redraw)
         self.options['plot/det(K)_flag'] = Option(False, self.redraw)
@@ -69,44 +77,30 @@ class MainWindow(ApplicationWindow):
     def option_values(self):
         return {option[0] : option[1].value for option in self.options.items()}
 
-    def get_solver(self):
-        if self.options['solver_idx'].value == 0:
-            return 'nonlinear'
-        elif self.options['solver_idx'].value == 1:
-            return 'LPB'
-        elif self.options['solver_idx'].value == 2:
-            return 'linear'
-        elif self.options['solver_idx'].value == 3:
-            return 'bracketing'
-    
-    def get_predictor(self):
-        predictor_idx = self.options['nonlinear/predictor_idx'].value
-        if predictor_idx == 0:
-            return 'lambda'
-        elif predictor_idx == 1:
-            return 'delta_lambda'
-        elif predictor_idx == 2:
-            return 'dof'
-        elif predictor_idx == 3:
-            return 'delta_dof'
-        elif predictor_idx == 4:
-            return 'arclength'
-        elif predictor_idx == 5:
-            return 'arclength+eigenvector'
-        
-    def get_constraint(self):
-        constraint_idx = self.options['nonlinear/constraint_idx'].value
-        if constraint_idx == 0:
-            return 'load-control'
-        elif constraint_idx == 1:
-            return 'displacement-control'
-        elif constraint_idx == 2:
-            return 'arc-length-control'
-    
+    @property
+    def solvers(self):
+        return ['nonlinear', 'LPB', 'linear', 'bracketing']
+
+    @property
+    def predictors(self):
+        return [
+            'lambda',
+            'delta-lambda',
+            'dof',
+            'delta-dof',
+            'arc-length',
+            # 'increment',
+            'arclength_eigenvector'
+        ]
+
+    @property
+    def constraints(self):
+        return ['load-control', 'displacement-control', 'arc-length-control']
+
     @property
     def model(self):
         return self.branches[-1]
-    
+
     @model.setter
     def model(self, value):
         self.branches[-1] = value
@@ -157,8 +151,7 @@ class MainWindow(ApplicationWindow):
     def _draw(self, ax3d, ax2d):
         model = self.model
         options = self.option_values
-        free_dofs = Assembler(model).free_dofs
-        dof = free_dofs[options['plot/dof_idx']]
+        dof = model.free_dofs[options['plot/dof_idx']]
 
         bounding_box = get_bounding_box(self.model.get_model_history())
         plot_bounding_cube(ax3d, bounding_box)
@@ -168,9 +161,10 @@ class MainWindow(ApplicationWindow):
 
         if options['plot/eigenvector_flag'] and model.first_eigenvector_model is not None:
             plot_scaled_model(ax3d, self.model.first_eigenvector_model, 'green')
-        
+
         logger = LoadDisplacementLogger(dof)
         label = logger.xlabel + " : " + logger.ylabel
+        ax2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
         if options['plot/load_disp_curve_flag']:
             # other branches at first level
             n_branches = len(self.branches)
@@ -180,7 +174,7 @@ class MainWindow(ApplicationWindow):
             # main branch
             plot_history_curve(ax2d, model, logger, '-o', label=label, color='tab:blue')
             plot_crosshair(ax2d, model.get_dof_state(dof), model.lam, linestyle='-.', color='tab:blue', linewidth=0.75)
-        
+
         # load displacement iteration plot
         if options['plot/load_disp_curve_iter_flag']:
             plot_history_curve(ax2d, model, logger, '--o', label='{} (iter)'.format(label), skip_iterations=False, linewidth=0.75, markersize=2.0, color='tab:orange')
@@ -203,24 +197,31 @@ class MainWindow(ApplicationWindow):
                 y_label='Eigenvalue')
             plot_history_curve(ax2d, model, logger, '-o', label=logger.title, color='tab:red')
 
+    def show_animation_click(self):
+        if self.animation_window is not None:
+            self.animation_window.close()
+        model = self.model
+        self.animation_window = AnimationWindow(self, model)
 
     def solve_click(self):
         try:
             model = self.model.get_duplicate()
             options = self.option_values
-            solver = self.get_solver()
+            solver = self.solvers[options['solver_idx']]
+
             if solver == 'linear':
                 model.lam = options['linear/lambda']
                 model.perform_linear_solution_step()
+
             elif solver == 'LPB':
                 if model.get_previous_model().get_previous_model() is not None:
                     raise RuntimeError('LPB can only be done on the initial model')
-                model.lam = self.options['linear/lambda']
+                model.lam = options['linear/lambda']
                 model.perform_linear_solution_step()
                 model.solve_linear_eigenvalues()
-            elif solver == 'nonlinear':
-                predictor = self.get_predictor()
 
+            elif solver == 'nonlinear':
+                predictor = self.predictors[options['nonlinear/predictor_idx']]
                 tangential_flag = options['nonlinear/predictor/tangential_flag']
 
                 if predictor == 'lambda':
@@ -229,28 +230,28 @@ class MainWindow(ApplicationWindow):
                         model.predict_tangential(strategy=predictor, value=value)
                     else:
                         model.lam = value
-                elif predictor == 'delta_lambda':
+                elif predictor == 'delta-lambda':
                     value = options['nonlinear/predictor/delta_lambda']
                     if tangential_flag:
                         model.predict_tangential(strategy=predictor, value=value)
                     else:
                         model.lam += value
                 elif predictor == 'dof':
-                    dof = options['nonlinear/predictor/dof']
+                    dof = model.free_dofs[options['nonlinear/predictor/dof_idx']]
                     dof_value = options['nonlinear/predictor/dof_value']
                     if tangential_flag:
                         model.predict_tangential(strategy=predictor, dof=dof, value=dof_value)
                     else:
                         model.set_dof_state(dof, dof_value)
-                elif predictor == 'delta_dof':
-                    dof = options['nonlinear/predictor/dof']
-                    dof_value_increment = options['nonlinear/predictor/delta_dof']
+                elif predictor == 'delta-dof':
+                    dof = model.free_dofs[options['nonlinear/predictor/dof_idx']]
+                    dof_value_increment = options['nonlinear/predictor/delta-dof']
                     if tangential_flag:
                         model.predict_tangential(strategy=predictor, dof=dof, value=dof_value_increment)
                     else:
                         model.increment_dof_state(dof, dof_value_increment)
-                elif predictor == 'arclength':
-                    arclength = self.options['nonlinear/predictor/increment_length']
+                elif predictor == 'arc-length':
+                    arclength = options['nonlinear/predictor/increment_length']
                     model.predict_tangential(strategy=predictor, value=arclength)
                 # elif predictor == 'increment':
                 #     increment_length = self.options['nonlinear/predictor/increment_length']
@@ -263,8 +264,8 @@ class MainWindow(ApplicationWindow):
                 else:
                     raise Exception('Unknown predictor {}'.format(predictor))
 
-                constraint = self.get_constraint()
-                constraint_dof = options['nonlinear/constraint/dof']
+                constraint = self.constraints[options['nonlinear/constraint_idx']]
+                constraint_dof = model.free_dofs[options['nonlinear/constraint/dof_idx']]
                 tolerance_power = options['nonlinear/newtonraphson/tolerance_power']
                 max_iterations = options['nonlinear/newtonraphson/maxiterations']
                 determinant = options['nonlinear/solution/det(K)_flag']
@@ -279,7 +280,8 @@ class MainWindow(ApplicationWindow):
                     solve_attendant_eigenvalue=eigenproblem
                 )
             elif solver == 'bracketing':
-                raise NotImplementedError('Bracketing not yet implemented')
+                self.solve_bracketing()
+                model = self.model
             else:
                 raise Exception(f'Unknown solver {solver}')
         except Exception as e:
@@ -290,17 +292,65 @@ class MainWindow(ApplicationWindow):
         self.options['nonlinear/predictor/increment_length'].change(model.get_increment_norm())
         self.redraw()
 
+    def solve_bracketing(self):
+        model = self.model
+        backup_model = model.get_duplicate(branch=True)
+        options = self.option_values
+
+        try:
+            tolerance_power = options['nonlinear/newtonraphson/tolerance_power']
+            max_iterations = options['nonlinear/newtonraphson/maxiterations']
+
+            determinant = options['nonlinear/solution/det(K)_flag']
+            eigenproblem = options['nonlinear/solution/eigenproblem_flag']
+
+            bracketing_tolerance_power = options['bracketing/tolerance_power']
+            bracketing_maxiterations = options['bracketing/maxiterations']
+
+            model = bracketing(
+                model,
+                tol=10**bracketing_tolerance_power,
+                max_steps=bracketing_maxiterations,
+                raise_error=True,
+                tolerance=10**tolerance_power,
+                max_iterations=max_iterations,
+                solve_det_k=determinant,
+                solve_attendant_eigenvalue=eigenproblem
+            )
+
+        except Exception as e:
+            traceback.print_exc()
+            self.show_error_dialog(str(e))
+            model = backup_model
+        
+        self.model = model
+
     def go_back_click(self):
-        self.DEBUG_red('go back is clicked')
+        if self.model.get_previous_model() is None:
+            return
+        self.model = self.model.get_previous_model()
+        self.redraw()
+        self.DEBUG_red('Went back one step')
 
     def reset_path_click(self):
-        self.DEBUG_red('reset path is clicked')
+        if self.model.get_previous_model() is None:
+            return
+        self.model = self.model.get_initial_model()
+        self.redraw()
+        self.DEBUG_red('Path is being reset')
 
     def new_path_click(self):
-        self.DEBUG_blue('new path is clicked')
+        new_model = self.model.get_duplicate()
+        new_model._previous_model= self.model.get_previous_model()
+        self.branches.append(new_model)
+        self.redraw()
+        self.DEBUG_blue('Created a new path')
 
     def reset_all_click(self):
-        self.WARNING('reset all is clicked')
+        model = self.model.get_initial_model()
+        self.branches = [model]
+        self.redraw()
+        self.DEBUG_red('Reset all is clicked')
 
 
 class AnalysisTab(Widget):
@@ -308,10 +358,11 @@ class AnalysisTab(Widget):
         builder.add_combobox(
             label='Solver',
             items=[
-                'Non-Linear',
+                'Nonlinear',
                 'Linearized Pre-Buckling (LPB)',
                 'Linear',
-                'Bracketing'],
+                'Bracketing'
+            ],
             option=builder.context.options['solver_idx'])
         builder.add_stack(
             items=[
@@ -379,7 +430,7 @@ class PredictorGroup(Widget):
                 'Set Dof value',
                 'Increment Dof value',
                 'Arclength',
-                # 'Last increment',
+                # 'Last Increment',
                 'Arclength + Eigenvector'],
             option=builder.context.options['nonlinear/predictor_idx'])
         builder.add_stack(
@@ -440,7 +491,7 @@ class IncrementDofValuePredictorSettings(Widget):
         builder.add_spinbox(
             label=None,
             dtype=float,
-            option=builder.context.options['nonlinear/predictor/increment_length'])
+            option=builder.context.options['nonlinear/predictor/delta-dof'])
 
 class ArclengthPredictorSettings(Widget):
     def build(self, builder):
@@ -499,10 +550,16 @@ class NewtonRaphsonGroup(Widget):
     def build(self, builder):
         builder.add_spinbox(
             label='Maximum Iterations',
+            dtype=int,
+            minimum=1,
+            maximum=5000,
             option=builder.context.options['nonlinear/newtonraphson/maxiterations'])
         builder.add_spinbox(
             label='Tolerance',
             prefix='10^ ',
+            dtype=int,
+            minimum=-10,
+            maximum=-1,
             option=builder.context.options['nonlinear/newtonraphson/tolerance_power'])
 
 
@@ -535,10 +592,16 @@ class BracketingGroup(Widget):
     def build(self, builder):
         builder.add_spinbox(
             label='Maximum iterations',
+            dtype=int,
+            minimum=1,
+            maximum=5000,
             option=builder.context.options['bracketing/maxiterations'])
         builder.add_spinbox(
             label='Tolerance',
             prefix='10^ ',
+            dtype=int,
+            minimum=-10,
+            maximum=-1,
             option=builder.context.options['bracketing/tolerance_power'])
 
 
@@ -551,7 +614,12 @@ class VisualisationTab(Widget):
         builder.add_group(
             label='2D Plot Settings',
             content=Plot2DSettingsGroup)
+        builder.add_space()
+        builder.add_button(
+            label='Show Animation',
+            action=builder.context.show_animation_click)
         builder.add_stretch()
+
 
 
 class Plot3DSettingsGroup(Widget):
@@ -575,12 +643,11 @@ class Plot3DSettingsGroup(Widget):
 
 class Plot2DSettingsGroup(Widget):
     def build(self, builder):
-        # get the free dofs from the model
-        assembler = Assembler(builder.context.model)
-        dofs = [dof[1] + ' at node ' + dof[0] for dof in assembler.free_dofs]
+        free_dofs = builder.context.model.free_dofs
+        dof_strings = [dof[1] + ' at node ' + dof[0] for dof in free_dofs]
 
         builder.add_combobox(
-            items=dofs,
+            items=dof_strings,
             option=builder.context.options['plot/dof_idx'])
         builder.add_checkbox(
             label='Load Displacement Curve',
@@ -615,10 +682,12 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         self._canvas3d = canvas3d
 
         toolbar3d = NavigationToolbar2QT(canvas3d, self)
+        toolbar3d.setMaximumHeight(20)
+        toolbar3d.setIconSize(QtCore.QSize(20, 20))
         layout.addWidget(toolbar3d, 2, 1, 1, 1)
 
         plot3d = figure3d.add_subplot(111, projection='3d')
-        plot3d.set_aspect('equal')
+        # plot3d.set_aspect('equal')
         self._plot3d = plot3d
 
         # right
@@ -629,10 +698,12 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         self._canvas2d = canvas2d
 
         toolbar2d = NavigationToolbar2QT(canvas2d, self)
+        toolbar2d.setMaximumHeight(20)
+        toolbar2d.setIconSize(QtCore.QSize(20, 20))
         layout.addWidget(toolbar2d, 2, 2, 1, 1)
 
         plot2d = figure2d.add_subplot(111)
-        plot2d.set_aspect('equal')
+        # plot2d.set_aspect('equal')
         self._plot2d = plot2d
 
         self._redraw.connect(redraw)
@@ -691,3 +762,31 @@ class CustomLogger(object):
         return '{} : {}'.format(self.xlabel, self.ylabel)
     def __call__(self, model):
         return self.x_fct(model), self.y_fct(model)
+
+
+# == Animation Window
+class AnimationWindow(Widget):
+    def __init__(self, parent, model):
+        super(AnimationWindow, self).__init__()
+
+        self.setWindowTitle('Animation')
+        self.options = parent.option_values
+        # store the animation
+        options={}
+        parent_options = parent.option_values
+        # options['plot/dirichlet'] = parent.options['plot/dirichlet']
+        # options['plot/neumann'] = parent.options['plot/neumann']
+        # options['plot/symbol_size'] = parent.options['plot/symbol_size']
+        # options['plot/highlight_dof'] = parent.options['plot/highlight_dof']
+        # options['plot/highlighted_dof'] = parent.options['plot/dof']
+    
+    def build(self, builder):
+        figure = Figure(dpi=80)
+        animation_canvas = FigureCanvasQTAgg(figure)
+        animation_canvas.setContentsMargins(0, 0, 0, 0)
+        builder._add_widget(animation_canvas)
+        ax_3d = figure.add_subplot(111, projection='3d')
+        figure.tight_layout()
+        ax_3d.set_aspect('equal')
+        self.a = animate_model(figure, ax_3d, model.get_model_history(), **self.options)
+        self.show()
