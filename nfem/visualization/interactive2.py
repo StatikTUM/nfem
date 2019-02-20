@@ -200,7 +200,7 @@ class MainWindow(ApplicationWindow):
             plot_history_curve(ax2d, model, logger, '-o', label=logger.title, color='tab:red')
 
     def show_animation_click(self, builder):
-        builder.show_dialog(AnimationWindow)
+        builder.show_dialog(AnimationWindow, size=(800, 800))
 
     def solve_click(self):
         try:
@@ -464,7 +464,7 @@ class SetDofValuePredictorSettings(Widget):
     def build(self, builder):
         # get the free dofs from the model
         assembler = Assembler(builder.context.model)
-        dofs = [dof[1] + ' at node ' + dof[0] for dof in assembler.free_dofs]
+        dofs = [dof[1] + ' at node ' + str(dof[0]) for dof in assembler.free_dofs]
         builder.add_combobox(
             items=dofs,
             option=builder.context.options['nonlinear/predictor/dof_idx'])
@@ -479,7 +479,7 @@ class IncrementDofValuePredictorSettings(Widget):
     def build(self, builder):
         # get the free dofs from the model
         assembler = Assembler(builder.context.model)
-        dofs = [dof[1] + ' at node ' + dof[0] for dof in assembler.free_dofs]
+        dofs = [dof[1] + ' at node ' + str(dof[0]) for dof in assembler.free_dofs]
         builder.add_combobox(
             items=dofs,
             option=builder.context.options['nonlinear/predictor/dof_idx'])
@@ -537,7 +537,7 @@ class DisplacementControlConstraintSettings(Widget):
     def build(self, builder):
         # get the free dofs from the model
         assembler = Assembler(builder.context.model)
-        dofs = [dof[1] + ' at node ' + dof[0] for dof in assembler.free_dofs]
+        dofs = [dof[1] + ' at node ' + str(dof[0]) for dof in assembler.free_dofs]
         builder.add_combobox(
             items=dofs,
             option=builder.context.options['nonlinear/constraint/dof_idx'])
@@ -642,7 +642,7 @@ class Plot3DSettingsGroup(Widget):
 class Plot2DSettingsGroup(Widget):
     def build(self, builder):
         free_dofs = builder.context.model.free_dofs
-        dof_strings = [dof[1] + ' at node ' + dof[0] for dof in free_dofs]
+        dof_strings = [dof[1] + ' at node ' + str(dof[0]) for dof in free_dofs]
 
         builder.add_combobox(
             items=dof_strings,
