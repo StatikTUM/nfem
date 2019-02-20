@@ -170,7 +170,7 @@ def get_max_axes_delta(ax):
     return max([x_lim[1]-x_lim[0], y_lim[1]-y_lim[0], z_lim[1]-z_lim[0]])
 
 def plot_dof_higlight(ax, model, initial, **options):
-    size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5).value
+    size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5)
 
     dof = options.get('plot/highlighted_dof', None)
     if dof is None:
@@ -205,7 +205,7 @@ def plot_dof_higlight(ax, model, initial, **options):
 
 
 def plot_forces(ax, model, initial, **options):
-    size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5).value
+    size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5)
     
     for element in model.elements:
         if type(element) == SingleLoad:
@@ -224,7 +224,7 @@ def plot_forces(ax, model, initial, **options):
             ax.add_artist(a)
 
 def plot_boundary_conditions(ax, model, initial, **options): 
-    size = get_max_axes_delta(ax)/100.0 * options.get('plot/symbol_size', 5).value
+    size = get_max_axes_delta(ax)/100.0 * options.get('plot/symbol_size', 5)
 
     polygons = list()
 
@@ -324,7 +324,7 @@ def plot_history_curve(ax, model, xy_function, fmt, skip_iterations=True, **kwar
     y_data = np.zeros(len(history))
 
     for i, model in enumerate(history):
-        x_data[i], y_data[i]= xy_function(model)
+        x_data[i], y_data[i] = xy_function(model)
 
     ax.plot(x_data, y_data, fmt, **kwargs)
 

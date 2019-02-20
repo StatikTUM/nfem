@@ -783,10 +783,10 @@ class Canvas(WidgetBase):
 
         plot2d.clear()
         plot2d.autoscale()
-        #plot2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
+        plot2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
         plot2d.set_facecolor('white')
         plot2d.yaxis.tick_right()
-        #plot2d.yaxis.set_label_position('right')
+        plot2d.yaxis.set_label_position('right')
         plot2d.grid()
 
         dof = self.get_option('plot/dof')
