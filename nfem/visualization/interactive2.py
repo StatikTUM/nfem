@@ -26,12 +26,14 @@ class MainWindow(ApplicationWindow):
 
         self.branches = [model]
         self.dof = dof
-        for i, free_dof in enumerate(model.free_dofs):
-            if free_dof == dof:
-                break
-            # raise ValueError(f'dof {dof} is not a free dof in the model. free dofs are: {model.free_dofs}')
 
-        self.animation_window = None
+        # Check if the given dof is a free dof in the model
+        try:
+            dof_index = model.free_dofs.index(dof)
+        except ValueError:
+            self.WARNING(f'Selected dof {dof} is not part of the free_dofs: {model.free_dofs}')
+            self.WARNING(f'Running the tool with the first free dof: {model.free_dofs[0]}')
+            dof_index = 0
 
         self.options = dict()
         # == analysis options
@@ -44,14 +46,14 @@ class MainWindow(ApplicationWindow):
         self.options['nonlinear/predictor/tangential_flag'] = Option(True)
         self.options['nonlinear/predictor/lambda'] = Option(0.0)
         self.options['nonlinear/predictor/delta_lambda'] = Option(0.0)
-        self.options['nonlinear/predictor/dof_idx'] = Option(i)
+        self.options['nonlinear/predictor/dof_idx'] = Option(dof_index)
         self.options['nonlinear/predictor/dof_value'] = Option(0.0)
         self.options['nonlinear/predictor/delta-dof'] = Option(0.0)
         self.options['nonlinear/predictor/increment_length'] = Option(0.0)
         self.options['nonlinear/predictor/beta'] = Option(1.0)
 
         self.options['nonlinear/constraint_idx'] = Option(0)
-        self.options['nonlinear/constraint/dof_idx'] = Option(i)
+        self.options['nonlinear/constraint/dof_idx'] = Option(dof_index)
 
         self.options['nonlinear/newtonraphson/maxiterations'] = Option(100)
         self.options['nonlinear/newtonraphson/tolerance_power'] = Option(-7)
@@ -67,7 +69,7 @@ class MainWindow(ApplicationWindow):
         self.options['plot/neumann'] = Option(True, self.redraw)
         self.options['plot/symbol_size'] = Option(5, self.redraw)
         self.options['plot/eigenvector_flag'] = Option(False, self.redraw)
-        self.options['plot/dof_idx'] = Option(i, self.redraw)
+        self.options['plot/dof_idx'] = Option(dof_index, self.redraw)
         self.options['plot/load_disp_curve_flag'] = Option(True, self.redraw)
         self.options['plot/load_disp_curve_iter_flag'] = Option(False, self.redraw)
         self.options['plot/det(K)_flag'] = Option(False, self.redraw)
@@ -197,11 +199,8 @@ class MainWindow(ApplicationWindow):
                 y_label='Eigenvalue')
             plot_history_curve(ax2d, model, logger, '-o', label=logger.title, color='tab:red')
 
-    def show_animation_click(self):
-        if self.animation_window is not None:
-            self.animation_window.close()
-        model = self.model
-        self.animation_window = AnimationWindow(self, model)
+    def show_animation_click(self, builder):
+        builder.show_dialog(AnimationWindow)
 
     def solve_click(self):
         try:
@@ -322,7 +321,7 @@ class MainWindow(ApplicationWindow):
             traceback.print_exc()
             self.show_error_dialog(str(e))
             model = backup_model
-        
+
         self.model = model
 
     def go_back_click(self):
@@ -330,21 +329,20 @@ class MainWindow(ApplicationWindow):
             return
         self.model = self.model.get_previous_model()
         self.redraw()
-        self.DEBUG_red('Went back one step')
+        self.DEBUG_red('Went back one step!')
 
     def reset_path_click(self):
         if self.model.get_previous_model() is None:
             return
         self.model = self.model.get_initial_model()
         self.redraw()
-        self.DEBUG_red('Path is being reset')
+        self.DEBUG_red('Path has been reset')
 
     def new_path_click(self):
-        new_model = self.model.get_duplicate()
-        new_model._previous_model= self.model.get_previous_model()
+        new_model = self.model.get_duplicate(branch=True)
         self.branches.append(new_model)
         self.redraw()
-        self.DEBUG_blue('Created a new path')
+        self.DEBUG_blue('Created a new path!')
 
     def reset_all_click(self):
         model = self.model.get_initial_model()
@@ -663,6 +661,22 @@ class Plot2DSettingsGroup(Widget):
             option=builder.context.options['plot/eigenvalue_flag'])
 
 
+class AnimationWindow(Widget):
+    def build(self, builder):
+        figure = Figure(dpi=80)
+        animation_canvas = FigureCanvasQTAgg(figure)
+        animation_canvas.setContentsMargins(0, 0, 0, 0)
+        builder._add_widget(animation_canvas)
+        ax_3d = figure.add_subplot(111, projection='3d')
+        figure.tight_layout()
+        ax_3d.set_aspect('equal')
+        self.a = animate_model(
+            figure, ax_3d,
+            builder.context.model.get_model_history(),
+            **builder.context.option_values
+        )
+        self.show()
+
 class SideBySide2D3DPlots(QtWidgets.QWidget):
     _redraw = QtCore.pyqtSignal(object, object)
 
@@ -762,31 +776,3 @@ class CustomLogger(object):
         return '{} : {}'.format(self.xlabel, self.ylabel)
     def __call__(self, model):
         return self.x_fct(model), self.y_fct(model)
-
-
-# == Animation Window
-class AnimationWindow(Widget):
-    def __init__(self, parent, model):
-        super(AnimationWindow, self).__init__()
-
-        self.setWindowTitle('Animation')
-        self.options = parent.option_values
-        # store the animation
-        options={}
-        parent_options = parent.option_values
-        # options['plot/dirichlet'] = parent.options['plot/dirichlet']
-        # options['plot/neumann'] = parent.options['plot/neumann']
-        # options['plot/symbol_size'] = parent.options['plot/symbol_size']
-        # options['plot/highlight_dof'] = parent.options['plot/highlight_dof']
-        # options['plot/highlighted_dof'] = parent.options['plot/dof']
-    
-    def build(self, builder):
-        figure = Figure(dpi=80)
-        animation_canvas = FigureCanvasQTAgg(figure)
-        animation_canvas.setContentsMargins(0, 0, 0, 0)
-        builder._add_widget(animation_canvas)
-        ax_3d = figure.add_subplot(111, projection='3d')
-        figure.tight_layout()
-        ax_3d.set_aspect('equal')
-        self.a = animate_model(figure, ax_3d, model.get_model_history(), **self.options)
-        self.show()
