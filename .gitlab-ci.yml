@@ -8,7 +8,6 @@ test:
         - pwd
         - whoami
         - python3 --version
-        - python3 -m pip install scipy
-        - python3 -m unittest discover
+        - python3 -m unittest discover -p 'test_*.py'
     tags:
         - sh_test
