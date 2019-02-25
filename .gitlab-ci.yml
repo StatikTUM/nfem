@@ -9,6 +9,6 @@ test:
         - echo "Testing"
         - pwd
         - python3 --version
-        - python3 -m unittest discover -p 'test_*.py'
+        - python3 -m unittest discover
     tags:
         - test
