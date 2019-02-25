@@ -1,12 +1,16 @@
 image: oberbichler/ubuntu-dev
 
+before_script: 
+    - export PATH=~/miniconda/bin:$PATH
+    - conda install numpy
+    - conda install PyQt5
+
 stages:
     - test
 
 test:
     stage: test
     script:
-        - conda install numpy
         - echo "Testing"
         - pwd
         - python3 --version
