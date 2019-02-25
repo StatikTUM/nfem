@@ -2,6 +2,7 @@ image: oberbichler/ubuntu-dev
 
 before_script: 
     - export PATH=~/miniconda/bin:$PATH
+    - conda install scipy
     - conda install numpy
     - conda install pyqt
 
