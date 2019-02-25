@@ -17,7 +17,7 @@ print("""
                    /_/ |_/_/   /_____/_/  /_/  Teaching Tool
 
   Authors:   Armin Geiser, Aditya Ghantasala, Thomas Oberbichler, Klaus Sautter
-  Copyright: © 2018 TUM Statik
+  Copyright: 2018 TUM Statik
   Version:   1.4
 
   This is a teaching tool! All results without warranty.
