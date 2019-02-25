@@ -1,5 +1,8 @@
 image: oberbichler/ubuntu-dev
 
+before_script:
+    - conda install numpy
+
 stages:
     - test
 
