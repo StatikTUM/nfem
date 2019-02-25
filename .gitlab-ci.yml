@@ -1,14 +1,12 @@
 image: oberbichler/ubuntu-dev
 
-before_script:
-    - conda install numpy
-
 stages:
     - test
 
 test:
     stage: test
     script:
+        - conda install numpy
         - echo "Testing"
         - pwd
         - python3 --version
