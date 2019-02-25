@@ -3,7 +3,7 @@ image: oberbichler/ubuntu-dev
 before_script: 
     - export PATH=~/miniconda/bin:$PATH
     - conda install numpy
-    - conda install PyQt5
+    - conda install pyqt
 
 stages:
     - test
