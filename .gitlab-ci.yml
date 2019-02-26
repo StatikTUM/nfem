@@ -8,6 +8,7 @@ test:
     script:
         - echo "Testing"
         - pwd
+        - gcc --version
         - python3 --version
         - python3 -m unittest discover
     tags:
