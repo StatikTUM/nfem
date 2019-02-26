@@ -3,6 +3,8 @@
 Author: Thomas Oberbichler
 """
 
+# to fix: "libgcc_s.so.1 must be installed for pthread_cancel to work" in the docker test run
+import matplotlib.pyplot as plt
 
 from PyQt5 import Qt
 from PyQt5.QtCore import pyqtSignal, QObject, Qt as CoreQt, QSize
