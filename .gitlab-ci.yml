@@ -1,10 +1,4 @@
-image: oberbichler/ubuntu-dev
-
-before_script: 
-    - export PATH=~/miniconda/bin:$PATH
-    - conda install scipy
-    - conda install numpy
-    - conda install pyqt
+image: gitlab.lrz.de:5005/gu42dib/test_ci:latest
 
 stages:
     - test
