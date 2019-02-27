@@ -358,6 +358,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         self._canvas3d = canvas3d
 
         toolbar3d = NavigationToolbar2QT(canvas3d, self)
+        toolbar3d.setMinimumSize(canvas3d.width(), 20)
         layout.addWidget(toolbar3d, 2, 1, 1, 1)
 
         plot3d = figure3d.add_subplot(111, projection='3d')
@@ -372,6 +373,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         self._canvas2d = canvas2d
 
         toolbar2d = NavigationToolbar2QT(canvas2d, self)
+        toolbar2d.setMinimumSize(canvas2d.width(), 20)
         layout.addWidget(toolbar2d, 2, 2, 1, 1)
 
         plot2d = figure2d.add_subplot(111)
