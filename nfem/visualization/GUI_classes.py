@@ -1,4 +1,7 @@
-from mpl_toolkits import mplot3d
+"""
+Helper classes to be used in interactive.py
+"""
+
 from .python_ui import (Widget, Figure, FigureCanvasQTAgg, NavigationToolbar2QT,
                         QtWidgets, QtCore)
 from .plot import animate_model
@@ -330,7 +333,7 @@ class AnimationWindow(Widget):
         ax_3d = figure.add_subplot(111, projection='3d')
         figure.tight_layout()
         ax_3d.set_aspect('equal')
-        self.a = animate_model(
+        animation = animate_model(
             figure, ax_3d,
             builder.context.model.get_model_history(),
             **builder.context.option_values

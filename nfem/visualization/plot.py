@@ -253,9 +253,9 @@ def animate_model(fig, ax, models, speed=200, **options):
 
         plot_bounding_cube(ax, bounding_box)
 
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        ax.set_zlabel('z')
+        ax.set_xlabel('< x >')
+        ax.set_ylabel('< y >')
+        ax.set_zlabel('< z >')
 
         ax.set_title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
 

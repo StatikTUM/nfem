@@ -1,4 +1,9 @@
-""" FIXME """
+"""
+Interactive
+===========
+
+Module to initiate the NFEM-Teching-Tool GUI
+"""
 
 import traceback
 
@@ -9,7 +14,25 @@ from .plot import (plot_model, plot_bounding_cube, plot_history_curve,
                    plot_crosshair, plot_scaled_model, get_bounding_box)
 
 def interact2(model, dof):
-    """ FIXME """
+    """
+    Launch the interactive GUI
+
+    Parameters
+    ----------
+    model : object
+        An object of class Model
+    dof : tuple
+        a tuple of the node ID and dof type
+
+    Returns
+    -------
+    model : object
+        the model after the GUI is closed
+
+    Examples
+    --------
+        >>> model = interact(model=model, dof=(42, 'u'))
+    """
     window = MainWindow.run(model=model, dof=dof)
     return window.model
 
@@ -28,7 +51,7 @@ class MainWindow(ApplicationWindow):
 
     def __init__(self, model, dof):
         super(MainWindow, self).__init__(
-            title='NFEM Teaching Tool',
+            title=f'NFEM Teaching Tool (Model: {model.name})',
             content=SideBySide2D3DPlots(self._draw))
 
         self.branches = [model]
@@ -178,6 +201,11 @@ class MainWindow(ApplicationWindow):
         logger = LoadDisplacementLogger(dof)
         label = logger.xlabel + " : " + logger.ylabel
         ax2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
+        ax3d.set(
+            xlabel='< x >',
+            ylabel='< y >',
+            zlabel='< z >',
+        )
 
         # plot load displacement curve
         if options['plot/load_disp_curve_flag']:
@@ -415,7 +443,7 @@ class MainWindow(ApplicationWindow):
         self.DEBUG_red('Reset all has been clicked!')
 
 
-# == Loggers
+# == Loggers to be used in plots
 class LoadDisplacementLogger(object):
     def __init__(self, dof):
         self.dof = dof
