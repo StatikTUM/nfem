@@ -371,6 +371,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         # right
         figure2d = Figure(dpi=80)
         canvas2d = FigureCanvasQTAgg(figure2d)
+        cid = canvas2d.mpl_connect('button_press_event', self._on_press_2d)
         canvas2d.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(canvas2d, 1, 2, 1, 1)
         self._canvas2d = canvas2d
@@ -406,3 +407,6 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
 
         self._canvas3d.draw()
         self._canvas2d.draw()
+
+    def _on_press_2d(self, event):
+        pass
