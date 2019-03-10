@@ -8,10 +8,11 @@ Module to initiate the NFEM-Teching-Tool GUI
 import traceback
 
 from .python_ui import ApplicationWindow, Option, Fore, Style
-from .GUI_classes import SideBySide2D3DPlots, AnalysisTab, VisualisationTab, AnimationWindow
+from .GUI_classes import SideBySide2D3DPlots, AnalysisTab, VisualisationTab, AnimationWindow, set_stiffness_matrix
 from ..bracketing import bracketing
 from .plot import (plot_model, plot_bounding_cube, plot_history_curve,
                    plot_crosshair, plot_scaled_model, get_bounding_box)
+from ..assembler import Assembler
 
 def interact2(model, dof):
     """
@@ -52,7 +53,8 @@ class MainWindow(ApplicationWindow):
     def __init__(self, model, dof):
         super(MainWindow, self).__init__(
             title=f'NFEM Teaching Tool (Model: {model.name})',
-            content=SideBySide2D3DPlots(self._draw))
+            content=SideBySide2D3DPlots(self._draw),
+            size=(1024, 768)) #TODO: Calculate sizes and assign the figure size accordingly!!
 
         self.branches = [model]
         self.dof = dof
@@ -105,6 +107,24 @@ class MainWindow(ApplicationWindow):
         self.options['plot/det(K)_flag'] = Option(False, self.redraw)
         self.options['plot/eigenvalue_flag'] = Option(False, self.redraw)
 
+        self.options['stiffness/system_idx'] = Option(
+            value=0,
+            action=lambda: set_stiffness_matrix(
+                model=self.model,
+                debugger=self.DEBUG_blue,
+                **self.options
+                )
+            )
+        self.options['stiffness/component_idx'] = Option(
+            value=0,
+            action=lambda: set_stiffness_matrix(
+                model=self.model,
+                debugger=self.DEBUG_blue,
+                **self.options
+                )
+            )
+        self.options['stiffness/matrix'] = Option([])
+
     @property
     def option_values(self):
         """ dict of self.options values instead of objects """
@@ -122,6 +142,7 @@ class MainWindow(ApplicationWindow):
             'dof',
             'delta-dof',
             'arc-length',
+            'increment',
             'arclength_eigenvector'
         ]
 
@@ -368,6 +389,10 @@ class MainWindow(ApplicationWindow):
         elif predictor == 'arc-length':
             arclength = options['nonlinear/predictor/increment_length']
             model.predict_tangential(strategy=predictor, value=arclength)
+        
+        elif predictor == 'increment':
+            increment_length = options['nonlinear/predictor/increment_length']
+            model.predict_with_last_increment(value=increment_length)
 
         elif predictor == 'arclength_eigenvector':
             arclength = options['nonlinear/predictor/increment_length']

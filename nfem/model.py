@@ -133,6 +133,17 @@ class Model(object):
         """
         return self._elements.values()
 
+    @property
+    def structural_elements(self):
+        """
+        FIXME
+        """
+        elements = []
+        for element in self.elements:
+            if isinstance(element, Truss):
+                elements.append(element)
+        return elements
+
     def get_element(self, id):
         """Get an element by its ID.
 

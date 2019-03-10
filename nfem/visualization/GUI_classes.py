@@ -2,9 +2,12 @@
 Helper classes to be used in interactive.py
 """
 
+import numpy as np
+
 from .python_ui import (Widget, Figure, FigureCanvasQTAgg, NavigationToolbar2QT,
                         QtWidgets, QtCore)
 from .plot import animate_model
+from ..assembler import Assembler
 
 class AnalysisTab(Widget):
     def build(self, builder):
@@ -83,6 +86,7 @@ class PredictorGroup(Widget):
                 'Set Dof value',
                 'Increment Dof value',
                 'Arclength',
+                'Last Increment',
                 'Arclength + Eigenvector'],
             option=builder.context.options['nonlinear/predictor_idx'])
         builder.add_stack(
@@ -92,7 +96,7 @@ class PredictorGroup(Widget):
                 SetDofValuePredictorSettings,
                 IncrementDofValuePredictorSettings,
                 ArclengthPredictorSettings,
-                # LastIncrement,
+                LastIncrementPredictorSettings,
                 ArclengthPlusEigenvectorPredictorSettings],
             option=builder.context.options['nonlinear/predictor_idx'])
 
@@ -150,6 +154,14 @@ class IncrementDofValuePredictorSettings(Widget):
 
 
 class ArclengthPredictorSettings(Widget):
+    def build(self, builder):
+        builder.add_spinbox(
+            label=None,
+            dtype=float,
+            option=builder.context.options['nonlinear/predictor/increment_length'])
+
+
+class LastIncrementPredictorSettings(Widget):
     def build(self, builder):
         builder.add_spinbox(
             label=None,
@@ -280,7 +292,84 @@ class VisualisationTab(Widget):
             label='Show Animation',
             action=builder.context.show_animation_click)
         builder.add_stretch()
+        builder.add_button(
+            label='Show Stiffness Matrix',
+            action=self.show_stiffness_matrix)
 
+    def show_stiffness_matrix(self, builder):
+        builder.show_dialog(StiffnessMatrixDialog, title='Stiffness Matrix')
+
+class StiffnessMatrixDialog(Widget):
+    def build(self, builder):
+        element_ids = ['Element '+str(element.id) for element in builder.context.model.structural_elements]
+        systems = ['Total System']
+        systems.extend(element_ids)
+        builder.add_combobox(
+            label='System',
+            items=systems,
+            option=builder.context.options['stiffness/system_idx'])
+        builder.add_space()
+        builder.add_combobox(
+            label='Stiffness Matrix Component',
+            items=['Total', 'Elastic', 'Initial Displacement', 'Geometric'],
+            option=builder.context.options['stiffness/component_idx'])
+        builder.add_space()
+        set_stiffness_matrix(
+            builder.context.model,
+            builder.context.DEBUG_blue,
+            **builder.context.options
+            )
+        builder.add_array(
+            readonly=True,
+            option=builder.context.options['stiffness/matrix'])
+        builder.add_stretch()
+
+def set_stiffness_matrix(model, debugger=print, **options):
+    if options['stiffness/system_idx'].value == 0:
+
+        assembler = Assembler(model)
+        k = np.zeros((assembler.dof_count, assembler.dof_count))
+
+        if options['stiffness/component_idx'].value == 0:
+            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+            debugger('Total stiffness matrix for the total system:')
+        elif options['stiffness/component_idx'].value == 1:
+            assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
+            debugger('Elastic stiffness matrix for the total system:')
+        elif options['stiffness/component_idx'].value == 2:
+            assembler.assemble_matrix(k, lambda element: element.calculate_initial_displacement_stiffness_matrix())
+            debugger('Initial displacement stiffness matrix for the total system:')
+        elif options['stiffness/component_idx'].value == 3:
+            assembler.assemble_matrix(k, lambda element: element.calculate_geometric_stiffness_matrix())
+            debugger('Geometric stiffness matrix for the total system:')
+        else:
+            raise NotImplementedError(f'Wrong stiffness matrix component index.')
+
+        options['stiffness/matrix'].change(k[:assembler.free_dof_count, :assembler.free_dof_count])
+        debugger(str(k[:assembler.free_dof_count, :assembler.free_dof_count]) + '\n')
+
+    else:
+        element = model.structural_elements[
+            options['stiffness/system_idx'].value - 1
+            ] #TODO: fix
+
+        if options['stiffness/component_idx'].value == 0:
+            k = element.calculate_stiffness_matrix()
+            debugger(f'Total stiffness matrix for element ({element.id}):')
+        elif options['stiffness/component_idx'].value == 1:
+            k = element.calculate_elastic_stiffness_matrix()
+            debugger(f'Elastc stiffness matrix for element ({element.id}):')
+        elif options['stiffness/component_idx'].value == 2:
+            k = element.calculate_initial_displacement_stiffness_matrix()
+            debugger(f'Initial displacement stiffness matrix for element ({element.id}):')
+        elif options['stiffness/component_idx'].value == 3:
+            k = element.calculate_geometric_stiffness_matrix()
+            debugger(f'Geometric stiffness matrix for element ({element.id}):')
+        else:
+            raise NotImplementedError(f'Wrong stiffness matrix component index.')
+
+        options['stiffness/matrix'].change(k)
+        debugger(str(k) + '\n')
 
 
 class Plot3DSettingsGroup(Widget):
@@ -333,7 +422,7 @@ class AnimationWindow(Widget):
         ax_3d = figure.add_subplot(111, projection='3d')
         figure.tight_layout()
         ax_3d.set_aspect('equal')
-        animation = animate_model(
+        self.a = animate_model(
             figure, ax_3d,
             builder.context.model.get_model_history(),
             **builder.context.option_values
