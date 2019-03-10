@@ -6,6 +6,8 @@ import numpy as np
 
 from .python_ui import (Widget, Figure, FigureCanvasQTAgg, NavigationToolbar2QT,
                         QtWidgets, QtCore)
+from .plot import (plot_model, plot_bounding_cube, plot_history_curve,
+                   plot_crosshair, plot_scaled_model, get_bounding_box)
 from .plot import animate_model
 from ..assembler import Assembler
 
@@ -414,11 +416,15 @@ class Plot2DSettingsGroup(Widget):
 
 
 class AnimationWindow(Widget):
+    def __init__(self):
+        super(AnimationWindow, self).__init__()
+        self.a = None   # Animation function return
+
     def build(self, builder):
         figure = Figure(dpi=80)
-        animation_canvas = FigureCanvasQTAgg(figure)
+        animation_canvas = FigureCanvas(figure)
         animation_canvas.setContentsMargins(0, 0, 0, 0)
-        builder._add_widget(animation_canvas)
+        builder.add(animation_canvas)
         ax_3d = figure.add_subplot(111, projection='3d')
         figure.tight_layout()
         ax_3d.set_aspect('equal')
@@ -429,13 +435,23 @@ class AnimationWindow(Widget):
         )
         self.show()
 
+class FigureCanvas(FigureCanvasQTAgg):
+    """
+    subclass of FigureCanvasQTAgg to be able to use
+    python_ui.WidgetBuilder.add(widget_type)
+    """
+    def __call__(self):
+        return self
+    def build(self, builder):
+        pass
+
 
 # == content of the application window
 class SideBySide2D3DPlots(QtWidgets.QWidget):
-    _redraw = QtCore.pyqtSignal(object, object)
-
-    def __init__(self, redraw):
+    def __init__(self, parent):
         super(SideBySide2D3DPlots, self).__init__()
+
+        self.parent = parent
 
         layout = QtWidgets.QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -473,8 +489,6 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         # plot2d.set_aspect('equal')
         self._plot2d = plot2d
 
-        self._redraw.connect(redraw)
-
     def redraw(self):
         plot3d = self._plot3d
         plot2d = self._plot2d
@@ -487,15 +501,147 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         plot3d.clear()
         plot2d.clear()
 
-        self._redraw.emit(plot3d, plot2d)
-
         plot2d.grid()
         handles, labels = plot2d.get_legend_handles_labels()
         if handles:
             plot2d.legend(handles, labels, loc='best')
 
+        self.plot(plot3d, plot2d)
+
         self._canvas3d.draw()
         self._canvas2d.draw()
 
+    def plot(self, ax3d, ax2d):
+        # get variables
+        parent = self.parent
+        options = parent.option_values
+        dof = parent.model.free_dofs[options['plot/dof_idx']]
+
+        # plot bounding cube
+        bounding_box = get_bounding_box(parent.model.get_model_history())
+        plot_bounding_cube(ax3d, bounding_box)
+
+        # plot initial and deformed models
+        plot_model(ax3d, parent.model, 'gray', True, **options)
+        plot_model(ax3d, parent.model, 'red', False, **options)
+
+        # plot eigenvector
+        if options['plot/eigenvector_flag'] and parent.model.first_eigenvector_model is not None:
+            plot_scaled_model(ax3d, parent.model.first_eigenvector_model, 'green')
+
+        # logger
+        logger = LoadDisplacementLogger(dof)
+        label = logger.xlabel + " : " + logger.ylabel
+        ax2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
+        ax3d.set(
+            xlabel='< x >',
+            ylabel='< y >',
+            zlabel='< z >',
+        )
+
+        # plot load displacement curve
+        if options['plot/load_disp_curve_flag']:
+            # other branches at first level
+            n_branches = len(parent.branches)
+            for i, branch_model in enumerate(parent.branches[:-1]):
+                grey_level = i/float(n_branches)
+                plot_history_curve(
+                    ax=ax2d,
+                    model=branch_model,
+                    xy_function=logger,
+                    fmt='--x',
+                    label=f'Branch {i+1} of {n_branches}',
+                    color=str(grey_level))
+            # main branch
+            plot_history_curve(
+                ax=ax2d,
+                model=parent.model,
+                xy_function=logger,
+                fmt='-o',
+                label=label,
+                color='tab:blue')
+            plot_crosshair(
+                ax=ax2d,
+                x=parent.model.get_dof_state(dof),
+                y=parent.model.lam,
+                linestyle='-.',
+                color='tab:blue',
+                linewidth=0.75)
+
+        # load displacement iteration plot
+        if options['plot/load_disp_curve_iter_flag']:
+            plot_history_curve(
+                ax=ax2d,
+                model=parent.model,
+                xy_function=logger,
+                fmt='--o',
+                label=f'{label} (iter)',
+                skip_iterations=False,
+                linewidth=0.75,
+                markersize=2.0,
+                color='tab:orange')
+
+        # det_k plot
+        if options['plot/det(K)_flag']:
+            logger = CustomLogger(
+                x_fct=lambda model: model.get_dof_state(dof=dof),
+                y_fct=lambda model: model.det_k,
+                x_label=f'{dof[1]} at node {dof[0]}',
+                y_label='Det(K)')
+            plot_history_curve(
+                ax=ax2d,
+                model=parent.model,
+                xy_function=logger,
+                fmt='-o',
+                label=logger.title,
+                color='tab:green')
+
+        # eigenvalue plot
+        if options['plot/eigenvalue_flag']:
+            logger = CustomLogger(
+                x_fct=lambda model: model.get_dof_state(dof=dof),
+                y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.lam,
+                x_label=f'{dof[1]} at node {dof[0]}',
+                y_label='Eigenvalue')
+            plot_history_curve(
+                ax=ax2d,
+                model=parent.model,
+                xy_function=logger,
+                fmt='-o',
+                label=logger.title,
+                color='tab:red')
+    
     def _on_press_2d(self, event):
         pass
+
+
+# == Loggers to be used in plots
+class LoadDisplacementLogger(object):
+    def __init__(self, dof):
+        self.dof = dof
+    @property
+    def title(self):
+        node_id, dof_type = self.dof
+        return f'Load-displacement diagram for {dof_type} at node {node_id}'
+    @property
+    def xlabel(self):
+        node_id, dof_type = self.dof
+        return f'{dof_type} at node {node_id}'
+    @property
+    def ylabel(self):
+        return 'Load factor (\u03BB)'
+    def __call__(self, model):
+        u = model.get_dof_state(self.dof)
+        return model.get_dof_state(self.dof), model.lam
+
+class CustomLogger(object):
+    def __init__(self, x_fct, y_fct, x_label, y_label):
+        self.x_fct = x_fct
+        self.y_fct = y_fct
+        self.xlabel = x_label
+        self.ylabel = y_label
+    @property
+    def title(self):
+        return '{} : {}'.format(self.xlabel, self.ylabel)
+    def __call__(self, model):
+        return self.x_fct(model), self.y_fct(model)
