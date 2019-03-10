@@ -644,7 +644,7 @@ class Sidebar(QtWidgets.QScrollArea):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.setWidgetResizable(True)
-        self.setMinimumWidth(400)
+        self.setMinimumWidth(350)
 
 
 class PlotCanvas(QtWidgets.QWidget):

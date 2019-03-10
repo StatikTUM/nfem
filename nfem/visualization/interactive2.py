@@ -52,7 +52,7 @@ class MainWindow(ApplicationWindow):
         super(MainWindow, self).__init__(
             title=f'NFEM Teaching Tool (Model: {model.name})',
             content=SideBySide2D3DPlots,
-            size=(1024, 768)) #TODO: Calculate sizes and assign the figure size accordingly!!
+            size=(1024, 700))
 
         self.branches = [model]
         self.dof = dof
@@ -203,7 +203,7 @@ class MainWindow(ApplicationWindow):
         self.content.redraw()
 
     def show_animation_click(self, builder):
-        builder.show_dialog(AnimationWindow, size=(800, 800))
+        builder.show_dialog(AnimationWindow, size=(700, 700))
 
     def solve_click(self):
         try:

@@ -353,7 +353,7 @@ def set_stiffness_matrix(model, debugger=print, **options):
     else:
         element = model.structural_elements[
             options['stiffness/system_idx'].value - 1
-            ] #TODO: fix
+            ]
 
         if options['stiffness/component_idx'].value == 0:
             k = element.calculate_stiffness_matrix()
@@ -466,7 +466,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         self._canvas3d = canvas3d
 
         toolbar3d = NavigationToolbar2QT(canvas3d, self)
-        toolbar3d.setMinimumSize(canvas3d.width(), 20)
+        toolbar3d.setMinimumWidth(self.width() / 2)
         layout.addWidget(toolbar3d, 2, 1, 1, 1)
 
         plot3d = figure3d.add_subplot(111, projection='3d')
@@ -482,7 +482,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         self._canvas2d = canvas2d
 
         toolbar2d = NavigationToolbar2QT(canvas2d, self)
-        toolbar2d.setMinimumSize(canvas2d.width(), 20)
+        toolbar2d.setMinimumWidth(self.width() / 2)
         layout.addWidget(toolbar2d, 2, 2, 1, 1)
 
         plot2d = figure2d.add_subplot(111)
@@ -533,6 +533,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         logger = LoadDisplacementLogger(dof)
         label = logger.xlabel + " : " + logger.ylabel
         ax2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
+        ax2d.yaxis.set_label_position('right')
         ax3d.set(
             xlabel='< x >',
             ylabel='< y >',
