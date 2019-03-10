@@ -4,7 +4,6 @@
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
                                                 NavigationToolbar2QT)
 from matplotlib.figure import Figure
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 import inspect
 import numpy as np
@@ -45,6 +44,9 @@ class Option(QtCore.QObject):
 
     def change(self, value):
         self.value = value
+
+    def __call__(self):
+        return self.value
 
     @property
     def value(self):
@@ -93,7 +95,7 @@ class Style(object):
 ConsoleStyles = Fore, Back, Style
 
 
-class Console(QtWidgets.QTextEdit):
+class DarkStyle:
     BACKGROUND = QtGui.QColor('#1b1b1b')
     BLACK = QtGui.QColor('#303030')
     RED = QtGui.QColor('#e1321a')
@@ -104,9 +106,15 @@ class Console(QtWidgets.QTextEdit):
     CYAN = QtGui.QColor('#2aa7e7')
     WHITE = QtGui.QColor('#f2f2f2')
 
+
+class Console(QtWidgets.QTextEdit):
+
     def __init__(self):
         super(Console, self).__init__()
+        
         font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont)
+        
+        self.style = DarkStyle
 
         font = QtGui.QFont('Consolas')
         font.setStyleHint(QtGui.QFont.TypeWriter)
@@ -118,8 +126,8 @@ class Console(QtWidgets.QTextEdit):
         self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
 
         p = self.palette()
-        p.setColor(QtGui.QPalette.Base, Console.BACKGROUND)
-        p.setColor(QtGui.QPalette.Text, Console.WHITE)
+        p.setColor(QtGui.QPalette.Base, self.style.BACKGROUND)
+        p.setColor(QtGui.QPalette.Text, self.style.WHITE)
         self.setPalette(p)
 
     def _foreground(self, color):
@@ -140,39 +148,39 @@ class Console(QtWidgets.QTextEdit):
         elif code == 1:
             self._text_format.setFontWeight(QtGui.QFont.Bold)
         elif code == 30:
-            self._foreground(Console.BLACK)
+            self._foreground(self.style.BLACK)
         elif code == 31:
-            self._foreground(Console.RED)
+            self._foreground(self.style.RED)
         elif code == 32:
-            self._foreground(Console.GREEN)
+            self._foreground(self.style.GREEN)
         elif code == 33:
-            self._foreground(Console.YELLOW)
+            self._foreground(self.style.YELLOW)
         elif code == 34:
-            self._foreground(Console.BLUE)
+            self._foreground(self.style.BLUE)
         elif code == 35:
-            self._foreground(Console.MAGENTA)
+            self._foreground(self.style.MAGENTA)
         elif code == 36:
-            self._foreground(Console.CYAN)
+            self._foreground(self.style.CYAN)
         elif code == 37:
-            self._foreground(Console.WHITE)
+            self._foreground(self.style.WHITE)
         elif code == 39:
             self._foreground(None)
         elif code == 40:
-            self._background(Console.BLACK)
+            self._background(self.style.BLACK)
         elif code == 41:
-            self._background(Console.RED)
+            self._background(self.style.RED)
         elif code == 42:
-            self._background(Console.GREEN)
+            self._background(self.style.GREEN)
         elif code == 43:
-            self._background(Console.YELLOW)
+            self._background(self.style.YELLOW)
         elif code == 44:
-            self._background(Console.BLUE)
+            self._background(self.style.BLUE)
         elif code == 45:
-            self._background(Console.MAGENTA)
+            self._background(self.style.MAGENTA)
         elif code == 46:
-            self._background(Console.CYAN)
+            self._background(self.style.CYAN)
         elif code == 47:
-            self._background(Console.WHITE)
+            self._background(self.style.WHITE)
         elif code == 49:
             self._background(None)
 
@@ -295,15 +303,15 @@ class WidgetBuilder(object):
             spinbox_widget = QtWidgets.QSpinBox()
             spinbox_widget.setMinimum(minimum or -2147483648)
             spinbox_widget.setMaximum(maximum or 2147483647)
-            spinbox_widget.setValue(option.value)
             spinbox_widget.setSingleStep(step or 1)
+            spinbox_widget.setValue(option.value)
         elif dtype is float:
             spinbox_widget = QtWidgets.QDoubleSpinBox()
             spinbox_widget.setMinimum(minimum or -Qt.qInf())
             spinbox_widget.setMaximum(maximum or Qt.qInf())
-            spinbox_widget.setValue(option.value)
             spinbox_widget.setSingleStep(step or 0.1)
             spinbox_widget.setDecimals(decimals or 5)
+            spinbox_widget.setValue(option.value)
         else:
             raise ValueError(f'Invalid dtype "{dtype.__name__}"')
 
@@ -326,21 +334,6 @@ class WidgetBuilder(object):
         option.connect(checkbox_widget.setChecked)
         checkbox_widget.clicked.connect(option.change)
 
-    def add_slider(self, label, option, minimum=None, maximum=None, ticks=None):
-        if label:
-            label_widget = QtWidgets.QLabel(label)
-            self._add_widget(label_widget)
-
-        slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        slider.setMinimum(minimum or 1)
-        slider.setMaximum(maximum or 10)
-        if ticks:
-            slider.setTickInterval(ticks)
-        slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
-        slider.setValue(option.value)
-        slider.valueChanged.connect(option.change)
-        self._add_widget(slider)
-    
     def add_combobox(self, items, option, label=None):
         if label:
             label_widget = QtWidgets.QLabel(label)
@@ -472,10 +465,31 @@ class WidgetBuilder(object):
         update_table(option.value)
 
         option.connect(update_table)
-        table_widget.cellChanged.connect(lambda i, j: update_cell(i, j))
+        table_widget.cellChanged.connect(update_cell)
 
         self._add_widget(table_widget)
 
+    """
+    contributed by Mahmoud Zidan
+    """
+    def add_slider(self, label, option, minimum=None, maximum=None, ticks=None):
+        if label:
+            label_widget = QtWidgets.QLabel(label)
+            self._add_widget(label_widget)
+
+        slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        slider.setMinimum(minimum or 1)
+        slider.setMaximum(maximum or 10)
+        if ticks:
+            slider.setTickInterval(ticks)
+            slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        slider.setValue(option.value)
+        slider.valueChanged.connect(option.change)
+        self._add_widget(slider)
+
+    def add_wheel(self, option, unit=1):
+        wheel = Wheel(option, unit)
+        self._add_widget(wheel)
 
 class Widget(QtWidgets.QWidget):
     def __init__(self):
@@ -630,13 +644,11 @@ class Sidebar(QtWidgets.QScrollArea):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.setWidgetResizable(True)
-        self.setMinimumWidth(350)
+        self.setMinimumWidth(400)
 
 
 class PlotCanvas(QtWidgets.QWidget):
-    _redraw = QtCore.pyqtSignal(object)
-
-    def __init__(self, redraw):
+    def __init__(self, parent):
         super(PlotCanvas, self).__init__()
 
         layout = QtWidgets.QGridLayout()
@@ -657,8 +669,6 @@ class PlotCanvas(QtWidgets.QWidget):
         plot.set_aspect('equal')
         self._plot = plot
 
-        self._redraw.connect(redraw)
-
     def redraw(self):
         plot = self._plot
 
@@ -671,9 +681,33 @@ class PlotCanvas(QtWidgets.QWidget):
 
         plot.clear()
 
-        self._redraw.emit(plot)
+        self.plot(plot)
 
-        self._canvas.draw()
+    def plot(self, ax):
+        pass
+
+
+class Wheel(QtWidgets.QDial):
+    def __init__(self, option, unit=1):
+        super().__init__()
+        self.setMaximum(359)
+        self.setValue(180)
+        self._value = 180
+        self.unit = unit
+        self.valueChanged.connect(self._valueChanged)            
+        self.setWrapping(True)
+        self.option = option
+
+    def _valueChanged(self, value):
+        old_angle = self._value / 180 * np.pi
+        new_angle = value / 180 * np.pi
+
+        delta = np.arccos(np.cos(old_angle - new_angle))
+        s = np.sign(-np.sin(old_angle - new_angle))
+
+        self._value = int(self._value + s * delta * 180 / np.pi)
+
+        self.option.value = self._value / 180 * self.unit
 
 
 class ApplicationWindow(QtWidgets.QWidget):
@@ -688,25 +722,23 @@ class ApplicationWindow(QtWidgets.QWidget):
         layout.setSpacing(0)
         self.setLayout(layout)
 
-        if not content:
-            self.content = PlotCanvas(self._draw)
-        elif isinstance(content, QtWidgets.QWidget):
-            self.content = content
-        else:
-            raise ValueError('content is not an object of the class PyQt.QtWidgets.QWidget')
-
+        self.content = content(parent=self) if content else None
         self.console = Console()
         self.sidebar = Sidebar()
 
-        vsplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
-        vsplitter.addWidget(self.content)
-        vsplitter.addWidget(self.console)
-        vsplitter.setStretchFactor(0, 1)
-        vsplitter.setStretchFactor(1, 0)
+        if content:
+            vsplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+            vsplitter.addWidget(self.content)
+            vsplitter.addWidget(self.console)
+            vsplitter.setStretchFactor(0, 1)
+            vsplitter.setStretchFactor(1, 0)
 
         hsplitter = QtWidgets.QSplitter()
         hsplitter.addWidget(self.sidebar)
-        hsplitter.addWidget(vsplitter)
+        if content:
+            hsplitter.addWidget(vsplitter)
+        else:
+            hsplitter.addWidget(self.console)
         hsplitter.setStretchFactor(0, 0)
         hsplitter.setStretchFactor(1, 1)
 
@@ -756,19 +788,25 @@ class ApplicationWindow(QtWidgets.QWidget):
 
         dialog.show()
 
-    def show_open_file_dialog(self, title=None, filters=None):
-        filter = ';;'.join(filters) if isinstance(filters, list) else filters
+    def show_open_file_dialog(self, title=None, extension_filters=None):
+        if isinstance(extension_filters, list):
+            extension_filter = ';;'.join(extension_filters)
+        else:
+            extension_filter = extension_filters
 
         result = QtWidgets.QFileDialog.getOpenFileName(self, title,
-                                                       filter=filter)
+                                                       filter=extension_filter)
 
         return result
 
-    def show_save_file_dialog(self, title=None, filters=None):
-        filter = ';;'.join(filters) if isinstance(filters, list) else filters
+    def show_save_file_dialog(self, title=None, extension_filters=None):
+        if isinstance(extension_filters, list):
+            extension_filter = ';;'.join(extension_filters)
+        else:
+            extension_filter = extension_filters
 
         result = QtWidgets.QFileDialog.getSaveFileName(self, title,
-                                                       filter=filter)
+                                                       filter=extension_filter)
 
         return result
 
@@ -785,15 +823,8 @@ class ApplicationWindow(QtWidgets.QWidget):
     def _build(self, context):
         sidebar_builder = WidgetBuilder(self.sidebar._ground, context)
         self._build_sidebar(sidebar_builder)
-        self.redraw()
 
     def _build_sidebar(self, builder):
-        pass
-
-    def redraw(self):
-        self.content.redraw()
-
-    def _draw(self, plot):
         pass
 
     def _started(self):

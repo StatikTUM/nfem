@@ -10,8 +10,6 @@ import traceback
 from .python_ui import ApplicationWindow, Option, Fore, Style
 from .GUI_classes import SideBySide2D3DPlots, AnalysisTab, VisualisationTab, AnimationWindow, set_stiffness_matrix
 from ..bracketing import bracketing
-from .plot import (plot_model, plot_bounding_cube, plot_history_curve,
-                   plot_crosshair, plot_scaled_model, get_bounding_box)
 from ..assembler import Assembler
 
 def interact2(model, dof):
@@ -53,7 +51,7 @@ class MainWindow(ApplicationWindow):
     def __init__(self, model, dof):
         super(MainWindow, self).__init__(
             title=f'NFEM Teaching Tool (Model: {model.name})',
-            content=SideBySide2D3DPlots(self._draw),
+            content=SideBySide2D3DPlots,
             size=(1024, 768)) #TODO: Calculate sizes and assign the figure size accordingly!!
 
         self.branches = [model]
@@ -201,104 +199,8 @@ class MainWindow(ApplicationWindow):
             label='Reset all',
             action=self.reset_all_click)
 
-    def _draw(self, ax3d, ax2d):
-        # get variables
-        options = self.option_values
-        dof = self.model.free_dofs[options['plot/dof_idx']]
-
-        # plot bounding cube
-        bounding_box = get_bounding_box(self.model.get_model_history())
-        plot_bounding_cube(ax3d, bounding_box)
-
-        # plot initial and deformed models
-        plot_model(ax3d, self.model, 'gray', True, **options)
-        plot_model(ax3d, self.model, 'red', False, **options)
-
-        # plot eigenvector
-        if options['plot/eigenvector_flag'] and self.model.first_eigenvector_model is not None:
-            plot_scaled_model(ax3d, self.model.first_eigenvector_model, 'green')
-
-        # logger
-        logger = LoadDisplacementLogger(dof)
-        label = logger.xlabel + " : " + logger.ylabel
-        ax2d.set(xlabel=logger.xlabel, ylabel=logger.ylabel, title=logger.title)
-        ax3d.set(
-            xlabel='< x >',
-            ylabel='< y >',
-            zlabel='< z >',
-        )
-
-        # plot load displacement curve
-        if options['plot/load_disp_curve_flag']:
-            # other branches at first level
-            n_branches = len(self.branches)
-            for i, branch_model in enumerate(self.branches[:-1]):
-                grey_level = i/float(n_branches)
-                plot_history_curve(
-                    ax=ax2d,
-                    model=branch_model,
-                    xy_function=logger,
-                    fmt='--x',
-                    label=f'Branch {i+1} of {n_branches}',
-                    color=str(grey_level))
-            # main branch
-            plot_history_curve(
-                ax=ax2d,
-                model=self.model,
-                xy_function=logger,
-                fmt='-o',
-                label=label,
-                color='tab:blue')
-            plot_crosshair(
-                ax=ax2d,
-                x=self.model.get_dof_state(dof),
-                y=self.model.lam,
-                linestyle='-.',
-                color='tab:blue',
-                linewidth=0.75)
-
-        # load displacement iteration plot
-        if options['plot/load_disp_curve_iter_flag']:
-            plot_history_curve(
-                ax=ax2d,
-                model=self.model,
-                xy_function=logger,
-                fmt='--o',
-                label=f'{label} (iter)',
-                skip_iterations=False,
-                linewidth=0.75,
-                markersize=2.0,
-                color='tab:orange')
-
-        # det_k plot
-        if options['plot/det(K)_flag']:
-            logger = CustomLogger(
-                x_fct=lambda model: model.get_dof_state(dof=dof),
-                y_fct=lambda model: model.det_k,
-                x_label=f'{dof[1]} at node {dof[0]}',
-                y_label='Det(K)')
-            plot_history_curve(
-                ax=ax2d,
-                model=self.model,
-                xy_function=logger,
-                fmt='-o',
-                label=logger.title,
-                color='tab:green')
-
-        # eigenvalue plot
-        if options['plot/eigenvalue_flag']:
-            logger = CustomLogger(
-                x_fct=lambda model: model.get_dof_state(dof=dof),
-                y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.lam,
-                x_label=f'{dof[1]} at node {dof[0]}',
-                y_label='Eigenvalue')
-            plot_history_curve(
-                ax=ax2d,
-                model=self.model,
-                xy_function=logger,
-                fmt='-o',
-                label=logger.title,
-                color='tab:red')
+    def redraw(self):
+        self.content.redraw()
 
     def show_animation_click(self, builder):
         builder.show_dialog(AnimationWindow, size=(800, 800))
@@ -466,35 +368,3 @@ class MainWindow(ApplicationWindow):
         self.branches = [model]
         self.redraw()
         self.DEBUG_red('Reset all has been clicked!')
-
-
-# == Loggers to be used in plots
-class LoadDisplacementLogger(object):
-    def __init__(self, dof):
-        self.dof = dof
-    @property
-    def title(self):
-        node_id, dof_type = self.dof
-        return f'Load-displacement diagram for {dof_type} at node {node_id}'
-    @property
-    def xlabel(self):
-        node_id, dof_type = self.dof
-        return f'{dof_type} at node {node_id}'
-    @property
-    def ylabel(self):
-        return 'Load factor (\u03BB)'
-    def __call__(self, model):
-        u = model.get_dof_state(self.dof)
-        return model.get_dof_state(self.dof), model.lam
-
-class CustomLogger(object):
-    def __init__(self, x_fct, y_fct, x_label, y_label):
-        self.x_fct = x_fct
-        self.y_fct = y_fct
-        self.xlabel = x_label
-        self.ylabel = y_label
-    @property
-    def title(self):
-        return '{} : {}'.format(self.xlabel, self.ylabel)
-    def __call__(self, model):
-        return self.x_fct(model), self.y_fct(model)
