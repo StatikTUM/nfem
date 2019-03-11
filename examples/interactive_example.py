@@ -1,6 +1,6 @@
 # add the path to the nfem tool to the PATH.
 import sys
-sys.path.append('../NFEM_Teaching_Tool')
+sys.path.append('..')
 # import necessary modules
 from nfem import *
 
@@ -19,4 +19,4 @@ model.add_dirichlet_condition(node_id='A', dof_types='uvw', value=0)
 model.add_dirichlet_condition(node_id='B', dof_types='w', value=0)
 model.add_dirichlet_condition(node_id='C', dof_types='uvw', value=0)
 
-model = interact2(model=model, dof=('B', 'v'))
+model = interact(model=model, dof=('B', 'v'))

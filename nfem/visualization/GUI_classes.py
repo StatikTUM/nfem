@@ -5,7 +5,7 @@ Helper classes to be used in interactive.py
 import numpy as np
 
 from .python_ui import (Widget, Figure, FigureCanvasQTAgg, NavigationToolbar2QT,
-                        QtWidgets, QtCore)
+                        QtWidgets)
 from .plot import (plot_model, plot_bounding_cube, plot_history_curve,
                    plot_crosshair, plot_scaled_model, get_bounding_box)
 from .plot import animate_model
