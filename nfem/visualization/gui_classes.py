@@ -298,8 +298,8 @@ class VisualisationTab(Widget):
             label='Show Stiffness Matrix',
             action=self.show_stiffness_matrix)
 
-    def show_stiffness_matrix(self, builder):
-        builder.show_dialog(StiffnessMatrixDialog, title='Stiffness Matrix')
+    def show_stiffness_matrix(self, main_window):
+        main_window.show_dialog(StiffnessMatrixDialog, title='Stiffness Matrix')
 
 class StiffnessMatrixDialog(Widget):
     def build(self, builder):
@@ -324,7 +324,6 @@ class StiffnessMatrixDialog(Widget):
         builder.add_array(
             readonly=True,
             option=builder.context.options['stiffness/matrix'])
-        builder.add_stretch()
 
 def set_stiffness_matrix(model, debugger=print, **options):
     if options['stiffness/system_idx'].value == 0:
@@ -476,7 +475,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         # right
         figure2d = Figure(dpi=80)
         canvas2d = FigureCanvasQTAgg(figure2d)
-        cid = canvas2d.mpl_connect('button_press_event', self._on_press_2d)
+        # cid = canvas2d.mpl_connect('button_press_event', self._on_press_2d)
         canvas2d.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(canvas2d, 1, 2, 1, 1)
         self._canvas2d = canvas2d
