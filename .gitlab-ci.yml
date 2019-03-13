@@ -1,4 +1,4 @@
-image: gitlab.lrz.de:5005/gu42dib/test_ci:latest
+image: gitlab.lrz.de:5005/chair_of_structural_analysis/ci-docker-images/python-dev
 
 stages:
     - test
