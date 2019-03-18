@@ -1,0 +1,14 @@
+image: gitlab.lrz.de:5005/chair_of_structural_analysis/ci-docker-images/python-dev
+
+stages:
+    - test
+
+test:
+    stage: test
+    script:
+        - echo "Testing"
+        - pwd
+        - python3 --version
+        - python3 -m unittest discover
+    tags:
+        - test

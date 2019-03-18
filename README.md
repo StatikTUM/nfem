@@ -1,0 +1,1 @@
+[![pipeline status](https://gitlab.lrz.de/chair_of_structural_analysis/NFEM_Teaching_Tool/badges/master/pipeline.svg)](https://gitlab.lrz.de/chair_of_structural_analysis/NFEM_Teaching_Tool/commits/master)

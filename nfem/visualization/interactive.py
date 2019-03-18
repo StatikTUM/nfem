@@ -4,6 +4,8 @@ Interactive
 
 Module to initiate the NFEM-Teching-Tool GUI
 """
+# to fix: "libgcc_s.so.1 must be installed for pthread_cancel to work" in the docker test run
+import matplotlib.pyplot as plt
 
 import traceback
 
@@ -291,7 +293,7 @@ class MainWindow(ApplicationWindow):
         elif predictor == 'arc-length':
             arclength = options['nonlinear/predictor/increment_length']
             model.predict_tangential(strategy=predictor, value=arclength)
-        
+
         elif predictor == 'increment':
             increment_length = options['nonlinear/predictor/increment_length']
             model.predict_with_last_increment(value=increment_length)
