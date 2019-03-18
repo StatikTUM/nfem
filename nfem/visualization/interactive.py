@@ -4,8 +4,7 @@ Interactive
 
 Module to initiate the NFEM-Teching-Tool GUI
 """
-# to fix: "libgcc_s.so.1 must be installed for pthread_cancel to work" in the docker test run
-import matplotlib.pyplot as plt
+
 
 import traceback
 
