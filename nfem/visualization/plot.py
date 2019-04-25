@@ -172,7 +172,7 @@ def get_max_axes_delta(ax):
 def plot_dof_higlight(ax, model, initial, **options):
     size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5)
 
-    dof = options.get('plot/highlighted_dof', None)
+    dof = model.free_dofs[options.get('plot/dof_idx', None)]
     if dof is None:
         return
     
@@ -253,9 +253,9 @@ def animate_model(fig, ax, models, speed=200, **options):
 
         plot_bounding_cube(ax, bounding_box)
 
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        ax.set_zlabel('z')
+        ax.set_xlabel('< x >')
+        ax.set_ylabel('< y >')
+        ax.set_zlabel('< z >')
 
         ax.set_title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
 
@@ -324,7 +324,7 @@ def plot_history_curve(ax, model, xy_function, fmt, skip_iterations=True, **kwar
     y_data = np.zeros(len(history))
 
     for i, model in enumerate(history):
-        x_data[i], y_data[i]= xy_function(model)
+        x_data[i], y_data[i] = xy_function(model)
 
     ax.plot(x_data, y_data, fmt, **kwargs)
 

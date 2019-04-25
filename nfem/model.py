@@ -91,10 +91,7 @@ class Model(object):
         #find the most previous model that is not an iteration or prediction
         previous_model = self._previous_model
 
-        if previous_model is None:
-            return previous_model
-
-        while previous_model.status in [ModelStatus.duplicate, ModelStatus.prediction, ModelStatus.iteration]:
+        while previous_model is not None and previous_model.status in [ModelStatus.duplicate, ModelStatus.prediction, ModelStatus.iteration]:
             previous_model = previous_model._previous_model
 
         return previous_model
@@ -136,6 +133,17 @@ class Model(object):
         """
         return self._elements.values()
 
+    @property
+    def structural_elements(self):
+        """
+        FIXME
+        """
+        elements = []
+        for element in self.elements:
+            if isinstance(element, Truss):
+                elements.append(element)
+        return elements
+
     def get_element(self, id):
         """Get an element by its ID.
 
@@ -150,6 +158,10 @@ class Model(object):
             Element with the given ID.
         """
         return self._elements[id]
+
+    @property
+    def free_dofs(self):
+        return Assembler(self).free_dofs
 
     # === modeling
 
@@ -464,12 +476,12 @@ class Model(object):
             duplicate._previous_model = self._previous_model
         else:
             duplicate._previous_model = self
+            duplicate.status = ModelStatus.duplicate
 
         if name is not None:
             duplicate.name = name
 
         # make sure the duplicated model is in a clean state
-        duplicate.status = ModelStatus.duplicate
         duplicate.det_k = None
         duplicate.first_eigenvalue = None
         duplicate.first_eigenvector_model = None
