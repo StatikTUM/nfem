@@ -4,7 +4,7 @@
 
 This is a lightweight python tool build for teaching non linear FEM analysis of 3D truss structures.
 
-It can be either used in scripting mode or via a interactive user interface.
+It can be either used in scripting mode or via an interactive user interface.
 
 ## User Manual
 
