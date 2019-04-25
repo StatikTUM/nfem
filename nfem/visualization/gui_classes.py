@@ -500,11 +500,12 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         plot2d.clear()
 
         plot2d.grid()
-        handles, labels = plot2d.get_legend_handles_labels()
-        if handles:
-            plot2d.legend(handles, labels, loc='best')
 
         self.plot(plot3d, plot2d)
+
+        handles, labels = plot2d.get_legend_handles_labels()
+        if handles:
+            plot2d.legend(handles, labels, loc='upper right')
 
         self._canvas3d.draw()
         self._canvas2d.draw()
