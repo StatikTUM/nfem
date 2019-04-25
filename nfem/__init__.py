@@ -19,7 +19,7 @@ print("""
   Authors:   Armin Geiser, Aditya Ghantasala, Thomas Oberbichler, Klaus Sautter
              Mahmoud Zidan
   Copyright: © 2018 TUM Statik
-  Version:   1.4
+  Version:   1.5
 
   This is a teaching tool! All results without warranty.
 
