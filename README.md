@@ -9,7 +9,7 @@ It can be either used in scripting mode or via an interactive user interface.
 ## User Manual
 
 There is a short user manual available 
-<a href="https://gitlab.lrz.de/chair_of_structural_analysis/NFEM_Teaching_Tool/blob/master/user_manual/user_manual.ipynb" target="_blank">here</a>
+<a href="https://gitlab.lrz.de/chair_of_structural_analysis/NFEM_Teaching_Tool/blob/master/user_manual/user_manual.ipynb" target="_blank">here</a>.
 
 ## Prerequisites
 * Python3 
