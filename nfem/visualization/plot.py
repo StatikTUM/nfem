@@ -71,11 +71,11 @@ class Plot2D(object):
         """
         plot_custom_curve(self.ax, *args, **kwargs)
 
-    def show(self):
+    def show(self, block=True):
         """Shows the plot with all the curves that have been added.
         """
         self.ax.legend(loc='best')
-        plt.show()
+        plt.show(block)
 
 class Animation3D(object):
 
@@ -353,7 +353,7 @@ def plot_bounding_cube(ax, bounding_box, color='w'):
     for x, y, z in corners:
         ax.plot([x], [y], [z], color)
 
-def show_load_displacement_curve(model, dof, invert_xaxis=True):
+def show_load_displacement_curve(model, dof, invert_xaxis=True, block=True):
     dof_type, node_id = dof
 
     fig, ax = plt.subplots()
@@ -369,9 +369,9 @@ def show_load_displacement_curve(model, dof, invert_xaxis=True):
     if invert_xaxis:
         ax.invert_xaxis()
 
-    plt.show()
+    plt.show(block)
 
-def show_history_animation(model, speed=200):
+def show_history_animation(model, speed=200, block=True):
     history = model.get_model_history()
 
     fig = plt.figure()
@@ -379,11 +379,11 @@ def show_history_animation(model, speed=200):
 
     a = animate_model(fig, ax, history, speed=speed)
 
-    plt.show()
+    plt.show(block)
 
     return a
 
-def show_eigenvector_animation(model, speed=200):
+def show_eigenvector_animation(model, speed=200, block=True):
     eigenvector = model
     initial_model = model.get_initial_model()
 
@@ -414,11 +414,11 @@ def show_eigenvector_animation(model, speed=200):
 
     a = anim.FuncAnimation(fig, update, frames=2, repeat=True, interval=speed)
 
-    plt.show()
+    plt.show(block)
 
     return a
 
-def show_deformation_plot(model, step=None):
+def show_deformation_plot(model, step=None, block=True):
 
     bounding_box = get_bounding_box([model])
 
@@ -445,4 +445,4 @@ def show_deformation_plot(model, step=None):
 
     ax.set_title('Deformed structure at time step {}\n{}'.format(step, model.name))
 
-    plt.show()
+    plt.show(block)
