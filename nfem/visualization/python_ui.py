@@ -744,6 +744,9 @@ class ApplicationWindow(QtWidgets.QWidget):
 
         self.layout().addWidget(hsplitter)
 
+    def closeEvent(self, event):
+        QtWidgets.QApplication.quit()
+
     @classmethod
     def run(cls, *args, **kwargs):
         app = QtWidgets.QApplication([])
