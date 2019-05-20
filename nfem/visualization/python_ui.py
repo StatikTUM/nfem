@@ -1,6 +1,8 @@
 # PythonUI by Thomas Oberbichler
 # https://github.com/oberbichler/PythonUI
 
+import matplotlib
+matplotlib.use("Qt5Agg") 
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
                                                 NavigationToolbar2QT)
 from matplotlib.figure import Figure
