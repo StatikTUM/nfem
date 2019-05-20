@@ -156,9 +156,9 @@ def plot_model(ax, model, color, initial, **options):
     plot_symbols(ax, model, color, initial, **options)
 
 def plot_symbols(ax, model, color, initial, **options):    
-    if options.get('plot/dirichlet', False):
+    if options.get('plot/dirichlet', True):
         plot_boundary_conditions(ax, model, initial, **options)
-    if options.get('plot/neumann', False):
+    if options.get('plot/neumann', True):
         plot_forces(ax, model, initial, **options)
     if options.get('plot/highlight_dof', False):
         plot_dof_higlight(ax, model, initial, **options)
