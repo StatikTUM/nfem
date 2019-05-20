@@ -80,15 +80,12 @@ class Plot2D(object):
 class Animation3D(object):
 
     def show(self, model, speed=200):
-        if model.status == ModelStatus.eigenvector:
-            self.animation = show_eigenvector_animation(model, speed)
-        else:
-            self.animation = show_history_animation(model, speed)
+        raise DeprecationWarning("Use the function 'show_animation' instead of this class!")
 
 class DeformationPlot3D(object):
 
     def show(self, model, step=None):
-        show_deformation_plot(model, step)
+        raise DeprecationWarning("Use the function 'show_deformation_plot' instead of this class!")
 
 
 def get_bounding_box(models):
@@ -371,6 +368,12 @@ def show_load_displacement_curve(model, dof, invert_xaxis=True, block=True):
 
     plt.show(block)
 
+def show_animation(model, speed=200, block=True):
+    if model.status == ModelStatus.eigenvector:
+        show_eigenvector_animation(model, speed, block)
+    else:
+        show_history_animation(model, speed, block)
+
 def show_history_animation(model, speed=200, block=True):
     history = model.get_model_history()
 
@@ -380,9 +383,6 @@ def show_history_animation(model, speed=200, block=True):
     a = animate_model(fig, ax, history, speed=speed)
 
     plt.show(block)
-
-    return a
-
 def show_eigenvector_animation(model, speed=200, block=True):
     eigenvector = model
     initial_model = model.get_initial_model()
@@ -415,8 +415,6 @@ def show_eigenvector_animation(model, speed=200, block=True):
     a = anim.FuncAnimation(fig, update, frames=2, repeat=True, interval=speed)
 
     plt.show(block)
-
-    return a
 
 def show_deformation_plot(model, step=None, block=True):
 
