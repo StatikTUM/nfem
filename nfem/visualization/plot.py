@@ -80,13 +80,14 @@ class Plot2D(object):
 class Animation3D(object):
 
     def show(self, model, speed=200):
-        raise DeprecationWarning("Use the function 'show_animation' instead of this class!")
+        print("WARNING: Please use the function 'show_animation' instead of this class!")
+        show_animation(model, speed=200)
 
 class DeformationPlot3D(object):
 
     def show(self, model, step=None):
-        raise DeprecationWarning("Use the function 'show_deformation_plot' instead of this class!")
-
+        print("WARNING: Please use the function 'show_deformation_plot' instead of this class!")
+        show_deformation_plot(model, speed=200)
 
 def get_bounding_box(models):
     nodes = [node for model in models for node in model.nodes]
