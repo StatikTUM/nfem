@@ -1,6 +1,8 @@
 # PythonUI by Thomas Oberbichler
 # https://github.com/oberbichler/PythonUI
 
+import matplotlib
+matplotlib.use("Qt5Agg") 
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
                                                 NavigationToolbar2QT)
 from matplotlib.figure import Figure
@@ -743,6 +745,9 @@ class ApplicationWindow(QtWidgets.QWidget):
         hsplitter.setStretchFactor(1, 1)
 
         self.layout().addWidget(hsplitter)
+
+    def closeEvent(self, event):
+        QtWidgets.QApplication.quit()
 
     @classmethod
     def run(cls, *args, **kwargs):

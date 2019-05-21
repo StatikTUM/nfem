@@ -209,5 +209,4 @@ print("Model creation completed - start interaction.")
 
 model = interact(model=model, dof=(22,'v'))
 
-animation = Animation3D()
-animation.show(model, speed=1)
+animation = show_animation(model, speed=1)

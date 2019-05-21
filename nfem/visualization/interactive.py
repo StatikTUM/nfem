@@ -124,6 +124,8 @@ class MainWindow(ApplicationWindow):
             )
         self.options['stiffness/matrix'] = Option([])
 
+        self.redraw()
+
     @property
     def option_values(self):
         """ dict of self.options values instead of objects """

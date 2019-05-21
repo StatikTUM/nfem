@@ -70,5 +70,4 @@ plot.add_history_curve(model,
 plot.show()
 
 # animated plot
-animation = Animation3D()
-animation.show(model)
+animation = show_animation(model)
