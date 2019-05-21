@@ -179,7 +179,7 @@ plot.add_custom_curve(x, y, label="my_custom_curve", linewidth=0.5)
 plot.show()
 
 # animated plot
-show_animation(model)
+animation = show_animation(model)
 
 # static plot
 show_deformation_plot(model)

@@ -81,7 +81,7 @@ class Animation3D(object):
 
     def show(self, model, speed=200):
         print("WARNING: Please use the function 'show_animation' instead of this class!")
-        show_animation(model, speed=200)
+        self.animation = show_animation(model, speed=200)
 
 class DeformationPlot3D(object):
 
@@ -371,9 +371,9 @@ def show_load_displacement_curve(model, dof, invert_xaxis=True, block=True):
 
 def show_animation(model, speed=200, block=True):
     if model.status == ModelStatus.eigenvector:
-        show_eigenvector_animation(model, speed, block)
+        return show_eigenvector_animation(model, speed, block)
     else:
-        show_history_animation(model, speed, block)
+        return show_history_animation(model, speed, block)
 
 def show_history_animation(model, speed=200, block=True):
     history = model.get_model_history()
@@ -384,6 +384,9 @@ def show_history_animation(model, speed=200, block=True):
     a = animate_model(fig, ax, history, speed=speed)
 
     plt.show(block)
+
+    return a
+
 def show_eigenvector_animation(model, speed=200, block=True):
     eigenvector = model
     initial_model = model.get_initial_model()
@@ -416,6 +419,8 @@ def show_eigenvector_animation(model, speed=200, block=True):
     a = anim.FuncAnimation(fig, update, frames=2, repeat=True, interval=speed)
 
     plt.show(block)
+
+    return a
 
 def show_deformation_plot(model, step=None, block=True):
 

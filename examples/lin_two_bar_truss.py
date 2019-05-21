@@ -39,4 +39,4 @@ history = model.get_model_history()
 show_load_displacement_curve(model, dof = ('B', 'v'))
 
 # animated plot
-show_animation(model)
+animation = show_animation(model)
