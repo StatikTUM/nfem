@@ -81,13 +81,13 @@ class Animation3D(object):
 
     def show(self, model, speed=200):
         print("WARNING: Please use the function 'show_animation' instead of this class!")
-        self.animation = show_animation(model, speed=200)
+        self.animation = show_animation(model, speed)
 
 class DeformationPlot3D(object):
 
     def show(self, model, step=None):
         print("WARNING: Please use the function 'show_deformation_plot' instead of this class!")
-        show_deformation_plot(model, speed=200)
+        show_deformation_plot(model, step)
 
 def get_bounding_box(models):
     nodes = [node for model in models for node in model.nodes]
@@ -107,9 +107,9 @@ def plot_scaled_model(ax, model, color, **options):
     scaling_factor = options.get('plot/scaling_factor', None)
     if not scaling_factor:
         # autoscaling max u to 10% of bounding_box
-        bounding_box = get_bounding_box([model.get_initial_model()])        
+        bounding_box = get_bounding_box([model.get_initial_model()])
         min_x, max_x, min_y, max_y, min_z, max_z = bounding_box
-        max_delta = max(max_x-min_x, max_y-min_y, max_z-min_z) 
+        max_delta = max(max_x-min_x, max_y-min_y, max_z-min_z)
         max_u = max(abs(node.u) for node in model.nodes)
         max_v = max(abs(node.v) for node in model.nodes)
         max_w = max(abs(node.w) for node in model.nodes)
@@ -153,7 +153,7 @@ def plot_model(ax, model, color, initial, **options):
 
     plot_symbols(ax, model, color, initial, **options)
 
-def plot_symbols(ax, model, color, initial, **options):    
+def plot_symbols(ax, model, color, initial, **options):
     if options.get('plot/dirichlet', True):
         plot_boundary_conditions(ax, model, initial, **options)
     if options.get('plot/neumann', True):
@@ -173,11 +173,11 @@ def plot_dof_higlight(ax, model, initial, **options):
     dof = model.free_dofs[options.get('plot/dof_idx', None)]
     if dof is None:
         return
-    
+
     node_id, dof_type = dof
 
     node = model.get_node(node_id)
-    
+
     dx, dy, dz = 0, 0, 0
     if dof_type == 'u':
         dx = 1
@@ -204,7 +204,7 @@ def plot_dof_higlight(ax, model, initial, **options):
 
 def plot_forces(ax, model, initial, **options):
     size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5)
-    
+
     for element in model.elements:
         if type(element) == SingleLoad:
             node = element.node
@@ -221,7 +221,7 @@ def plot_forces(ax, model, initial, **options):
 
             ax.add_artist(a)
 
-def plot_boundary_conditions(ax, model, initial, **options): 
+def plot_boundary_conditions(ax, model, initial, **options):
     size = get_max_axes_delta(ax)/100.0 * options.get('plot/symbol_size', 5)
 
     polygons = list()
