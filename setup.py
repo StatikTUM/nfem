@@ -22,7 +22,7 @@ setup(
     author='Thomas Oberbichler, Armin Geiser, Klaus Sautter, Aditya Ghantasala',
     author_email='',
     license='',
-    packages=['nfem'],
+    packages=['nfem', 'nfem.visualization'],
     python_requires='>3.6',
     install_requires=['numpy', 'matplotlib', 'pyqt5', 'scipy'],
     zip_safe=False,
