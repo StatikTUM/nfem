@@ -42,8 +42,3 @@ from .visualization import show_load_displacement_curve, show_animation, show_de
 from .visualization import Plot2D, Animation3D, DeformationPlot3D
 
 from .bracketing import bracketing
-
-def test():
-    import unittest
-    suite = unittest.TestLoader().discover('.', pattern='test*')
-    unittest.TextTestRunner(verbosity=2).run(suite)
