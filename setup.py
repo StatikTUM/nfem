@@ -25,4 +25,5 @@ setup(
     packages=['nfem'],
     python_requires='>3.6',
     install_requires=['numpy', 'matplotlib', 'pyqt5', 'scipy'],
+    zip_safe=False,
 )
