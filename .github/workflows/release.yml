@@ -21,7 +21,7 @@ jobs:
       run: |
         import regex as re
         # settings
-        tag = ${{ github.ref }}
+        tag = '${{ github.ref }}'
         path = './nfem/__init__.py'
         # get version string from tag
         pattern = 'v(\d+)(?:\.(\d+)(?:\.(\d+)(?:\.(\d+))?)?)?$'
