@@ -7,7 +7,9 @@ A light weight object oriented FEM code and some usefull postprocessing tools.
 
 import sys
 
-print("""
+__version__ = 'dev'
+
+print(f"""
 --------------------------------------------------------------------------------
 
                        _   ________________  ___
@@ -19,7 +21,7 @@ print("""
   Authors:   Armin Geiser, Aditya Ghantasala, Thomas Oberbichler, Klaus Sautter
              Mahmoud Zidan
   Copyright: © 2018 TUM Statik
-  Version:   1.6
+  Version:   {__version__}
 
   This is a teaching tool! All results without warranty.
 
