@@ -1,6 +1,6 @@
 # NFEM Teaching Tool
 
-![CI](https://github.com/ChairOfStructuralAnalysisTUM/nfem/workflows/CI/badge.svg) ![PyPI](https://img.shields.io/pypi/v/nfem?label=Version)
+![CI](https://github.com/ChairOfStructuralAnalysisTUM/nfem/workflows/CI/badge.svg) ![PyPI](https://img.shields.io/pypi/v/nfem?label=Version) [![codecov](https://codecov.io/gh/ChairOfStructuralAnalysisTUM/nfem/branch/master/graph/badge.svg)](https://codecov.io/gh/ChairOfStructuralAnalysisTUM/nfem)
 
 This is a lightweight python tool build for teaching non linear FEM analysis of 3D truss structures.
 
