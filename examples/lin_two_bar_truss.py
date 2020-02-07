@@ -1,10 +1,7 @@
 """
 Linear example of the two bar truss
 """
-# add the path to the nfem tool to the PATH.
-import sys
-sys.path.append('..') 
-# import necessary modules
+
 import numpy as np
 
 from nfem import *

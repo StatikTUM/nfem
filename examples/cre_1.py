@@ -1,8 +1,3 @@
-
-# add the path to the nfem tool to the PATH.
-import sys
-sys.path.append('..') 
-# import necessary modules
 import numpy as np
 import numpy.linalg as la
 
