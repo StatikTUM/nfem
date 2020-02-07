@@ -20,7 +20,7 @@ print(f"""
 
   Authors:   Armin Geiser, Aditya Ghantasala, Thomas Oberbichler, Klaus Sautter
              Mahmoud Zidan
-  Copyright: © 2018 TUM Statik
+  Copyright: © 2018-2020 TUM Statik
   Version:   {__version__}
 
   This is a teaching tool! All results without warranty.
