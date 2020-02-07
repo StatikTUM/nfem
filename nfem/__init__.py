@@ -9,24 +9,25 @@ import sys
 
 __version__ = 'dev'
 
-print(f"""
---------------------------------------------------------------------------------
 
-                       _   ________________  ___
-                      / | / / ____/ ____/  |/  /
-                     /  |/ / /_  / __/ / /|_/ /
-                    / /|  / __/ / /___/ /  / /
-                   /_/ |_/_/   /_____/_/  /_/  Teaching Tool
+def info():
+    print(f'--------------------------------------------------------------------------------')
+    print(f'                                                                                ')
+    print(f'                      _   ________________  ___                                 ')
+    print(f'                     / | / / ____/ ____/  |/  /                                 ')
+    print(f'                    /  |/ / /_  / __/ / /|_/ /                                  ')
+    print(f'                   / /|  / __/ / /___/ /  / /                                   ')
+    print(f'                  /_/ |_/_/   /_____/_/  /_/  Teaching Tool                     ')
+    print(f'                                                                                ')
+    print(f'  Authors:   Armin Geiser, Aditya Ghantasala, Thomas Oberbichler, Klaus Sautter ')
+    print(f'             Mahmoud Zidan                                                      ')
+    print(f'  Copyright: © 2018-2020 TUM Statik                                             ')
+    print(f'  Version:   {__version__}                                                      ')
+    print(f'                                                                                ')
+    print(f'  This is a teaching tool! All results without warranty.                        ')
+    print(f'                                                                                ')
+    print(f'--------------------------------------------------------------------------------')
 
-  Authors:   Armin Geiser, Aditya Ghantasala, Thomas Oberbichler, Klaus Sautter
-             Mahmoud Zidan
-  Copyright: © 2018-2020 TUM Statik
-  Version:   {__version__}
-
-  This is a teaching tool! All results without warranty.
-
---------------------------------------------------------------------------------
-""")
 
 if sys.version_info < (3, 5):
     raise RuntimeError("The nfem module requires at least Python 3.5!")
