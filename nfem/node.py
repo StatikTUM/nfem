@@ -114,7 +114,7 @@ class Node(object):
         displacement : ndarray
             A numpy array containing the displacements u, v and w.
         """
-        return self.get_reference_location() - self.get_actual_location()
+        return self.get_actual_location() - self.get_reference_location()
 
     def update(self, dof_type, value):
         """
