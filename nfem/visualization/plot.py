@@ -75,7 +75,7 @@ class Plot2D(object):
         """Shows the plot with all the curves that have been added.
         """
         self.ax.legend(loc='best')
-        plt.show(block)
+        plt.show(block=True)
 
 class Animation3D(object):
 
@@ -367,7 +367,7 @@ def show_load_displacement_curve(model, dof, invert_xaxis=True, block=True):
     if invert_xaxis:
         ax.invert_xaxis()
 
-    plt.show(block)
+    plt.show(block=True)
 
 def show_animation(model, speed=200, block=True):
     if model.status == ModelStatus.eigenvector:
@@ -383,7 +383,7 @@ def show_history_animation(model, speed=200, block=True):
 
     a = animate_model(fig, ax, history, speed=speed)
 
-    plt.show(block)
+    plt.show(block=True)
 
     return a
 
@@ -418,7 +418,7 @@ def show_eigenvector_animation(model, speed=200, block=True):
 
     a = anim.FuncAnimation(fig, update, frames=2, repeat=True, interval=speed)
 
-    plt.show(block)
+    plt.show(block=True)
 
     return a
 
@@ -449,4 +449,4 @@ def show_deformation_plot(model, step=None, block=True):
 
     ax.set_title('Deformed structure at time step {}\n{}'.format(step, model.name))
 
-    plt.show(block)
+    plt.show(block=True)
