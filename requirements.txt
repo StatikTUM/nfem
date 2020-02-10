@@ -1,0 +1,7 @@
+matplotlib
+nbval
+numpy
+pyqt5
+pytest
+pytest-cov
+scipy
