@@ -116,21 +116,6 @@ class Node(object):
         """
         return self.get_actual_location() - self.get_reference_location()
 
-    def update(self, dof_type, value):
-        """
-        .. note:: Deprecated
-                  Use `SetDofState` instead
-        """
-        raise DeprecationWarning('Use `SetDofState` instead')
-        if dof_type == 'u':
-            self.u = value
-        elif dof_type == 'v':
-            self.v =  value
-        elif dof_type == 'w':
-            self.w = value
-        else:
-            raise RuntimeError('Node has no Dof of type {}'.format(dof_type))
-
     def get_dof_state(self, dof_type):
         """Get the current value of the given dof type.
 
