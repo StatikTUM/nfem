@@ -4,6 +4,8 @@ Author: Thomas Oberbichler
 """
 
 import numpy as np
+from nfem.dof import Dof
+
 
 class Node(object):
     """Three dimensional Node providing Dofs for displacements.
@@ -47,74 +49,114 @@ class Node(object):
             Initial Z coordinate of the node.
         """
         self.id = id
-        self.x = x
-        self.y = y
-        self.z = z
-        self.reference_x = x
-        self.reference_y = y
-        self.reference_z = z
+        self._dof_x = Dof(x)
+        self._dof_y = Dof(y)
+        self._dof_z = Dof(z)
+
+    def dof(self, dof_type):
+        if dof_type == 'u':
+            return self._dof_x
+        if dof_type == 'v':
+            return self._dof_y
+        if dof_type == 'w':
+            return self._dof_z
+        raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
+
+    @property
+    def reference_x(self):
+        return self._dof_x.reference_value
+
+    @reference_x.setter
+    def reference_x(self, value):
+        self._dof_x.reference_value = value
+
+    @property
+    def reference_y(self):
+        return self._dof_y.reference_value
+
+    @reference_y.setter
+    def reference_y(self, value):
+        self._dof_y.reference_value = value
+
+    @property
+    def reference_z(self):
+        return self._dof_z.reference_value
+
+    @reference_z.setter
+    def reference_z(self, value):
+        self._dof_z.reference_value = value
+
+    @property
+    def x(self):
+        return self._dof_x.value
+
+    @x.setter
+    def x(self, value):
+        self._dof_x.value = value
+
+    @property
+    def y(self):
+        return self._dof_y.value
+
+    @y.setter
+    def y(self, value):
+        self._dof_y.value = value
+
+    @property
+    def z(self):
+        return self._dof_z.value
+
+    @z.setter
+    def z(self, value):
+        self._dof_z.value = value
 
     @property
     def u(self):
-        return self.x - self.reference_x
+        return self._dof_x.delta
 
     @u.setter
     def u(self, value):
-        self.x = self.reference_x + value
+        self._dof_x.delta = value
 
     @property
     def v(self):
-        return self.y - self.reference_y
+        return self._dof_y.delta
 
     @v.setter
     def v(self, value):
-        self.y = self.reference_y + value
-    
+        self._dof_y.delta = value
+
     @property
     def w(self):
-        return self.z - self.reference_z
+        return self._dof_z.delta
 
     @w.setter
     def w(self, value):
-        self.z = self.reference_z + value
+        self._dof_z.delta = value
 
-    def get_reference_location(self):
-        """Location of the node in the reference configuration.
+    @property
+    def reference_location(self):
+        return np.array([self._dof_x.reference_value, self._dof_y.reference_value, self._dof_z.reference_value])
 
-        Returns
-        -------
-        location : ndarray
-            Numpy array containing the reference coordinates X, Y and Z.
-        """
-        x = self.reference_x
-        y = self.reference_y
-        z = self.reference_z
+    @reference_location.setter
+    def reference_location(self, value):
+        self._dof_x.reference_value, self._dof_y.reference_value, self._dof_z.reference_value = value
 
-        return np.array([x, y, z], dtype=float)
+    @property
+    def location(self):
+        return np.array([self._dof_x.value, self._dof_y.value, self._dof_z.value])
 
-    def get_actual_location(self):
-        """Location of the node in the actual configuration.
+    @location.setter
+    def location(self, value):
+        self._dof_x.value, self._dof_y.value, self._dof_z.value = value
 
-        Returns
-        -------
-        location : ndarray
-            Numpy array containing the actual coordinates X, Y and Z.
-        """
-        x = self.x
-        y = self.y
-        z = self.z
+    @property
+    def displacement(self):
+        return np.array([self._dof_x.delta, self._dof_y.delta, self._dof_z.delta])
 
-        return np.array([x, y, z], dtype=float)
-
-    def get_displacement(self):
-        """Displacement of the node in the actual configuration.
-
-        Returns
-        -------
-        displacement : ndarray
-            A numpy array containing the displacements u, v and w.
-        """
-        return self.get_actual_location() - self.get_reference_location()
+    @displacement.setter
+    def displacement(self, value):
+        self._dof_x.delta, self._dof_y.delta, self._dof_z.delta = value
 
     def get_dof_state(self, dof_type):
         """Get the current value of the given dof type.
@@ -134,14 +176,7 @@ class Node(object):
         AttributeError
             If `dof_type` does not exist.
         """
-        if dof_type == 'u':
-            return self.u
-        if dof_type == 'v':
-            return self.v
-        if dof_type == 'w':
-            return self.w
-
-        raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
+        return self.dof(dof_type).delta
 
     def set_dof_state(self, dof_type, value):
         """Update the node according to the value of the given dof type.
@@ -158,11 +193,40 @@ class Node(object):
         AttributeError
             If `dof_type` does not exist.
         """
-        if dof_type == 'u':
-            self.u = value
-        elif dof_type == 'v':
-            self.v = value
-        elif dof_type == 'w':
-            self.w = value
-        else:
-            raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
+        self.dof(dof_type).delta = value
+
+    def get_reference_location(self):
+        """Location of the node in the reference configuration.
+
+        Returns
+        -------
+        location : ndarray
+            Numpy array containing the reference coordinates X, Y and Z.
+        """
+        import warnings
+        warnings.warn('', warnings.DeprecationWarning)
+        return self.reference_location
+
+    def get_actual_location(self):
+        """Location of the node in the actual configuration.
+
+        Returns
+        -------
+        location : ndarray
+            Numpy array containing the actual coordinates X, Y and Z.
+        """
+        import warnings
+        warnings.warn('', warnings.DeprecationWarning)
+        return self.location
+
+    def get_displacement(self):
+        """Displacement of the node in the actual configuration.
+
+        Returns
+        -------
+        displacement : ndarray
+            A numpy array containing the displacements u, v and w.
+        """
+        import warnings
+        warnings.warn('', warnings.DeprecationWarning)
+        return self.displacement
