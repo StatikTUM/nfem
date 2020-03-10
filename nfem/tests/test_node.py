@@ -37,81 +37,81 @@ def test_node_set_dof_state(node):
 
 
 def test_node_init(node):
-    assert_equal(node.get_reference_location(), [4, 5, 6])
-    assert_equal(node.get_actual_location(), [4, 5, 6])
-    assert_equal(node.get_displacement(), [0, 0, 0])
+    assert_equal(node.reference_location, [4, 5, 6])
+    assert_equal(node.location, [4, 5, 6])
+    assert_equal(node.displacement, [0, 0, 0])
 
 
 def test_node_reference_x(node):
     node.reference_x = 9
 
     assert_equal(node.reference_x, 9)
-    assert_equal(node.get_reference_location(), [9, 5, 6])
-    assert_equal(node.get_actual_location(), [4, 5, 6])
+    assert_equal(node.reference_location, [9, 5, 6])
+    assert_equal(node.location, [4, 5, 6])
 
 
 def test_node_reference_y(node):
     node.reference_y = 9
 
     assert_equal(node.reference_y, 9)
-    assert_equal(node.get_reference_location(), [4, 9, 6])
-    assert_equal(node.get_actual_location(), [4, 5, 6])
+    assert_equal(node.reference_location, [4, 9, 6])
+    assert_equal(node.location, [4, 5, 6])
 
 
 def test_node_reference_z(node):
     node.reference_z = 9
 
     assert_equal(node.reference_z, 9)
-    assert_equal(node.get_reference_location(), [4, 5, 9])
-    assert_equal(node.get_actual_location(), [4, 5, 6])
+    assert_equal(node.reference_location, [4, 5, 9])
+    assert_equal(node.location, [4, 5, 6])
 
 
 def test_node_x(node):
     node.x = 9
 
     assert_equal(node.x, 9)
-    assert_equal(node.get_reference_location(), [4, 5, 6])
-    assert_equal(node.get_actual_location(), [9, 5, 6])
+    assert_equal(node.reference_location, [4, 5, 6])
+    assert_equal(node.location, [9, 5, 6])
 
 
 def test_node_y(node):
     node.y = 9
 
     assert_equal(node.y, 9)
-    assert_equal(node.get_reference_location(), [4, 5, 6])
-    assert_equal(node.get_actual_location(), [4, 9, 6])
+    assert_equal(node.reference_location, [4, 5, 6])
+    assert_equal(node.location, [4, 9, 6])
 
 
 def test_node_z(node):
     node.z = 9
 
     assert_equal(node.z, 9)
-    assert_equal(node.get_reference_location(), [4, 5, 6])
-    assert_equal(node.get_actual_location(), [4, 5, 9])
+    assert_equal(node.reference_location, [4, 5, 6])
+    assert_equal(node.location, [4, 5, 9])
 
 
 def test_node_u(node):
     node.u = 9
 
     assert_equal(node.u, 9)
-    assert_equal(node.get_reference_location(), [4, 5, 6])
-    assert_equal(node.get_actual_location(), [13, 5, 6])
-    assert_equal(node.get_displacement(), [9, 0, 0])
+    assert_equal(node.reference_location, [4, 5, 6])
+    assert_equal(node.location, [13, 5, 6])
+    assert_equal(node.displacement, [9, 0, 0])
 
 
 def test_node_v(node):
     node.v = 9
 
     assert_equal(node.v, 9)
-    assert_equal(node.get_reference_location(), [4, 5, 6])
-    assert_equal(node.get_actual_location(), [4, 14, 6])
-    assert_equal(node.get_displacement(), [0, 9, 0])
+    assert_equal(node.reference_location, [4, 5, 6])
+    assert_equal(node.location, [4, 14, 6])
+    assert_equal(node.displacement, [0, 9, 0])
 
 
 def test_node_w(node):
     node.w = 9
 
     assert_equal(node.w, 9)
-    assert_equal(node.get_reference_location(), [4, 5, 6])
-    assert_equal(node.get_actual_location(), [4, 5, 15])
-    assert_equal(node.get_displacement(), [0, 0, 9])
+    assert_equal(node.reference_location, [4, 5, 6])
+    assert_equal(node.location, [4, 5, 15])
+    assert_equal(node.displacement, [0, 0, 9])
