@@ -4,10 +4,7 @@ Non linear example of the two bar truss
 It can be run with different path following and predictor methods:
 This can be set right below in the 'Solve' block
 """
-# add the path to the nfem tool to the PATH.
-import sys
-sys.path.append('..')
-# import necessary modules
+
 import numpy as np
 
 from nfem import *
