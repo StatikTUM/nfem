@@ -1,5 +1,5 @@
 import pytest
-from numpy.testing import assert_equal, assert_raises
+from numpy.testing import assert_equal
 from nfem.node import Node
 
 
@@ -115,3 +115,27 @@ def test_node_w(node):
     assert_equal(node.reference_location, [4, 5, 6])
     assert_equal(node.location, [4, 5, 15])
     assert_equal(node.displacement, [0, 0, 9])
+
+
+def test_node_reference_location(node):
+    node.reference_location = [3, 2, 1]
+
+    assert_equal(node.reference_location, [3, 2, 1])
+    assert_equal(node.location, [4, 5, 6])
+    assert_equal(node.displacement, [1, 3, 5])
+
+
+def test_node_location(node):
+    node.location = [3, 2, 1]
+
+    assert_equal(node.reference_location, [4, 5, 6])
+    assert_equal(node.location, [3, 2, 1])
+    assert_equal(node.displacement, [-1, -3, -5])
+
+
+def test_node_displacement(node):
+    node.displacement = [3, 2, 1]
+
+    assert_equal(node.reference_location, [4, 5, 6])
+    assert_equal(node.location, [7, 7, 7])
+    assert_equal(node.displacement, [3, 2, 1])
