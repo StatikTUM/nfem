@@ -469,7 +469,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         layout.addWidget(toolbar3d, 2, 1, 1, 1)
 
         plot3d = figure3d.add_subplot(111, projection='3d')
-        plot3d.set_aspect('equal')
+        # plot3d.set_aspect('equal')
         self._plot3d = plot3d
 
         # right

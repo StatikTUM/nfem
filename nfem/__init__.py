@@ -37,8 +37,8 @@ from .path_following_method import LoadControl
 from .path_following_method import DisplacementControl
 from .path_following_method import ArcLengthControl
 
-from .visualization import interact
-from .visualization import show_load_displacement_curve, show_animation, show_deformation_plot
-from .visualization import Plot2D, Animation3D, DeformationPlot3D
+# from .visualization import interact
+# from .visualization import show_load_displacement_curve, show_animation, show_deformation_plot
+# from .visualization import Plot2D, Animation3D, DeformationPlot3D
 
 from .bracketing import bracketing
