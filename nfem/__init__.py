@@ -19,6 +19,9 @@ from .path_following_method import ArcLengthControl
 
 from .bracketing import bracketing
 
+from .visualization import show_load_displacement_curve, show_animation, show_deformation_plot
+from .visualization import Plot2D, Animation3D, DeformationPlot3D
+
 
 def info():
     print(f'--------------------------------------------------------------------------------')
@@ -50,20 +53,18 @@ __all__ = [
     'ArcLengthControl',
     'bracketing',
     'info',
+    'show_load_displacement_curve',
+    'show_animation',
+    'show_deformation_plot',
+    'Plot2D',
+    'Animation3D',
+    'DeformationPlot3D',
 ]
 
 try:
     from .visualization import interact
-    from .visualization import show_load_displacement_curve, show_animation, show_deformation_plot
-    from .visualization import Plot2D, Animation3D, DeformationPlot3D
     __all__ += [
         'interact',
-        'show_load_displacement_curve',
-        'show_animation',
-        'show_deformation_plot',
-        'Plot2D',
-        'Animation3D',
-        'DeformationPlot3D',
     ]
 except Exception as _:
     pass
