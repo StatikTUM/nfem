@@ -460,7 +460,7 @@ class Model(object):
         return history
 
     def get_duplicate(self, name=None, branch=False):
-        """Get a duplicate of the model.
+        r"""Get a duplicate of the model.
 
         Parameters
         ----------
@@ -1209,3 +1209,14 @@ class Model(object):
             delta[index] = self.get_dof_state(dof) - model_b.get_dof_state(dof)
 
         return delta
+
+    def load_displacement_curve(self, dof, skip_iterations=True):
+        history = self.get_model_history(skip_iterations)
+
+        data = np.zeros([2, len(history)])
+
+        for i, self in enumerate(history):
+            data[0, i] = self.get_dof_state(dof)
+            data[1, i] = self.lam
+
+        return data
