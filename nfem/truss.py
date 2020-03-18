@@ -33,32 +33,32 @@ class Truss(ElementBase):
     def get_reference_vector(self):
         """FIXME"""
 
-        reference_a = self.node_a.get_reference_location()
-        reference_b = self.node_b.get_reference_location()
+        reference_a = self.node_a.reference_location
+        reference_b = self.node_b.reference_location
 
         return reference_b - reference_a
 
     def get_actual_vector(self):
         """FIXME"""
 
-        actual_a = self.node_a.get_actual_location()
-        actual_b = self.node_b.get_actual_location()
+        actual_a = self.node_a.location
+        actual_b = self.node_b.location
 
         return actual_b - actual_a
 
     def get_reference_length(self):
         """FIXME"""
 
-        reference_a = self.node_a.get_reference_location()
-        reference_b = self.node_b.get_reference_location()
+        reference_a = self.node_a.reference_location
+        reference_b = self.node_b.reference_location
 
         return la.norm(reference_b - reference_a)
 
     def get_actual_length(self):
         """FIXME"""
 
-        actual_a = self.node_a.get_actual_location()
-        actual_b = self.node_b.get_actual_location()
+        actual_a = self.node_a.location
+        actual_b = self.node_b.location
         
         return la.norm(actual_b - actual_a)
 
