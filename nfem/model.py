@@ -179,6 +179,11 @@ class Model(object):
         z : float
             Z coordinate.
 
+        Returns
+        ----------
+        Node
+            The new Node
+
         Examples
         --------
         Add a node with ID `B`:
@@ -188,7 +193,11 @@ class Model(object):
         if id in self._nodes:
             raise RuntimeError('The model already contains a node with id {}'.format(id))
 
-        self._nodes[id] = Node(id, x, y, z)
+        node = Node(id, x, y, z)
+
+        self._nodes[id] = node
+
+        return node
 
     def add_truss_element(self, id, node_a, node_b, youngs_modulus, area):
         """Add a three dimensional truss element to the model.
@@ -206,6 +215,11 @@ class Model(object):
         area : float
             Area of the cross section for the truss.
 
+        Returns
+        ----------
+        Truss
+            The new Truss
+
         Examples
         --------
         Add a truss element from node `A` to node `B`:
@@ -221,7 +235,11 @@ class Model(object):
         if node_b not in self._nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_b))
 
-        self._elements[id] = Truss(id, self._nodes[node_a], self._nodes[node_b], youngs_modulus, area)
+        element = Truss(id, self._nodes[node_a], self._nodes[node_b], youngs_modulus, area)
+
+        self._elements[id] = element
+
+        return element
 
     def add_dirichlet_condition(self, node_id, dof_types, value):
         """Apply a dirichlet condition to the given dof types of a node.
