@@ -7,6 +7,18 @@ A light weight object oriented FEM code and some usefull postprocessing tools.
 
 __version__ = 'dev'
 
+from .model import Model
+from .node import Node
+from .truss import Truss
+from .assembler import Assembler
+
+from .newton_raphson import newton_raphson_solve
+from .path_following_method import LoadControl
+from .path_following_method import DisplacementControl
+from .path_following_method import ArcLengthControl
+
+from .bracketing import bracketing
+
 
 def info():
     print(f'--------------------------------------------------------------------------------')
@@ -27,18 +39,31 @@ def info():
     print(f'--------------------------------------------------------------------------------')
 
 
-from .model import Model
-from .node import Node
-from .truss import Truss
-from .assembler import Assembler
+__all__ = [
+    'Model',
+    'Node',
+    'Truss',
+    'Assembler',
+    'newton_raphson_solve',
+    'LoadControl',
+    'DisplacementControl',
+    'ArcLengthControl',
+    'bracketing',
+    'info',
+]
 
-from .newton_raphson import newton_raphson_solve
-from .path_following_method import LoadControl
-from .path_following_method import DisplacementControl
-from .path_following_method import ArcLengthControl
-
-# from .visualization import interact
-# from .visualization import show_load_displacement_curve, show_animation, show_deformation_plot
-# from .visualization import Plot2D, Animation3D, DeformationPlot3D
-
-from .bracketing import bracketing
+try:
+    from .visualization import interact
+    from .visualization import show_load_displacement_curve, show_animation, show_deformation_plot
+    from .visualization import Plot2D, Animation3D, DeformationPlot3D
+    __all__ += [
+        'interact',
+        'show_load_displacement_curve',
+        'show_animation',
+        'show_deformation_plot',
+        'Plot2D',
+        'Animation3D',
+        'DeformationPlot3D',
+    ]
+finally:
+    pass
