@@ -51,7 +51,7 @@ class Model(object):
         Previous state of this model
     """
 
-    def __init__(self, name):
+    def __init__(self, name=None):
         """Create a new model.
 
         Parameters
