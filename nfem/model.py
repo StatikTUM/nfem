@@ -460,7 +460,7 @@ class Model(object):
         return history
 
     def get_duplicate(self, name=None, branch=False):
-        """Get a duplicate of the model.
+        r"""Get a duplicate of the model.
 
         Parameters
         ----------
