@@ -65,5 +65,5 @@ try:
         'Animation3D',
         'DeformationPlot3D',
     ]
-finally:
+except Exception as _:
     pass
