@@ -8,31 +8,25 @@ from numpy.testing import assert_almost_equal
 def model_1():
     model = nfem.Model()
 
-    model.add_node(id='A', x=0, y=0, z=0)
-    model.add_node(id='B', x=1, y=1, z=0)
-    model.add_node(id='C', x=2, y=0, z=0)
+    model.add_node(id='A', x=0, y=0, z=0, support='xyz')
+    model.add_node(id='B', x=1, y=1, z=0, support='z', fy=-1)
+    model.add_node(id='C', x=2, y=0, z=0, support='xyz')
 
     model.add_truss_element(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
     model.add_truss_element(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
-
-    model.add_single_load(id='load 1', node_id='B', fv=-1)
-
-    model.add_dirichlet_condition(node_id='A', dof_types='uvw', value=0)
-    model.add_dirichlet_condition(node_id='B', dof_types='w', value=0)
-    model.add_dirichlet_condition(node_id='C', dof_types='uvw', value=0)
 
     return model
 
 
 @pytest.fixture
-def model_2_3():
+def model_2():
     model = nfem.Model()
 
-    model.add_node(id='A', x=0, y=0, z=0, support='uvw')
-    model.add_node(id='B', x=1, y=1, z=0, support='w')
-    model.add_node(id='C', x=2, y=2, z=0, support='w')
-    model.add_node(id='D', x=3, y=1, z=0, support='w')
-    model.add_node(id='E', x=4, y=0, z=0, support='uvw')
+    model.add_node(id='A', x=0, y=0, z=0, support='xyz')
+    model.add_node(id='B', x=1, y=1, z=0, support='z')
+    model.add_node(id='C', x=2, y=2, z=0, support='z', fy = -1)
+    model.add_node(id='D', x=3, y=1, z=0, support='z')
+    model.add_node(id='E', x=4, y=0, z=0, support='xyz')
 
     model.add_truss_element(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
     model.add_truss_element(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
@@ -46,17 +40,24 @@ def model_2_3():
 
 
 @pytest.fixture
-def model_2(model_2_3):
-    model_2_3.add_single_load(id='V2', node_id='C', fv=-1)
-    return model_2_3
+def model_3():
+    model = nfem.Model()
 
+    model.add_node(id='A', x=0, y=0, z=0, support='xyz')
+    model.add_node(id='B', x=1, y=1, z=0, support='z', fy = -0.25)
+    model.add_node(id='C', x=2, y=2, z=0, support='z', fy = -0.5)
+    model.add_node(id='D', x=3, y=1, z=0, support='z', fy = -0.25)
+    model.add_node(id='E', x=4, y=0, z=0, support='xyz')
 
-@pytest.fixture
-def model_3(model_2_3):
-    model_2_3.add_single_load(id='V2', node_id='C', fv=-0.5)
-    model_2_3.add_single_load(id='V1_left', node_id='B', fv=-0.25)
-    model_2_3.add_single_load(id='V1_right', node_id='D', fv=-0.25)
-    return model_2_3
+    model.add_truss_element(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
+    model.add_truss_element(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
+    model.add_truss_element(id=3, node_a='C', node_b='D', youngs_modulus=1, area=1)
+    model.add_truss_element(id=4, node_a='D', node_b='E', youngs_modulus=1, area=1)
+    model.add_truss_element(id=5, node_a='B', node_b='D', youngs_modulus=1, area=1)
+    model.add_truss_element(id=6, node_a='A', node_b='D', youngs_modulus=1, area=1)
+    model.add_truss_element(id=7, node_a='B', node_b='E', youngs_modulus=1, area=1)
+
+    return model
 
 
 def test_1a(model_1):

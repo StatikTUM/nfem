@@ -165,7 +165,7 @@ class Model(object):
 
     # === modeling
 
-    def add_node(self, id, x, y, z, support='', fx=None, fy=None, fz=None):
+    def add_node(self, id, x, y, z, support='', fx=0.0, fy=0.0, fz=0.0):
         """Add a three dimensional node to the model.
 
         Parameters
@@ -203,6 +203,10 @@ class Model(object):
             node.dof('v').is_active = False
         if 'z' in support:
             node.dof('w').is_active = False
+
+        node.dof('u').external_force = fx
+        node.dof('v').external_force = fy
+        node.dof('w').external_force = fz
 
         return node
 
@@ -537,6 +541,9 @@ class Model(object):
         k = np.zeros((dof_count, dof_count))
         f = np.zeros(dof_count)
 
+        for i, dof in enumerate(assembler.free_dofs):
+            f[i] += self.dof(*dof).external_force
+
         assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
         assembler.assemble_vector(f, lambda element: element.calculate_external_forces())
 
@@ -645,6 +652,10 @@ class Model(object):
             assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
 
             # assemble force
+
+            for i, dof in enumerate(assembler.free_dofs):
+                external_f[i] += self.dof(*dof).external_force
+                
             assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
             assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
 
@@ -873,6 +884,10 @@ class Model(object):
         )
 
         # assemble force
+
+        for i, dof in enumerate(assembler.free_dofs):
+            external_f[i] += self.dof(*dof).external_force
+        
         assembler.assemble_vector(external_f,
             lambda element: element.calculate_external_forces()
         )

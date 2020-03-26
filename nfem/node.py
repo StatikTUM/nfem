@@ -135,6 +135,38 @@ class Node(object):
         self._dof_z.delta = value
 
     @property
+    def fx(self):
+        return self._dof_x.external_force
+
+    @fx.setter
+    def fx(self, value):
+        self._dof_x.external_force = value
+
+    @property
+    def fy(self):
+        return self._dof_y.external_force
+
+    @fy.setter
+    def fy(self, value):
+        self._dof_y.external_force = value
+
+    @property
+    def fz(self):
+        return self._dof_z.external_force
+
+    @fz.setter
+    def fz(self, value):
+        self._dof_z.external_force = value
+
+    @property
+    def external_force(self):
+        return np.array([self.fx, self.fy, self.fz])
+
+    @external_force.setter
+    def external_force(self, value):
+        [self.fx, self.fy, self.fz] = value
+
+    @property
     def reference_location(self):
         return np.array([self._dof_x.reference_value, self._dof_y.reference_value, self._dof_z.reference_value])
 
