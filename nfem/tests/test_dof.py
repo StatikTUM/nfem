@@ -36,3 +36,10 @@ def test_dof_delta(dof):
     assert_equal(dof.reference_value, 5)
     assert_equal(dof.value, 8)
     assert_equal(dof.delta, 3)
+
+
+def test_dof_external_force(dof):
+    dof.external_force = 3
+
+    assert_equal(dof.external_force, 3)
+
