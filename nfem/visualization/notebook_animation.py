@@ -191,7 +191,12 @@ def animate_model(fig, ax, models, speed=200, **options):
         ax.set_ylabel('< y >')
         ax.set_zlabel('< z >')
 
-        ax.set_title('Deformed structure at time step {}\n{}'.format(step, step_model.name))
+        title = f'Deformed structure at time step {step}'
+
+        if step_model.name is not None:
+            title += f'\n{step}'
+
+        ax.set_title(title)
 
         plot_model(ax, step_model, 'gray', True, **options)
         plot_model(ax, step_model, 'red', False, **options)
