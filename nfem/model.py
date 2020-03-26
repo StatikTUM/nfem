@@ -197,12 +197,12 @@ class Model(object):
 
         self._nodes[id] = node
 
-        if 'u' in support:
-            self.add_dirichlet_condition(id, 'u', 0.0)
-        if 'v' in support:
-            self.add_dirichlet_condition(id, 'v', 0.0)
-        if 'w' in support:
-            self.add_dirichlet_condition(id, 'w', 0.0)
+        if 'x' in support:
+            node.dof('u').is_active = False
+        if 'y' in support:
+            node.dof('v').is_active = False
+        if 'z' in support:
+            node.dof('w').is_active = False
 
         return node
 
