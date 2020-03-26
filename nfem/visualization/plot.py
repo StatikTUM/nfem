@@ -228,7 +228,7 @@ def plot_boundary_conditions(ax, model, initial, **options):
 
     for node in model.nodes:
         for dof_type in ['u', 'v', 'w']:
-            if model.dof_is_active(dof_type):
+            if node.dof(dof_type).is_active:
                 continue
             if initial:
                 polygons.extend(get_tet4_polygons(node.reference_x, node.reference_y, node.reference_z, size, dof_type))
