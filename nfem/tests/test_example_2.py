@@ -28,11 +28,11 @@ def model_1():
 def model_2_3():
     model = nfem.Model()
 
-    model.add_node(id='A', x=0, y=0, z=0)
-    model.add_node(id='B', x=1, y=1, z=0)
-    model.add_node(id='C', x=2, y=2, z=0)
-    model.add_node(id='D', x=3, y=1, z=0)
-    model.add_node(id='E', x=4, y=0, z=0)
+    model.add_node(id='A', x=0, y=0, z=0, support='uvw')
+    model.add_node(id='B', x=1, y=1, z=0, support='w')
+    model.add_node(id='C', x=2, y=2, z=0, support='w')
+    model.add_node(id='D', x=3, y=1, z=0, support='w')
+    model.add_node(id='E', x=4, y=0, z=0, support='uvw')
 
     model.add_truss_element(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
     model.add_truss_element(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
@@ -41,12 +41,6 @@ def model_2_3():
     model.add_truss_element(id=5, node_a='B', node_b='D', youngs_modulus=1, area=1)
     model.add_truss_element(id=6, node_a='A', node_b='D', youngs_modulus=1, area=1)
     model.add_truss_element(id=7, node_a='B', node_b='E', youngs_modulus=1, area=1)
-
-    model.add_dirichlet_condition(node_id='A', dof_types='uvw', value=0)
-    model.add_dirichlet_condition(node_id='B', dof_types='w', value=0)
-    model.add_dirichlet_condition(node_id='C', dof_types='w', value=0)
-    model.add_dirichlet_condition(node_id='D', dof_types='w', value=0)
-    model.add_dirichlet_condition(node_id='E', dof_types='uvw', value=0)
 
     return model
 

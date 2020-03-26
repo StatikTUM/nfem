@@ -165,7 +165,7 @@ class Model(object):
 
     # === modeling
 
-    def add_node(self, id, x, y, z):
+    def add_node(self, id, x, y, z, support='', fx=None, fy=None, fz=None):
         """Add a three dimensional node to the model.
 
         Parameters
@@ -196,6 +196,13 @@ class Model(object):
         node = Node(id, x, y, z)
 
         self._nodes[id] = node
+
+        if 'u' in support:
+            self.add_dirichlet_condition(id, 'u', 0.0)
+        if 'v' in support:
+            self.add_dirichlet_condition(id, 'v', 0.0)
+        if 'w' in support:
+            self.add_dirichlet_condition(id, 'w', 0.0)
 
         return node
 
