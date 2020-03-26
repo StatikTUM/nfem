@@ -41,8 +41,6 @@ class Model(object):
         Dictionary that stores node_id : node object
     elements : str
         Dictionary that stores element_id : element object
-    dirichlet_conditions : str
-        Dictionary that stores dc_id : dirichlet condition object
     neumann_conditions : str
         Dictionary that stores nc_id : load object
     lam : float
@@ -64,7 +62,6 @@ class Model(object):
         self.status = ModelStatus.initial
         self._nodes = dict()
         self._elements = dict()
-        self.dirichlet_conditions = dict()
         self.neumann_conditions = dict()
         self.lam = 0.0
         self._previous_model = None
@@ -95,6 +92,12 @@ class Model(object):
             previous_model = previous_model._previous_model
 
         return previous_model
+
+    def dof(self, node_id, dof_type):
+        return self.get_node(node_id).dof(dof_type)
+
+    def dof_is_active(self, dof):
+        return self.dof(*dof).is_active
 
     @property
     def nodes(self):
@@ -275,14 +278,12 @@ class Model(object):
         if node_id not in self._nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
 
+        node = self.get_node(node_id)
+
         for dof_type in dof_types:
-            dof = (node_id, dof_type)
-
-            if dof in self.dirichlet_conditions:
-                raise RuntimeError('The model already contains a dirichlet condition for {}'
-                                   .format(dof))
-
-            self.dirichlet_conditions[dof] = value
+            dof = node.dof(dof_type)
+            dof.is_active = False
+            dof.delta = value
 
     def add_single_load(self, id, node_id, fu=0, fv=0, fw=0):
         """Add a single force element to the model.
@@ -532,9 +533,9 @@ class Model(object):
 
         u = np.zeros(dof_count)
 
-        for dof, value in self.dirichlet_conditions.items():
+        for dof in assembler.dofs[assembler.free_dof_count:]:
             index = assembler.index_of_dof(dof)
-            u[index] = value
+            u[index] = self.dof(*dof).delta
 
         k = np.zeros((dof_count, dof_count))
         f = np.zeros(dof_count)
@@ -862,9 +863,9 @@ class Model(object):
 
         v = tangent[:-1]
 
-        for dof, value in self.dirichlet_conditions.items():
+        for dof in assembler.dofs[assembler.free_dof_count:]:
             index = assembler.index_of_dof(dof)
-            v[index] = value
+            v[index] = self.dof(*dof).delta
 
         k = np.zeros((dof_count, dof_count))
         external_f = np.zeros(dof_count)

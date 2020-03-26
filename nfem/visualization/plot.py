@@ -226,12 +226,14 @@ def plot_boundary_conditions(ax, model, initial, **options):
 
     polygons = list()
 
-    for dof in model.dirichlet_conditions.keys():
-        node = model.get_node(dof[0])
-        if initial:
-            polygons.extend(get_tet4_polygons(node.reference_x, node.reference_y, node.reference_z, size, dof[1]))
-        else:
-            polygons.extend(get_tet4_polygons(node.x, node.y, node.z, size, dof[1]))
+    for node in model.nodes:
+        for dof_type in ['u', 'v', 'w']:
+            if model.dof_is_active(dof_type):
+                continue
+            if initial:
+                polygons.extend(get_tet4_polygons(node.reference_x, node.reference_y, node.reference_z, size, dof_type))
+            else:
+                polygons.extend(get_tet4_polygons(node.x, node.y, node.z, size, dof_type))
 
     color = 'lightgray' if initial else 'lightcoral'
     pc = Poly3DCollection(polygons, edgecolor=color, linewidth=0.5, alpha=0.25)
