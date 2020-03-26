@@ -284,8 +284,7 @@ def show_eigenvector_animation(model, speed=200, block=True):
     return HTML(ani.to_jshtml())
 
 
-def show_deformation_plot(model, step=None, block=True):
-
+def show_deformation_plot(model, step=None):
     bounding_box = get_bounding_box([model])
 
     fig = Figure()
@@ -311,4 +310,4 @@ def show_deformation_plot(model, step=None, block=True):
 
     ax.set_title('Deformed structure at time step {}\n{}'.format(step, model.name))
 
-    fig.show(block=block)
+    fig.show()
