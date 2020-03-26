@@ -41,6 +41,15 @@ class Plot2D(object):
         fig.show()
 
 
+def show_load_displacement_curve(model, dof):
+    dof_type, node_id = dof
+
+    plot = Plot2D()
+    model.add_load_displacement_curve(model, dof)
+
+    plot.show()
+
+
 def _add_load_displacement_curve(data, model, dof, label):
     history = model.get_model_history()
 
