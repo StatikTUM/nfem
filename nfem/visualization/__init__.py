@@ -1,6 +1,8 @@
 try:
-    from .interactive import interact #needs to be imported first, because it sets the matplotlib backend
+    from nfem.visualization.interactive import interact # needs to be imported first, because it sets the matplotlib backend
 except Exception as _:
     pass
-from .plot import show_load_displacement_curve, show_animation, show_deformation_plot
-from .plot import Plot2D, Animation3D, DeformationPlot3D
+
+from nfem.visualization.plot import show_load_displacement_curve, show_animation, show_deformation_plot
+from nfem.visualization.plot import Animation3D, DeformationPlot3D
+from nfem.visualization.notebook_plot import Plot2D
