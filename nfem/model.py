@@ -97,6 +97,14 @@ class Model(object):
         return self.dof(*dof).is_active
 
     @property
+    def load_factor(self):
+        return self.lam
+
+    @load_factor.setter
+    def load_factor(self, value):
+        self.lam = value
+
+    @property
     def nodes(self):
         """Get a list of all nodes in the model.
 
