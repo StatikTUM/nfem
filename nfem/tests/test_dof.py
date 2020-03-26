@@ -14,22 +14,6 @@ def test_dof_init(dof):
     assert_equal(dof.delta, 0)
 
 
-def test_dof_increment(dof):
-    dof += 1.5
-
-    assert_equal(dof.reference_value, 5)
-    assert_equal(dof.value, 6.5)
-    assert_equal(dof.delta, 1.5)
-
-
-def test_dof_decrement(dof):
-    dof -= 0.5
-
-    assert_equal(dof.reference_value, 5)
-    assert_equal(dof.value, 4.5)
-    assert_equal(dof.delta, -0.5)
-
-
 def test_dof_reference_value(dof):
     dof.reference_value = 3
 
@@ -52,3 +36,10 @@ def test_dof_delta(dof):
     assert_equal(dof.reference_value, 5)
     assert_equal(dof.value, 8)
     assert_equal(dof.delta, 3)
+
+
+def test_dof_external_force(dof):
+    dof.external_force = 3
+
+    assert_equal(dof.external_force, 3)
+

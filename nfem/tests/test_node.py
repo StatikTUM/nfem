@@ -117,6 +117,33 @@ def test_node_w(node):
     assert_equal(node.displacement, [0, 0, 9])
 
 
+def test_node_fx(node):
+    node.fx = 9
+
+    assert_equal(node.fx, 9)
+    assert_equal(node.external_force, [9, 0, 0])
+
+
+def test_node_fy(node):
+    node.fy = 9
+
+    assert_equal(node.fy, 9)
+    assert_equal(node.external_force, [0, 9, 0])
+
+
+def test_node_fz(node):
+    node.fz = 9
+
+    assert_equal(node.fz, 9)
+    assert_equal(node.external_force, [0, 0, 9])
+
+
+def test_node_external_force(node):
+    node.external_force = [1, 2, 3]
+
+    assert_equal(node.external_force, [1, 2, 3])
+
+
 def test_node_reference_location(node):
     node.reference_location = [3, 2, 1]
 

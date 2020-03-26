@@ -32,11 +32,6 @@ class TestModel(TestCase):
         expected = 3
         assert(actual == expected)
 
-    def test_dirichlet_container(self):
-        actual = len(self.model.dirichlet_conditions)
-        expected = 7
-        assert(actual == expected)
-
 def get_model():
     '''Make this model available for further tests'''
     test = TestModel()
