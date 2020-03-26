@@ -41,8 +41,6 @@ class Model(object):
         Dictionary that stores node_id : node object
     elements : str
         Dictionary that stores element_id : element object
-    neumann_conditions : str
-        Dictionary that stores nc_id : load object
     lam : float
         load factor
     previous_model : Model
@@ -62,7 +60,6 @@ class Model(object):
         self.status = ModelStatus.initial
         self._nodes = dict()
         self._elements = dict()
-        self.neumann_conditions = dict()
         self.lam = 0.0
         self._previous_model = None
         self.det_k = None
