@@ -22,6 +22,17 @@ class Plot2D(object):
     def add_history_curve(self, model, fun, label, show_iterations=False):
         _plot_history_curve(self.data, model, fun, label, not show_iterations)
 
+    def add_custom_curve(self, x, y, label, linewidth=1.0):
+        self.data.append(go.Scatter(
+            name=label,
+            mode='lines+markers',
+            x=x,
+            y=y,
+            line=dict(
+                width=linewidth,
+            ),
+        ))
+
     def show(self, height=500):
         fig = go.Figure(
             data=self.data,
