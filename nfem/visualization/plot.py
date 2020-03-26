@@ -20,7 +20,7 @@ from ..model import ModelStatus
 
 class Plot2D(object):
 
-    def __init__(self, x_label='Displacement', y_label='Load factor ($\lambda$)',
+    def __init__(self, x_label='Displacement', y_label=r'Load factor ($\lambda$)',
                  title='Load-displacement diagram'):
         self.fig, self.ax = plt.subplots()
 
@@ -277,7 +277,7 @@ def plot_load_displacement_iterations(ax, model, dof, label=None):
         y_data[i] = model.lam
 
     if label == None:
-        label = '$\lambda$ : {} at node {} (iter)'.format(dof_type, node_id)
+        label = r'$\lambda$ : {} at node {} (iter)'.format(dof_type, node_id)
     else:
         label += ' (iter)'
     ax.plot(x_data, y_data, '--o', linewidth=0.75, markersize=2.0, label=label)
@@ -296,7 +296,7 @@ def plot_load_displacement_curve(ax, model, dof, label=None):
         y_data[i] = model.lam
 
     if label is None:
-        label = '$\lambda$ : {} at node {}'.format(dof_type, node_id)
+        label = r'$\lambda$ : {} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
 
 def plot_det_k_curve(ax, model, dof, label=None):
@@ -357,7 +357,7 @@ def show_load_displacement_curve(model, dof, invert_xaxis=True, block=True):
     fig, ax = plt.subplots()
 
     ax.set(xlabel='{} at node {}'.format(dof_type, node_id),
-           ylabel='Load factor ($\lambda$)',
+           ylabel=r'Load factor ($\lambda$)',
            title='Load-displacement diagram')
     ax.set_facecolor('white')
     ax.grid()
