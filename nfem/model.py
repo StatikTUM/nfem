@@ -216,8 +216,6 @@ class Model(object):
         node.dof('v').external_force = fy
         node.dof('w').external_force = fz
 
-        return node
-
     def add_truss_element(self, id, node_a, node_b, youngs_modulus, area):
         """Add a three dimensional truss element to the model.
 
@@ -257,8 +255,6 @@ class Model(object):
         element = Truss(id, self._nodes[node_a], self._nodes[node_b], youngs_modulus, area)
 
         self._elements[id] = element
-
-        return element
 
     def add_dirichlet_condition(self, node_id, dof_types, value):
         """Apply a dirichlet condition to the given dof types of a node.
