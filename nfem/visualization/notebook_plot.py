@@ -43,8 +43,6 @@ class Plot2D(object):
                     title_text=self.x_label,
                 ),
                 yaxis=dict(
-                    scaleanchor='x',
-                    scaleratio=1,
                     title_text=self.y_label,
                 ),
             ),
