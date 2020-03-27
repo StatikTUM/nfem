@@ -239,10 +239,10 @@ def show_animation(model, speed=200, block=True):
         return show_history_animation(model, speed, block)
 
 
-def show_history_animation(model, speed=200, block=True):
+def show_history_animation(model, speed=200, block=True, size=(12, 12)):
     history = model.get_model_history()
 
-    fig = Figure()
+    fig = Figure(figsize=size)
     ax = fig.add_subplot(111, projection='3d')
 
     ani = animate_model(fig, ax, history, speed=speed)
@@ -250,7 +250,7 @@ def show_history_animation(model, speed=200, block=True):
     return HTML(ani.to_jshtml())
 
 
-def show_eigenvector_animation(model, speed=200, block=True):
+def show_eigenvector_animation(model, speed=200, block=True, size=(12, 12)):
     eigenvector = model
     initial_model = model.get_initial_model()
 
@@ -258,7 +258,7 @@ def show_eigenvector_animation(model, speed=200, block=True):
 
     bounding_box = get_bounding_box(models)
 
-    fig = Figure()
+    fig = Figure(figsize=size)
     ax = fig.add_subplot(111, projection='3d')
 
     def update(step):
@@ -284,10 +284,10 @@ def show_eigenvector_animation(model, speed=200, block=True):
     return HTML(ani.to_jshtml())
 
 
-def show_deformation_plot(model, step=None):
+def show_deformation_plot(model, step=None, size=(12, 12)):
     bounding_box = get_bounding_box([model])
 
-    fig = Figure()
+    fig = Figure(figsize=size)
     ax = fig.add_subplot(111, projection='3d')
 
     ax.clear()
