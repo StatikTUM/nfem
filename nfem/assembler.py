@@ -89,21 +89,6 @@ class Assembler(object):
         """
         return self.dof_indices[dof]
 
-    def dof_at_index(self, index):
-        """Get the dof at the given index.
-
-        Parameters
-        ----------
-        index : int
-            Index of the dof.
-
-        Returns
-        -------
-        dof : object
-            Dof at the given index.
-        """
-        return self.dofs[index]
-
     @property
     def free_dofs(self):
         """Get a list with the unconstrained dofs
