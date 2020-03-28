@@ -1240,3 +1240,7 @@ class Model(object):
             data[1, i] = self.lam
 
         return data
+
+    def _repr_html_(self):
+        from nfem.visualization.notebook_animation import animate_model
+        return animate_model(self)
