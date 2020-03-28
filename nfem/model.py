@@ -324,6 +324,13 @@ class Model(object):
 
     # === degree of freedoms
 
+    def __getitem__(self, key):
+        if isinstance(key, Dof):
+            node_key, dof_type = key.key
+        else:
+            node_key, dof_type = key
+        return self.get_node(node_key).dof(dof_type)
+
     def set_dof_state(self, dof, value):
         """Sets the state of the dof
 
