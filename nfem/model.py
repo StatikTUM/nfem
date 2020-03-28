@@ -357,8 +357,7 @@ class Model(object):
         value : float
             Value at the dof
         """
-        node_id, dof_type = dof
-        return self._nodes[node_id].get_dof_state(dof_type)
+        return self[dof].delta
 
     def increment_dof_state(self, dof, delta):
         """Increment the state of the dof by a given value
@@ -370,8 +369,7 @@ class Model(object):
         delta : float
             Increment of the dof value
         """
-        value = self.get_dof_state(dof)
-        self.set_dof_state(dof, value + delta)
+        self[dof].value += delta
 
     # === increment
 
@@ -391,8 +389,10 @@ class Model(object):
         if self.get_previous_model() is None:
             return 0.0
 
-        current_value = self.get_dof_state(dof)
-        previous_value = self.get_previous_model().get_dof_state(dof)
+        previous_model = self.get_previous_model()
+
+        current_value = self[dof].delta
+        previous_value = previous_model[dof].delta
 
         return current_value - previous_value
 
