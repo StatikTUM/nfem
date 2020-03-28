@@ -22,6 +22,17 @@ class Plot2D(object):
     def add_history_curve(self, model, fun, label, show_iterations=False):
         _plot_history_curve(self.data, model, fun, label, not show_iterations)
 
+    def add_custom_curve(self, x, y, label, linewidth=1.0):
+        self.data.append(go.Scatter(
+            name=label,
+            mode='lines+markers',
+            x=x,
+            y=y,
+            line=dict(
+                width=linewidth,
+            ),
+        ))
+
     def show(self, height=500):
         fig = go.Figure(
             data=self.data,
@@ -32,13 +43,20 @@ class Plot2D(object):
                     title_text=self.x_label,
                 ),
                 yaxis=dict(
-                    scaleanchor='x',
-                    scaleratio=1,
                     title_text=self.y_label,
                 ),
             ),
         )
         fig.show()
+
+
+def show_load_displacement_curve(model, dof):
+    dof_type, node_id = dof
+
+    plot = Plot2D()
+    model.add_load_displacement_curve(model, dof)
+
+    plot.show()
 
 
 def _add_load_displacement_curve(data, model, dof, label):

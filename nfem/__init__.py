@@ -56,8 +56,6 @@ __all__ = [
     'show_animation',
     'show_deformation_plot',
     'Plot2D',
-    'Animation3D',
-    'DeformationPlot3D',
 ]
 
 try:
