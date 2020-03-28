@@ -194,7 +194,7 @@ def animate_model(fig, ax, models, speed=200, **options):
         title = f'Deformed structure at time step {step}'
 
         if step_model.name is not None:
-            title += f'\n{step}'
+            title += f'\n{step_model.name}'
 
         ax.set_title(title)
 
