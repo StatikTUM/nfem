@@ -28,7 +28,10 @@ class Circle3D(Circle):
 
 def get_force_arrow(x, y, z, fx, fy, fz, length, *args, **kwargs):
     delta = np.array([fx, fy, fz])
-    delta = delta/np.linalg.norm(delta)*length
+    dnorm = np.linalg.norm(delta)
+    if dnorm < 1e-8:
+        return None
+    delta = delta * length / dnorm
     return Arrow3D([x, x-delta[0]],[y, y-delta[1]],[z, z-delta[2]], *args, mutation_scale=15, lw=1.5, arrowstyle="<|-", **kwargs)
 
 def get_dof_arrow(x, y, z, dx, dy, dz, length, *args, **kwargs):

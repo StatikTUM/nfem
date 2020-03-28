@@ -205,20 +205,15 @@ def plot_dof_higlight(ax, model, initial, **options):
 def plot_forces(ax, model, initial, **options):
     size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5)
 
-    for element in model.elements:
-        if type(element) == SingleLoad:
-            node = element.node
-            color = 'lightgray' if initial else 'lightcoral'
-            if initial:
-                x = node.reference_x
-                y = node.reference_y
-                z = node.reference_z
-            else:
-                x = node.x
-                y = node.y
-                z = node.z
-            a = get_force_arrow(x, y, z, element.fu, element.fv, element.fw, size, color=color)
+    for node in model.nodes:
+        color = 'lightgray' if initial else 'lightcoral'
+        if initial:
+            x, y, z = node.reference_location
+        else:
+            x, y, z = node.location
+        a = get_force_arrow(x, y, z, node.fx, node.fy, node.fz, size, color=color)
 
+        if a is not None:
             ax.add_artist(a)
 
 def plot_boundary_conditions(ax, model, initial, **options):
