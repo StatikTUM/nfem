@@ -12,14 +12,14 @@ import numpy.linalg as la
 from scipy.linalg import eig
 
 from nfem.dof import Dof
-from .node import Node
-from .single_load import SingleLoad
-from .truss import Truss
+from nfem.node import Node
+from nfem.single_load import SingleLoad
+from nfem.truss import Truss
 
-from .assembler import Assembler
-from .newton_raphson import newton_raphson_solve
+from nfem.assembler import Assembler
+from nfem.newton_raphson import newton_raphson_solve
 
-from .path_following_method import ArcLengthControl, DisplacementControl, LoadControl
+from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 
 class ModelStatus(Enum):
     """Enum for the model status """
