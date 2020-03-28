@@ -91,7 +91,7 @@ class DisplacementControl(PathFollowingMethod):
             Prescribed value for the controlled dof
         """
         super(DisplacementControl, self).__init__()
-        self.displacement_hat = model.get_dof_state(dof)
+        self.displacement_hat = model[dof].delta
         self.dof = dof
 
     def calculate_constraint(self, model):
@@ -110,7 +110,7 @@ class DisplacementControl(PathFollowingMethod):
         dof = self.dof
         displacement_hat = self.displacement_hat
 
-        displacement = model.get_dof_state(dof)
+        displacement = model[dof].delta
 
         return displacement - displacement_hat
 
@@ -183,8 +183,8 @@ class ArcLengthControl(PathFollowingMethod):
         previous_model = model.get_previous_model()
 
         for index, dof in enumerate(assembler.free_dofs):
-            current_value = model.get_dof_state(dof)
-            previous_value = previous_model.get_dof_state(dof)
+            current_value = model[dof].delta
+            previous_value = previous_model[dof].delta
 
             dc[index] = 2 * (current_value - previous_value)
 

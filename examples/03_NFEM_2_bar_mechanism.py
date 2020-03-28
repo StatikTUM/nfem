@@ -57,8 +57,8 @@ def custom_data_function(model):
     """This function is called for each model in the history. It returns the
     values for x and y of a model.
     """
-    x = model.get_dof_state(dof=('C', 'u'))
-    y = model.get_dof_state(dof=('B', 'v'))    
+    x = model[('C', 'u')].delta
+    y = model[('B', 'v')].delta
     return x, y
 plot.add_history_curve(model,
                         x_y_data=custom_data_function,

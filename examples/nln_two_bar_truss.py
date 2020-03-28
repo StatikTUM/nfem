@@ -147,7 +147,7 @@ def det_k_data_function(model):
     """This function is called for each model in the history. It returns the
     values for x and y of a model.
     """
-    x = model.get_dof_state(dof=('B', 'v'))
+    x = model[('B', 'v')].delta
     y = model.det_k
     return x, y
 plot.add_history_curve(model,
@@ -159,7 +159,7 @@ def eigenvalue_data_function(model):
     """This function is called for each model in the history. It returns the
     values for x and y of a model.
     """
-    x = model.get_dof_state(dof=('B', 'v'))
+    x = model[('B', 'v')].delta
     if model.first_eigenvalue is None:
         y = None
     else:

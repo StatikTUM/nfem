@@ -5,7 +5,7 @@ from nfem.dof import Dof
 
 @pytest.fixture
 def dof():
-    return Dof(5)
+    return Dof('test', 5)
 
 
 def test_dof_init(dof):

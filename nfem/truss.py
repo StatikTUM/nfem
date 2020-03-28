@@ -24,11 +24,10 @@ class Truss(ElementBase):
     @property
     def dofs(self):
         """FIXME"""
+        node_a = self.node_a
+        node_b = self.node_b
 
-        a_id = self.node_a.id
-        b_id = self.node_b.id
-
-        return [(a_id, 'u'), (a_id, 'v'), (a_id, 'w'), (b_id, 'u'), (b_id, 'v'), (b_id, 'w')]
+        return [node_a._dof_x, node_a._dof_y, node_a._dof_z, node_b._dof_x, node_b._dof_y, node_b._dof_z]
 
     def get_reference_vector(self):
         """FIXME"""

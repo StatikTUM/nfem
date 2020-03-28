@@ -46,7 +46,7 @@ class Assembler(object):
                 else:
                     processed_dofs.add(dof)
 
-                if not model.dof_is_active(dof):
+                if not dof.is_active:
                     fixed_dofs.append(dof)
                 else:
                     free_dofs.append(dof)

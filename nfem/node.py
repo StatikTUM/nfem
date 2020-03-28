@@ -49,9 +49,9 @@ class Node(object):
             Initial Z coordinate of the node.
         """
         self.id = id
-        self._dof_x = Dof(x)
-        self._dof_y = Dof(y)
-        self._dof_z = Dof(z)
+        self._dof_x = Dof(key=(id, 'u'), value=x)
+        self._dof_y = Dof(key=(id, 'v'), value=y)
+        self._dof_z = Dof(key=(id, 'w'), value=z)
 
     def dof(self, dof_type):
         if dof_type == 'u':
@@ -189,76 +189,3 @@ class Node(object):
     @displacement.setter
     def displacement(self, value):
         self._dof_x.delta, self._dof_y.delta, self._dof_z.delta = value
-
-    def get_dof_state(self, dof_type):
-        """Get the current value of the given dof type.
-
-        Parameters
-        ----------
-        dof_type : string
-            Type of the dof.
-
-        Returns
-        -------
-        value : float
-            The current value of the dof type
-
-        Raises
-        ------
-        AttributeError
-            If `dof_type` does not exist.
-        """
-        return self.dof(dof_type).delta
-
-    def set_dof_state(self, dof_type, value):
-        """Update the node according to the value of the given dof type.
-
-        Parameters
-        ----------
-        dof_type : string
-            Type of the Dof.
-        value : float
-            The value of the given dof.
-
-        Raises
-        ------
-        AttributeError
-            If `dof_type` does not exist.
-        """
-        self.dof(dof_type).delta = value
-
-    def get_reference_location(self):
-        """Location of the node in the reference configuration.
-
-        Returns
-        -------
-        location : ndarray
-            Numpy array containing the reference coordinates X, Y and Z.
-        """
-        import warnings
-        warnings.warn('', warnings.DeprecationWarning)
-        return self.reference_location
-
-    def get_actual_location(self):
-        """Location of the node in the actual configuration.
-
-        Returns
-        -------
-        location : ndarray
-            Numpy array containing the actual coordinates X, Y and Z.
-        """
-        import warnings
-        warnings.warn('', warnings.DeprecationWarning)
-        return self.location
-
-    def get_displacement(self):
-        """Displacement of the node in the actual configuration.
-
-        Returns
-        -------
-        displacement : ndarray
-            A numpy array containing the displacements u, v and w.
-        """
-        import warnings
-        warnings.warn('', warnings.DeprecationWarning)
-        return self.displacement

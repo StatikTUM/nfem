@@ -562,7 +562,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
                 color='tab:blue')
             plot_crosshair(
                 ax=ax2d,
-                x=parent.model.get_dof_state(dof),
+                x=parent.model[dof].delta,
                 y=parent.model.lam,
                 linestyle='-.',
                 color='tab:blue',
@@ -584,7 +584,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         # det_k plot
         if options['plot/det(K)_flag']:
             logger = CustomLogger(
-                x_fct=lambda model: model.get_dof_state(dof=dof),
+                x_fct=lambda model: model[dof].delta,
                 y_fct=lambda model: model.det_k,
                 x_label=f'{dof[1]} at node {dof[0]}',
                 y_label='Det(K)')
@@ -599,7 +599,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         # eigenvalue plot
         if options['plot/eigenvalue_flag']:
             logger = CustomLogger(
-                x_fct=lambda model: model.get_dof_state(dof=dof),
+                x_fct=lambda model: model[dof].delta,
                 y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.lam,
                 x_label=f'{dof[1]} at node {dof[0]}',
                 y_label='Eigenvalue')
@@ -628,8 +628,7 @@ class LoadDisplacementLogger(object):
     def ylabel(self):
         return 'Load factor (\u03BB)'
     def __call__(self, model):
-        u = model.get_dof_state(self.dof)
-        return model.get_dof_state(self.dof), model.lam
+        return model[self.dof].delta, model.lam
 
 class CustomLogger(object):
     def __init__(self, x_fct, y_fct, x_label, y_label):

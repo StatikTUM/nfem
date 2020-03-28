@@ -17,25 +17,6 @@ def node_with_displacement():
     return node
 
 
-def test_node_get_dof_state(node_with_displacement):
-    assert_equal(node_with_displacement.get_dof_state('u'), 1)
-    assert_equal(node_with_displacement.get_dof_state('v'), 2)
-    assert_equal(node_with_displacement.get_dof_state('w'), 3)
-    with pytest.raises(AttributeError):
-        node_with_displacement.get_dof_state('invalid')
-
-
-def test_node_set_dof_state(node):
-    node.set_dof_state('u', 1)
-    node.set_dof_state('v', 2)
-    node.set_dof_state('w', 3)
-    assert_equal(node.get_dof_state('u'), 1)
-    assert_equal(node.get_dof_state('v'), 2)
-    assert_equal(node.get_dof_state('w'), 3)
-    with pytest.raises(AttributeError):
-        node.set_dof_state('invalid', 0)
-
-
 def test_node_init(node):
     assert_equal(node.reference_location, [4, 5, 6])
     assert_equal(node.location, [4, 5, 6])

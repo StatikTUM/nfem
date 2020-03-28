@@ -11,14 +11,15 @@ import numpy.linalg as la
 
 from scipy.linalg import eig
 
-from .node import Node
-from .single_load import SingleLoad
-from .truss import Truss
+from nfem.dof import Dof
+from nfem.node import Node
+from nfem.single_load import SingleLoad
+from nfem.truss import Truss
 
-from .assembler import Assembler
-from .newton_raphson import newton_raphson_solve
+from nfem.assembler import Assembler
+from nfem.newton_raphson import newton_raphson_solve
 
-from .path_following_method import ArcLengthControl, DisplacementControl, LoadControl
+from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 
 class ModelStatus(Enum):
     """Enum for the model status """
@@ -89,12 +90,6 @@ class Model(object):
             previous_model = previous_model._previous_model
 
         return previous_model
-
-    def dof(self, node_id, dof_type):
-        return self.get_node(node_id).dof(dof_type)
-
-    def dof_is_active(self, dof):
-        return self.dof(*dof).is_active
 
     @property
     def load_factor(self):
@@ -323,47 +318,12 @@ class Model(object):
 
     # === degree of freedoms
 
-    def set_dof_state(self, dof, value):
-        """Sets the state of the dof
-
-        Parameters
-        ----------
-        dof : tuple(node_id, dof_type)
-            Dof that is modified
-        value : float
-            Value that is set at the dof
-        """
-        node_id, dof_type = dof
-        self._nodes[node_id].set_dof_state(dof_type, value)
-
-    def get_dof_state(self, dof):
-        """Sets the state of the dof
-
-        Parameters
-        ----------
-        dof : tuple(node_id, dof_type)
-            Dof that is asked
-
-        Returns
-        ----------
-        value : float
-            Value at the dof
-        """
-        node_id, dof_type = dof
-        return self._nodes[node_id].get_dof_state(dof_type)
-
-    def increment_dof_state(self, dof, delta):
-        """Increment the state of the dof by a given value
-
-        Parameters
-        ----------
-        dof : tuple(node_id, dof_type)
-            Dof that is asked
-        delta : float
-            Increment of the dof value
-        """
-        value = self.get_dof_state(dof)
-        self.set_dof_state(dof, value + delta)
+    def __getitem__(self, key):
+        if isinstance(key, Dof):
+            node_key, dof_type = key.key
+        else:
+            node_key, dof_type = key
+        return self.get_node(node_key).dof(dof_type)
 
     # === increment
 
@@ -383,8 +343,10 @@ class Model(object):
         if self.get_previous_model() is None:
             return 0.0
 
-        current_value = self.get_dof_state(dof)
-        previous_value = self.get_previous_model().get_dof_state(dof)
+        previous_model = self.get_previous_model()
+
+        current_value = self[dof].delta
+        previous_value = previous_model[dof].delta
 
         return current_value - previous_value
 
@@ -559,13 +521,13 @@ class Model(object):
 
         for dof in assembler.dofs[assembler.free_dof_count:]:
             index = assembler.index_of_dof(dof)
-            u[index] = self.dof(*dof).delta
+            u[index] = self[dof].delta
 
         k = np.zeros((dof_count, dof_count))
         f = np.zeros(dof_count)
 
         for i, dof in enumerate(assembler.free_dofs):
-            f[i] += self.dof(*dof).external_force
+            f[i] += self[dof].external_force
 
         assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
         assembler.assemble_vector(f, lambda element: element.calculate_external_forces())
@@ -580,10 +542,7 @@ class Model(object):
         u[:free_count] = la.solve(a, b)
 
         for index, dof in enumerate(assembler.dofs):
-
-            value = u[index]
-
-            self.set_dof_state(dof, value)
+            self[dof].delta = u[index]
 
         self.status = ModelStatus.equilibrium
 
@@ -660,8 +619,7 @@ class Model(object):
 
             # update actual coordinates
             for index, dof in enumerate(assembler.free_dofs):
-                value = x[index]
-                self.set_dof_state(dof, value)
+                self[dof].delta = x[index]
 
             # update lambda
             self.lam = x[-1]
@@ -677,7 +635,7 @@ class Model(object):
             # assemble force
 
             for i, dof in enumerate(assembler.free_dofs):
-                external_f[i] += self.dof(*dof).external_force
+                external_f[i] += self[dof].external_force
                 
             assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
             assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
@@ -700,7 +658,7 @@ class Model(object):
         # prediction as vector for newton raphson
         x = np.zeros(free_count + 1)
         for index, dof in enumerate(assembler.free_dofs):
-            x[index] = self.get_dof_state(dof)
+            x[index] = self[dof].delta
 
         x[-1] = self.lam
 
@@ -806,10 +764,7 @@ class Model(object):
         model.lam = None
 
         for index, dof in enumerate(assembler.free_dofs):
-
-            value = eigvecs[index][0]
-
-            model.set_dof_state(dof, value)
+            model[dof].delta = eigvecs[index][0]
 
         self.first_eigenvector_model = model
 
@@ -868,10 +823,7 @@ class Model(object):
         model.lam = None
 
         for index, dof in enumerate(assembler.free_dofs):
-
-            value = eigvecs[index][idx]
-
-            model.set_dof_state(dof, value)
+            model[dof].delta = eigvecs[index][idx]
 
         self.first_eigenvector_model = model
 
@@ -896,7 +848,7 @@ class Model(object):
 
         for dof in assembler.dofs[assembler.free_dof_count:]:
             index = assembler.index_of_dof(dof)
-            v[index] = self.dof(*dof).delta
+            v[index] = self[dof].delta
 
         k = np.zeros((dof_count, dof_count))
         external_f = np.zeros(dof_count)
@@ -909,8 +861,8 @@ class Model(object):
         # assemble force
 
         for i, dof in enumerate(assembler.free_dofs):
-            external_f[i] += self.dof(*dof).external_force
-        
+            external_f[i] += self[dof].external_force
+
         assembler.assemble_vector(external_f,
             lambda element: element.calculate_external_forces()
         )
@@ -960,7 +912,7 @@ class Model(object):
             Value that is used to prescribe the dof.
         """
         self.status = ModelStatus.prediction
-        self.set_dof_state(dof, value)
+        self[dof].delta = value
 
     def predict_dof_increment(self, dof, value):
         """Predicts the solution by incrementing the dof
@@ -973,7 +925,7 @@ class Model(object):
             Value that is used to increment the dof.
         """
         self.status = ModelStatus.prediction
-        self.increment_dof_state(dof, value)
+        self[dof].delta += value
 
     def predict_with_last_increment(self, value=None):
         """Predicts the solution by incrementing lambda and all dofs with the
@@ -1008,9 +960,7 @@ class Model(object):
 
         # update dofs at model
         for index, dof in enumerate(assembler.dofs):
-
-            value = last_increment[index]
-            self.increment_dof_state(dof, value)
+            self[dof].delta += last_increment[index]
 
         # update lam at model
         self.lam += last_increment[-1]
@@ -1059,7 +1009,7 @@ class Model(object):
             dof = options['dof']
             value_prescribed = options['value']
 
-            value = self.get_dof_state(dof)
+            value = self[dof].delta
 
             delta_prescribed = value_prescribed - value
 
@@ -1111,8 +1061,7 @@ class Model(object):
 
         # update dofs at model
         for index, dof in enumerate(assembler.dofs):
-            value = tangent[index]
-            self.increment_dof_state(dof, value)
+            self[dof].delta += tangent[index]
 
         # update lambda at model
         self.lam += tangent[-1]
@@ -1167,8 +1116,7 @@ class Model(object):
 
         # update dofs at model
         for index, dof in enumerate(assembler.free_dofs):
-            value = delta_prediction[index]
-            self.increment_dof_state(dof, value)
+            self[dof].delta += delta_prediction[index]
 
         # update lambda at model
         self.lam += delta_lam
@@ -1210,7 +1158,7 @@ class Model(object):
         delta_lambda *= (factor - 1.0)
 
         for i, dof in enumerate(assembler.free_dofs):
-            self.increment_dof_state(dof, delta_dof_vector[i])
+            self[dof].delta += delta_dof_vector[i]
 
         self.lam += delta_lambda
 
@@ -1249,7 +1197,7 @@ class Model(object):
         delta = np.zeros(assembler.dof_count)
 
         for index, dof in enumerate(assembler.free_dofs):
-            delta[index] = self.get_dof_state(dof) - model_b.get_dof_state(dof)
+            delta[index] = self[dof].delta - model_b[dof].delta
 
         return delta
 
@@ -1259,7 +1207,7 @@ class Model(object):
         data = np.zeros([2, len(history)])
 
         for i, self in enumerate(history):
-            data[0, i] = self.get_dof_state(dof)
+            data[0, i] = self[dof].delta
             data[1, i] = self.lam
 
         return data
