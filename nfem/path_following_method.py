@@ -3,9 +3,8 @@
 Author: Armin Geiser
 """
 
-import numpy as np
+from nfem.assembler import Assembler
 
-from .assembler import Assembler
 
 class PathFollowingMethod(object):
 
@@ -13,12 +12,13 @@ class PathFollowingMethod(object):
         raise NotImplementedError
 
     def calculate_constraint(self, model):
-        #returns c
+        # returns c
         raise NotImplementedError
 
     def calculate_derivatives(self, model, dc):
-        #returns dc_du, dc_dLambda
+        # returns dc_du, dc_dLambda
         raise NotImplementedError
+
 
 class LoadControl(PathFollowingMethod):
     """The LoadControl adds a constraint to the non linear problem that ensures
@@ -68,6 +68,7 @@ class LoadControl(PathFollowingMethod):
         """
         dc.fill(0.0)
         dc[-1] = 1.0
+
 
 class DisplacementControl(PathFollowingMethod):
     """The DisplacementControl adds a constraint to the non linear problem that ensures
@@ -128,6 +129,7 @@ class DisplacementControl(PathFollowingMethod):
         assembler = Assembler(model)
         index = assembler.index_of_dof(self.dof)
         dc[index] = 1.0
+
 
 class ArcLengthControl(PathFollowingMethod):
     """The ArcLengthControl adds a constraint to the non linear problem that ensures

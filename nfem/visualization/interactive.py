@@ -8,10 +8,10 @@ Module to initiate the NFEM-Teching-Tool GUI
 
 import traceback
 
-from .python_ui import ApplicationWindow, Option, Fore, Style
-from .gui_classes import (SideBySide2D3DPlots, AnalysisTab, VisualisationTab,
-                          AnimationWindow, set_stiffness_matrix)
-from ..bracketing import bracketing
+from nfem.visualization.python_ui import ApplicationWindow, Option, Fore, Style
+from nfem.visualization.gui_classes import SideBySide2D3DPlots, AnalysisTab, VisualisationTab, AnimationWindow, set_stiffness_matrix
+from nfem.bracketing import bracketing
+
 
 def interact(model, dof):
     """
@@ -129,7 +129,7 @@ class MainWindow(ApplicationWindow):
     @property
     def option_values(self):
         """ dict of self.options values instead of objects """
-        return {option[0] : option[1].value for option in self.options.items()}
+        return {option[0]: option[1].value for option in self.options.items()}
 
     @property
     def solvers(self):
@@ -331,7 +331,7 @@ class MainWindow(ApplicationWindow):
         try:
             model = bracketing(
                 model,
-                tol=10** options['bracketing/tolerance_power'],
+                tol=10**options['bracketing/tolerance_power'],
                 max_steps=options['bracketing/maxiterations'],
                 raise_error=True,
                 tolerance=10**options['nonlinear/newtonraphson/tolerance_power'],

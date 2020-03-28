@@ -3,6 +3,7 @@
 Author: Thomas Oberbichler
 """
 
+
 class Assembler(object):
     """An Assembler helps to generate system matrices/vectors from elements.
 
@@ -55,7 +56,6 @@ class Assembler(object):
 
         dof_indices = {dof: index for index, dof in enumerate(dofs)}
 
-
         # --- element freedom table
 
         element_freedom_table = list()
@@ -64,7 +64,6 @@ class Assembler(object):
             indices = [dof_indices[dof] for dof in element.dofs]
 
             element_freedom_table.append((element, indices))
-
 
         # --- store
 

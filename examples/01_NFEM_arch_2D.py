@@ -30,7 +30,7 @@ model.add_node(id=18, x=-7.821723252, y= 49.3844170, z=0)
 model.add_node(id=19, x=-3.766036595, y= 47.8520320, z=0)
 model.add_node(id=20, x=-3.922954786, y= 49.8458666, z=0)
 model.add_node(id=21, x= 0          , y= 48        , z=0)
-model.add_node(id=22, x= 0          , y= 50        , z=0)
+model.add_node(id=22, x= 0          , y= 50        , z=0, fy=-1)
 model.add_node(id=23, x= 3.766036595, y=47.85203202, z=0)
 model.add_node(id=24, x= 3.922954786, y=49.84586669, z=0)
 model.add_node(id=25, x= 7.508854322, y=47.40904035, z=0)
@@ -198,9 +198,6 @@ model.add_dirichlet_condition(node_id=39, dof_types='w', value=0)
 model.add_dirichlet_condition(node_id=40, dof_types='w', value=0)
 model.add_dirichlet_condition(node_id=41, dof_types='uvw', value=0)
 model.add_dirichlet_condition(node_id=42, dof_types='w', value=0)
-
-# --- Loads
-model.add_single_load(id='load center', node_id=22, fv=-1)
 
 print("Model creation completed - start interaction.")
 

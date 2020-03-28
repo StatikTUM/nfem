@@ -4,29 +4,23 @@ Authors: Klaus Sautter, Thomas Oberbichler, Armin Geiser
 """
 
 import numpy as np
-import matplotlib
-from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 
-from .plot_symbols import get_force_arrow, get_tet4_polygons, get_dof_arrow, get_sphere
+from nfem.visualization.plot_symbols import get_force_arrow, get_tet4_polygons, get_dof_arrow
 
-from ..truss import Truss
-from ..single_load import SingleLoad
-from ..model import ModelStatus
+from nfem.truss import Truss
+from nfem.model import ModelStatus
+
 
 class Plot2D(object):
-
     def __init__(self, x_label='Displacement', y_label=r'Load factor ($\lambda$)',
                  title='Load-displacement diagram'):
         self.fig, self.ax = plt.subplots()
 
-        self.ax.set(xlabel=x_label,
-            ylabel=y_label,
-            title=title)
+        self.ax.set(xlabel=x_label, ylabel=y_label, title=title)
         self.ax.set_facecolor('white')
         self.ax.grid()
 
@@ -77,17 +71,18 @@ class Plot2D(object):
         self.ax.legend(loc='best')
         plt.show(block=block)
 
-class Animation3D(object):
 
+class Animation3D(object):
     def show(self, model, speed=200):
         print("WARNING: Please use the function 'show_animation' instead of this class!")
         self.animation = show_animation(model, speed)
 
-class DeformationPlot3D(object):
 
+class DeformationPlot3D(object):
     def show(self, model, step=None):
         print("WARNING: Please use the function 'show_deformation_plot' instead of this class!")
         show_deformation_plot(model, step)
+
 
 def get_bounding_box(models):
     nodes = [node for model in models for node in model.nodes]
@@ -102,6 +97,7 @@ def get_bounding_box(models):
     max_z = max(node.z for node in nodes)
 
     return min_x, max_x, min_y, max_y, min_z, max_z
+
 
 def plot_scaled_model(ax, model, color, **options):
     scaling_factor = options.get('plot/scaling_factor', None)
@@ -123,8 +119,12 @@ def plot_scaled_model(ax, model, color, **options):
             node_a = element.node_a
             node_b = element.node_b
 
-            b = [node_b.reference_x+scaling_factor*node_b.u, node_b.reference_y+scaling_factor*node_b.v, node_b.reference_z+scaling_factor*node_b.w]
-            a = [node_a.reference_x+scaling_factor*node_a.u, node_a.reference_y+scaling_factor*node_a.v, node_a.reference_z+scaling_factor*node_a.w]
+            b = [node_b.reference_x+scaling_factor*node_b.u,
+                 node_b.reference_y+scaling_factor*node_b.v,
+                 node_b.reference_z+scaling_factor*node_b.w]
+            a = [node_a.reference_x+scaling_factor*node_a.u,
+                 node_a.reference_y+scaling_factor*node_a.v,
+                 node_a.reference_z+scaling_factor*node_a.w]
 
             lines.append([a, b])
 
@@ -133,6 +133,7 @@ def plot_scaled_model(ax, model, color, **options):
     ax.add_collection(lc)
 
     plot_symbols(ax, model, color, initial=False, **options)
+
 
 def plot_model(ax, model, color, initial, **options):
     lines = list()
@@ -153,6 +154,7 @@ def plot_model(ax, model, color, initial, **options):
 
     plot_symbols(ax, model, color, initial, **options)
 
+
 def plot_symbols(ax, model, color, initial, **options):
     if options.get('plot/dirichlet', True):
         plot_boundary_conditions(ax, model, initial, **options)
@@ -161,11 +163,13 @@ def plot_symbols(ax, model, color, initial, **options):
     if options.get('plot/highlight_dof', False):
         plot_dof_higlight(ax, model, initial, **options)
 
+
 def get_max_axes_delta(ax):
     x_lim = ax.get_xlim()
     y_lim = ax.get_ylim()
     z_lim = ax.get_zlim()
     return max([x_lim[1]-x_lim[0], y_lim[1]-y_lim[0], z_lim[1]-z_lim[0]])
+
 
 def plot_dof_higlight(ax, model, initial, **options):
     size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5)
@@ -198,28 +202,24 @@ def plot_dof_higlight(ax, model, initial, **options):
     a = get_dof_arrow(x, y, z, dx, dy, dz, size*0.75, color=color)
     ax.add_artist(a)
     # TODO fix size of spere...
-    #a = get_sphere(x, y, z, size/300, color=color)
-    #ax.add_artist(a)
+    # a = get_sphere(x, y, z, size/300, color=color)
+    # ax.add_artist(a)
 
 
 def plot_forces(ax, model, initial, **options):
     size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5)
 
-    for element in model.elements:
-        if type(element) == SingleLoad:
-            node = element.node
-            color = 'lightgray' if initial else 'lightcoral'
-            if initial:
-                x = node.reference_x
-                y = node.reference_y
-                z = node.reference_z
-            else:
-                x = node.x
-                y = node.y
-                z = node.z
-            a = get_force_arrow(x, y, z, element.fu, element.fv, element.fw, size, color=color)
+    for node in model.nodes:
+        color = 'lightgray' if initial else 'lightcoral'
+        if initial:
+            x, y, z = node.reference_location
+        else:
+            x, y, z = node.location
+        a = get_force_arrow(x, y, z, node.fx, node.fy, node.fz, size, color=color)
 
+        if a is not None:
             ax.add_artist(a)
+
 
 def plot_boundary_conditions(ax, model, initial, **options):
     size = get_max_axes_delta(ax)/100.0 * options.get('plot/symbol_size', 5)
@@ -237,11 +237,11 @@ def plot_boundary_conditions(ax, model, initial, **options):
 
     color = 'lightgray' if initial else 'lightcoral'
     pc = Poly3DCollection(polygons, edgecolor=color, linewidth=0.5, alpha=0.25)
-    pc.set_facecolor(color) # needs to be defined outside otherwhise alpha is not working
+    pc.set_facecolor(color)  # needs to be defined outside otherwhise alpha is not working
     ax.add_collection3d(pc)
 
-def animate_model(fig, ax, models, speed=200, **options):
 
+def animate_model(fig, ax, models, speed=200, **options):
     bounding_box = get_bounding_box(models)
 
     def update(step):
@@ -266,6 +266,7 @@ def animate_model(fig, ax, models, speed=200, **options):
 
     return a
 
+
 def plot_load_displacement_iterations(ax, model, dof, label=None):
     history = model.get_model_history(skip_iterations=False)
 
@@ -278,7 +279,7 @@ def plot_load_displacement_iterations(ax, model, dof, label=None):
         x_data[i] = model[dof].delta
         y_data[i] = model.lam
 
-    if label == None:
+    if label is None:
         label = r'$\lambda$ : {} at node {} (iter)'.format(dof_type, node_id)
     else:
         label += ' (iter)'
@@ -301,6 +302,7 @@ def plot_load_displacement_curve(ax, model, dof, label=None):
         label = r'$\lambda$ : {} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
 
+
 def plot_det_k_curve(ax, model, dof, label=None):
     history = model.get_model_history()
 
@@ -317,6 +319,7 @@ def plot_det_k_curve(ax, model, dof, label=None):
         label = 'det(K) : {} at node {}'.format(dof_type, node_id)
     ax.plot(x_data, y_data, '-o', label=label)
 
+
 def plot_history_curve(ax, model, xy_function, fmt, skip_iterations=True, **kwargs):
     history = model.get_model_history(skip_iterations)
 
@@ -328,6 +331,7 @@ def plot_history_curve(ax, model, xy_function, fmt, skip_iterations=True, **kwar
 
     ax.plot(x_data, y_data, fmt, **kwargs)
 
+
 def plot_crosshair(ax, x, y, **kwargs):
     lx = ax.axvline(**kwargs)
     lx.set_xdata(x)
@@ -335,8 +339,10 @@ def plot_crosshair(ax, x, y, **kwargs):
     ly = ax.axhline(**kwargs)
     ly.set_ydata(y)
 
+
 def plot_custom_curve(ax, *args, **kwargs):
     ax.plot(*args, **kwargs)
+
 
 def plot_bounding_cube(ax, bounding_box, color='w'):
     min_x, max_x, min_y, max_y, min_z, max_z = bounding_box
@@ -352,6 +358,7 @@ def plot_bounding_cube(ax, bounding_box, color='w'):
 
     for x, y, z in corners:
         ax.plot([x], [y], [z], color)
+
 
 def show_load_displacement_curve(model, dof, invert_xaxis=True, block=True):
     dof_type, node_id = dof
@@ -371,11 +378,13 @@ def show_load_displacement_curve(model, dof, invert_xaxis=True, block=True):
 
     plt.show(block=block)
 
+
 def show_animation(model, speed=200, block=True):
     if model.status == ModelStatus.eigenvector:
         return show_eigenvector_animation(model, speed, block)
     else:
         return show_history_animation(model, speed, block)
+
 
 def show_history_animation(model, speed=200, block=True):
     history = model.get_model_history()
@@ -388,6 +397,7 @@ def show_history_animation(model, speed=200, block=True):
     plt.show(block=block)
 
     return a
+
 
 def show_eigenvector_animation(model, speed=200, block=True):
     eigenvector = model
@@ -424,6 +434,7 @@ def show_eigenvector_animation(model, speed=200, block=True):
 
     return a
 
+
 def show_deformation_plot(model, step=None, block=True):
 
     bounding_box = get_bounding_box([model])
@@ -442,7 +453,7 @@ def show_deformation_plot(model, step=None, block=True):
 
     plot_model(ax, model, 'gray', True)
 
-    if step != None:
+    if step is None:
         model = model.get_model_history()[step]
     else:
         step = len(model.get_model_history())-1

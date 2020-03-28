@@ -42,4 +42,3 @@ def test_dof_external_force(dof):
     dof.external_force = 3
 
     assert_equal(dof.external_force, 3)
-
