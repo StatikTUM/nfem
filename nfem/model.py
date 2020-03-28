@@ -519,6 +519,25 @@ class Model(object):
 
         return duplicate
 
+    def new_timestep(self, name=None):
+        temp_previous_model = self._previous_model
+        self._previous_model = None
+
+        duplicate = deepcopy(self)
+
+        self._previous_model = temp_previous_model
+
+        duplicate._previous_model = self
+
+        if name is not None:
+            duplicate.name = name
+
+        duplicate.det_k = None
+        duplicate.first_eigenvalue = None
+        duplicate.first_eigenvector_model = None
+
+        return duplicate
+
     # === solving
 
     def perform_linear_solution_step(self):
@@ -527,7 +546,7 @@ class Model(object):
             The results are stored at the dofs and used to update the current
             coordinates of the nodes.
         """
-        
+
         print("\n=================================")
         print("Start linear solution step...")
         print("lambda : {}".format(self.lam))
