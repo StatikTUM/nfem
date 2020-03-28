@@ -15,7 +15,6 @@ import matplotlib.animation as anim
 from .plot_symbols import get_force_arrow, get_tet4_polygons, get_dof_arrow, get_sphere
 
 from ..truss import Truss
-from ..single_load import SingleLoad
 from ..model import ModelStatus
 
 class Plot2D(object):

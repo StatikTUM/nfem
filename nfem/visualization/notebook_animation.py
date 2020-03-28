@@ -13,7 +13,6 @@ import matplotlib.animation as anim
 from .plot_symbols import get_force_arrow, get_tet4_polygons, get_dof_arrow
 
 from ..truss import Truss
-from ..single_load import SingleLoad
 from ..model import ModelStatus
 
 
@@ -145,7 +144,7 @@ def plot_forces(ax, model, initial, **options):
         else:
             x, y, z = node.location
         a = get_force_arrow(x, y, z, node.fx, node.fy, node.fz, size, color=color)
-        
+
         if a is not None:
             ax.add_artist(a)
 

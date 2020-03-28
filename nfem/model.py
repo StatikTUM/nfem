@@ -13,13 +13,13 @@ from scipy.linalg import eig
 
 from nfem.dof import Dof
 from nfem.node import Node
-from nfem.single_load import SingleLoad
 from nfem.truss import Truss
 
 from nfem.assembler import Assembler
 from nfem.newton_raphson import newton_raphson_solve
 
 from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
+
 
 class ModelStatus(Enum):
     """Enum for the model status """
@@ -284,37 +284,6 @@ class Model(object):
             dof = node.dof(dof_type)
             dof.is_active = False
             dof.delta = value
-
-    def add_single_load(self, id, node_id, fu=0, fv=0, fw=0):
-        """Add a single force element to the model.
-
-        Parameters
-        ----------
-        id : int or str
-            Unique ID of the force element.
-        node_id : int or str
-            ID of the node.
-        fu : float
-            Load magnitude in x direction - default 0.0
-        fv : float
-            Load magnitude in y direction - default 0.0
-        fw : float
-            Load magnitude in z direction - default 0.0
-
-        Examples
-        --------
-        Add a single force element at node `A` with only a component in negative y direction:
-
-        >>> model.add_single_load(id=1, node_id='A', fv=-1.0)
-        """
-
-        if id in self._elements:
-            raise RuntimeError('The model already contains an element with id {}'.format(id))
-
-        if node_id not in self._nodes:
-            raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
-
-        self._elements[id] = SingleLoad(id, self._nodes[node_id], fu, fv, fw)
 
     # === degree of freedoms
 
