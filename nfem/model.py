@@ -325,46 +325,6 @@ class Model(object):
             node_key, dof_type = key
         return self.get_node(node_key).dof(dof_type)
 
-    def set_dof_state(self, dof, value):
-        """Sets the state of the dof
-
-        Parameters
-        ----------
-        dof : tuple(node_id, dof_type)
-            Dof that is modified
-        value : float
-            Value that is set at the dof
-        """
-        node_id, dof_type = dof
-        self._nodes[node_id].set_dof_state(dof_type, value)
-
-    def get_dof_state(self, dof):
-        """Sets the state of the dof
-
-        Parameters
-        ----------
-        dof : tuple(node_id, dof_type)
-            Dof that is asked
-
-        Returns
-        ----------
-        value : float
-            Value at the dof
-        """
-        return self[dof].delta
-
-    def increment_dof_state(self, dof, delta):
-        """Increment the state of the dof by a given value
-
-        Parameters
-        ----------
-        dof : tuple(node_id, dof_type)
-            Dof that is asked
-        delta : float
-            Increment of the dof value
-        """
-        self[dof].value += delta
-
     # === increment
 
     def get_dof_increment(self, dof):
