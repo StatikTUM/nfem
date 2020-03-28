@@ -30,6 +30,27 @@ class ModelStatus(Enum):
     equilibrium = 4
     eigenvector = 5
 
+
+class CompletionsView:
+    def __init__(self, dictionary):
+        self._dictionary = dictionary
+
+    def __getitem__(self, key):
+        return self._dictionary[key]
+
+    def __len__(self):
+        return self._dictionary.values().__len__()
+
+    def __iter__(self):
+        return self._dictionary.values().__iter__()
+
+    def __next__(self):
+        return self._dictionary.values().__next__()
+
+    def _ipython_key_completions_(self):
+        return list(self._dictionary.keys())
+
+
 class Model(object):
     """A Model contains all the objects that build the finite element model.
         Nodes, elements, loads, dirichlet conditions...
@@ -108,7 +129,7 @@ class Model(object):
         nodes : list
             List of all nodes in the model.
         """
-        return self._nodes.values()
+        return CompletionsView(self._nodes)
 
     def get_node(self, id):
         """Get a node by its ID.
@@ -134,7 +155,7 @@ class Model(object):
         elements : list
             List of all elements in the model.
         """
-        return self._elements.values()
+        return CompletionsView(self._elements)
 
     @property
     def structural_elements(self):
