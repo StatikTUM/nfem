@@ -189,39 +189,3 @@ class Node(object):
     @displacement.setter
     def displacement(self, value):
         self._dof_x.delta, self._dof_y.delta, self._dof_z.delta = value
-
-    def get_reference_location(self):
-        """Location of the node in the reference configuration.
-
-        Returns
-        -------
-        location : ndarray
-            Numpy array containing the reference coordinates X, Y and Z.
-        """
-        import warnings
-        warnings.warn('', warnings.DeprecationWarning)
-        return self.reference_location
-
-    def get_actual_location(self):
-        """Location of the node in the actual configuration.
-
-        Returns
-        -------
-        location : ndarray
-            Numpy array containing the actual coordinates X, Y and Z.
-        """
-        import warnings
-        warnings.warn('', warnings.DeprecationWarning)
-        return self.location
-
-    def get_displacement(self):
-        """Displacement of the node in the actual configuration.
-
-        Returns
-        -------
-        displacement : ndarray
-            A numpy array containing the displacements u, v and w.
-        """
-        import warnings
-        warnings.warn('', warnings.DeprecationWarning)
-        return self.displacement
