@@ -239,7 +239,7 @@ def show_animation(model, speed=200, block=True):
         return show_history_animation(model, speed, block)
 
 
-def show_history_animation(model, speed=200, block=True, size=(12, 12)):
+def show_history_animation(model, speed=200, block=True, size=(10, 10)):
     history = model.get_model_history()
 
     fig = Figure(figsize=size)
@@ -250,7 +250,7 @@ def show_history_animation(model, speed=200, block=True, size=(12, 12)):
     return HTML(ani.to_jshtml())
 
 
-def show_eigenvector_animation(model, speed=200, block=True, size=(12, 12)):
+def show_eigenvector_animation(model, speed=200, block=True, size=(10, 10)):
     eigenvector = model
     initial_model = model.get_initial_model()
 
@@ -284,7 +284,7 @@ def show_eigenvector_animation(model, speed=200, block=True, size=(12, 12)):
     return HTML(ani.to_jshtml())
 
 
-def show_deformation_plot(model, step=None, size=(12, 12)):
+def show_deformation_plot(model, step=None, size=(10, 10)):
     bounding_box = get_bounding_box([model])
 
     fig = Figure(figsize=size)
