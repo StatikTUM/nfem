@@ -11,6 +11,7 @@ import numpy.linalg as la
 
 from scipy.linalg import eig
 
+from nfem.dof import Dof
 from .node import Node
 from .single_load import SingleLoad
 from .truss import Truss
