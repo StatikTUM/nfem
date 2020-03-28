@@ -6,7 +6,8 @@ Authors: Thomas Oberbichler, Klaus Sautter
 import numpy as np
 import numpy.linalg as la
 
-from .element_base import ElementBase
+from nfem.element_base import ElementBase
+
 
 class Truss(ElementBase):
     """FIXME"""
@@ -58,7 +59,7 @@ class Truss(ElementBase):
 
         actual_a = self.node_a.location
         actual_b = self.node_b.location
-        
+
         return la.norm(actual_b - actual_a)
 
     def get_reference_transformMatrix(self):
@@ -105,8 +106,7 @@ class Truss(ElementBase):
 
         k_e = e * a / reference_length
 
-        return reference_transform.T @ [[ k_e, -k_e],
-                                        [-k_e,  k_e]] @ reference_transform
+        return reference_transform.T @ [[k_e, -k_e], [-k_e, k_e]] @ reference_transform
 
     def calculate_material_stiffness_matrix(self):
         """FIXME"""
@@ -119,8 +119,7 @@ class Truss(ElementBase):
 
         k_m = e * a / reference_length * (actual_length / reference_length)**2
 
-        return actual_transform.T @ [[ k_m, -k_m],
-                                     [-k_m,  k_m]] @ actual_transform
+        return actual_transform.T @ [[k_m, -k_m], [-k_m, k_m]] @ actual_transform
 
     def calculate_initial_displacement_stiffness_matrix(self):
         """FIXME"""
@@ -144,12 +143,12 @@ class Truss(ElementBase):
 
         k_g = e * a / reference_length * epsilon + prestress * a / reference_length
 
-        return np.array([[ k_g,    0,    0, -k_g,    0,    0],
-                         [   0,  k_g,    0,    0, -k_g,    0],
-                         [   0,    0,  k_g,    0,    0, -k_g],
-                         [-k_g,    0,    0,  k_g,    0,    0],
-                         [   0, -k_g,    0,    0,  k_g,    0],
-                         [   0,    0, -k_g,    0,    0,  k_g]])
+        return np.array([[k_g, 0, 0, -k_g, 0, 0],
+                         [0,  k_g, 0, 0, -k_g, 0],
+                         [0, 0,  k_g, 0, 0, -k_g],
+                         [-k_g, 0, 0,  k_g, 0, 0],
+                         [0, -k_g, 0, 0,  k_g, 0],
+                         [0, 0, -k_g, 0, 0, k_g]])
 
     def calculate_stiffness_matrix(self):
         """FIXME"""
@@ -168,7 +167,7 @@ class Truss(ElementBase):
         e_gl = (actual_length**2 - reference_length**2) / (2 * reference_length**2)
 
         return e_gl
-        
+
     def calculate_linear_strain(self):
         """FIXME"""
 
@@ -177,10 +176,10 @@ class Truss(ElementBase):
 
         reference_length = self.get_reference_length()
 
-        #project actual on reference
+        # project actual on reference
         projected_l = reference_vec @ actual_vec / reference_length
 
-        e_lin = (projected_l  -  reference_length) / reference_length
+        e_lin = (projected_l - reference_length) / reference_length
 
         return e_lin
 
@@ -198,7 +197,7 @@ class Truss(ElementBase):
 
         deformation_gradient = actual_length / reference_length
 
-        normal_force = (E * e_gl + prestress) * A * deformation_gradient 
+        normal_force = (E * e_gl + prestress) * A * deformation_gradient
 
         local_internal_forces = [-normal_force, normal_force]
 
