@@ -190,43 +190,6 @@ class Node(object):
     def displacement(self, value):
         self._dof_x.delta, self._dof_y.delta, self._dof_z.delta = value
 
-    def get_dof_state(self, dof_type):
-        """Get the current value of the given dof type.
-
-        Parameters
-        ----------
-        dof_type : string
-            Type of the dof.
-
-        Returns
-        -------
-        value : float
-            The current value of the dof type
-
-        Raises
-        ------
-        AttributeError
-            If `dof_type` does not exist.
-        """
-        return self.dof(dof_type).delta
-
-    def set_dof_state(self, dof_type, value):
-        """Update the node according to the value of the given dof type.
-
-        Parameters
-        ----------
-        dof_type : string
-            Type of the Dof.
-        value : float
-            The value of the given dof.
-
-        Raises
-        ------
-        AttributeError
-            If `dof_type` does not exist.
-        """
-        self.dof(dof_type).delta = value
-
     def get_reference_location(self):
         """Location of the node in the reference configuration.
 
