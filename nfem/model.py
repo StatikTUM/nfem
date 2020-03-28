@@ -104,10 +104,11 @@ class Model(object):
         if not skip_iterations:
             return self._previous_model
 
-        #find the most previous model that is not an iteration or prediction
+        # find the most previous model that is not an iteration or prediction
         previous_model = self._previous_model
 
-        while previous_model is not None and previous_model.status in [ModelStatus.duplicate, ModelStatus.prediction, ModelStatus.iteration]:
+        while previous_model is not None and previous_model.status in [ModelStatus.duplicate,
+                                                                       ModelStatus.prediction, ModelStatus.iteration]:
             previous_model = previous_model._previous_model
 
         return previous_model
@@ -685,7 +686,7 @@ class Model(object):
             free_count = assembler.free_dof_count
             k = np.zeros((dof_count, dof_count))
             assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
-        self.det_k =  la.det(k[:free_count,:free_count])
+        self.det_k = la.det(k[:free_count, :free_count])
         print("Det(K): {}".format(self.det_k))
 
     def solve_linear_eigenvalues(self, assembler=None):
@@ -713,7 +714,7 @@ class Model(object):
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix(linear=True))
         
         # solve eigenvalue problem
-        eigvals, eigvecs = eig((k_e[:free_count,:free_count]), -k_g[:free_count,:free_count])
+        eigvals, eigvecs = eig((k_e[:free_count, :free_count]), -k_g[:free_count, :free_count])
 
         # extract real parts of eigenvalues
         eigvals = np.array([x.real for x in eigvals])
@@ -721,24 +722,24 @@ class Model(object):
         # sort eigenvalues and vectors
         idx = eigvals.argsort()
         eigvals = eigvals[idx]
-        eigvecs = eigvecs[:,idx]
+        eigvecs = eigvecs[:, idx]
 
         # remove negative eigenvalues
         for i, eigenvalue in enumerate(eigvals):
             if eigenvalue > 0.0:
                 break
             else:
-                i+=1
+                i += 1
 
         if i == len(eigvals):
             print('System has no positive eigenvalues!')
             return
 
         eigvals = eigvals[i:]
-        eigvecs = eigvecs[:,i:]
+        eigvecs = eigvecs[:, i:]
 
         print('First linear eigenvalue: {}'.format(eigvals[0]))
-        print('First linear eigenvalue * lambda: {}'.format(eigvals[0] * self.lam)) # this is printed in TRUSS
+        print('First linear eigenvalue * lambda: {}'.format(eigvals[0] * self.lam))  # this is printed in TRUSS
         if len(eigvecs[0]) < 10:
             print('First linear eigenvector: {}'.format(eigvecs[0]))
 
@@ -783,7 +784,7 @@ class Model(object):
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
 
         # solve eigenvalue problem
-        eigvals, eigvecs = eig((k_m[:free_count,:free_count]), -k_g[:free_count,:free_count])
+        eigvals, eigvecs = eig((k_m[:free_count, :free_count]), -k_g[:free_count, :free_count])
 
         # extract real parts of eigenvalues
         eigvals = np.array([x.real for x in eigvals])
@@ -791,13 +792,13 @@ class Model(object):
         # sort eigenvalues and vectors
         idx = eigvals.argsort()
         eigvals = eigvals[idx]
-        eigvecs = eigvecs[:,idx]
+        eigvecs = eigvecs[:, idx]
 
         # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
         idx = (np.abs(eigvals - 1.0)).argmin()
 
         print('Closest eigenvalue: {}'.format(eigvals[idx]))
-        print('Closest eigenvalue * lambda: {}'.format(eigvals[idx] * self.lam)) # this is printed in TRUSS
+        print('Closest eigenvalue * lambda: {}'.format(eigvals[idx] * self.lam))  # this is printed in TRUSS
         if len(eigvecs[idx]) < 10:
             print('Closest eigenvector: {}'.format(eigvecs[idx]))
 
@@ -844,18 +845,14 @@ class Model(object):
         external_f = np.zeros(dof_count)
 
         # assemble stiffness
-        assembler.assemble_matrix(k,
-            lambda element: element.calculate_stiffness_matrix()
-        )
+        assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
 
         # assemble force
 
         for i, dof in enumerate(assembler.free_dofs):
             external_f[i] += self[dof].external_force
 
-        assembler.assemble_vector(external_f,
-            lambda element: element.calculate_external_forces()
-        )
+        assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
 
         lhs = k[:free_count, :free_count]
         rhs = external_f[:free_count] - k[:free_count, free_count:] @ v[free_count:]
@@ -932,7 +929,7 @@ class Model(object):
             If the model has not already one calculated step.
         """
         self.status = ModelStatus.prediction
-        if self.get_previous_model().get_previous_model() == None:
+        if self.get_previous_model().get_previous_model() is None:
             raise RuntimeError('predict_with_last_increment can only be used after the first step!')
 
         assembler = Assembler(self)
@@ -1056,7 +1053,6 @@ class Model(object):
         # update lambda at model
         self.lam += tangent[-1]
 
-
     def combine_prediction_with_eigenvector(self, beta):
         """Combine the prediciton with the first eigenvector
 
@@ -1094,7 +1090,7 @@ class Model(object):
 
         eigenvector = eigenvector_model.get_delta_dof_vector(assembler=assembler)
 
-        #scale eigenvector to the length of the prediction
+        # scale eigenvector to the length of the prediction
         eigenvector *= (1.0/(la.norm(eigenvector)/prediction_length))
 
         prediction = u_prediction * (1.0 - abs(beta)) + eigenvector * beta
@@ -1152,7 +1148,6 @@ class Model(object):
 
         self.lam += delta_lambda
 
-
     def get_delta_dof_vector(self, model_b=None, assembler=None):
         """gets the delta dof between this and a given model_b as a numpy array
 
@@ -1178,10 +1173,10 @@ class Model(object):
         RuntimeError
             If the model has no previous model
         """
-        if model_b == None:
+        if model_b is None:
             model_b = self.get_initial_model()
 
-        if assembler==None:
+        if assembler is None:
             assembler = Assembler(self)
 
         delta = np.zeros(assembler.dof_count)
