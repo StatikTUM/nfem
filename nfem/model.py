@@ -1247,4 +1247,4 @@ class Model(object):
 
     def _repr_html_(self):
         from nfem.visualization.notebook_animation import show_animation
-        return show_animation(self)
+        return show_animation(self).data
