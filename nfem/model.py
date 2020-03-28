@@ -91,12 +91,6 @@ class Model(object):
 
         return previous_model
 
-    def dof(self, node_id, dof_type):
-        return self.get_node(node_id).dof(dof_type)
-
-    def dof_is_active(self, dof):
-        return self.dof(*dof).is_active
-
     @property
     def load_factor(self):
         return self.lam
