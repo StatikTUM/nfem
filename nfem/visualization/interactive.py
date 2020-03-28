@@ -281,7 +281,7 @@ class MainWindow(ApplicationWindow):
             if tangential_flag:
                 model.predict_tangential(strategy=predictor, dof=dof, value=dof_value)
             else:
-                model.set_dof_state(dof, dof_value)
+                model[dof].delta = dof_value
 
         elif predictor == 'delta-dof':
             dof = model.free_dofs[options['nonlinear/predictor/dof_idx']]
@@ -289,7 +289,7 @@ class MainWindow(ApplicationWindow):
             if tangential_flag:
                 model.predict_tangential(strategy=predictor, dof=dof, value=dof_value_increment)
             else:
-                model.increment_dof_state(dof, dof_value_increment)
+                model[dof].delta += dof_value_increment
 
         elif predictor == 'arc-length':
             arclength = options['nonlinear/predictor/increment_length']

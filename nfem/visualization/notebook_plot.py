@@ -66,7 +66,7 @@ def _add_load_displacement_curve(data, model, dof, label):
     y = np.zeros(len(history))
 
     for i, model in enumerate(history):
-        x[i] = model.get_dof_state(dof)
+        x[i] = model[dof].delta
         y[i] = model.lam
 
     node_id, dof_type = dof
@@ -91,7 +91,7 @@ def _plot_load_displacement_iterations(data, model, dof, label):
     node_id, dof_type = dof
 
     for i, model in enumerate(history):
-        x[i] = model.get_dof_state(dof)
+        x[i] = model[dof].delta
         y[i] = model.lam
 
     if label is None:
@@ -122,7 +122,7 @@ def _plot_det_k_curve(data, model, dof, label):
     node_id, dof_type = dof
 
     for i, model in enumerate(history):
-        x[i] = model.get_dof_state(dof)
+        x[i] = model[dof].delta
         y[i] = model.det_k
 
     if label is None:

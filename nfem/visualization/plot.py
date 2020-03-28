@@ -275,7 +275,7 @@ def plot_load_displacement_iterations(ax, model, dof, label=None):
     node_id, dof_type = dof
 
     for i, model in enumerate(history):
-        x_data[i] = model.get_dof_state(dof)
+        x_data[i] = model[dof].delta
         y_data[i] = model.lam
 
     if label == None:
@@ -294,7 +294,7 @@ def plot_load_displacement_curve(ax, model, dof, label=None):
     node_id, dof_type = dof
 
     for i, model in enumerate(history):
-        x_data[i] = model.get_dof_state(dof)
+        x_data[i] = model[dof].delta
         y_data[i] = model.lam
 
     if label is None:
@@ -310,7 +310,7 @@ def plot_det_k_curve(ax, model, dof, label=None):
     node_id, dof_type = dof
 
     for i, model in enumerate(history):
-        x_data[i] = model.get_dof_state(dof)
+        x_data[i] = model[dof].delta
         y_data[i] = model.det_k
 
     if label is None:

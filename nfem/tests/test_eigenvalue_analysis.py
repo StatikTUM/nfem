@@ -24,10 +24,10 @@ class TestEigenvalueAnalysis(TestCase):
 
         # test eigenvector [0.0, 1.0]
         eigenvector_model = limit_model.first_eigenvector_model
-        u_actual = eigenvector_model.get_dof_state(('B','u'))
+        u_actual = eigenvector_model[('B', 'u')].delta
         u_expected = 0.0
         assert_almost_equal(u_actual, u_expected)
-        v_actual = eigenvector_model.get_dof_state(('B','v'))
+        v_actual = eigenvector_model[('B', 'v')].delta
         v_expected = 1.0
         assert_almost_equal(v_actual, v_expected)
 
@@ -45,10 +45,10 @@ class TestEigenvalueAnalysis(TestCase):
 
         # test eigenvector [1.0, 0.0]
         eigenvector_model = bifurcation_model.first_eigenvector_model
-        u_actual = eigenvector_model.get_dof_state(('B','u'))
+        u_actual = eigenvector_model[('B', 'u')].delta
         u_expected = 1.0
         assert_almost_equal(u_actual, u_expected)
-        v_actual = eigenvector_model.get_dof_state(('B','v'))
+        v_actual = eigenvector_model[('B', 'v')].delta
         v_expected = 0.0
         assert_almost_equal(v_actual, v_expected)
         

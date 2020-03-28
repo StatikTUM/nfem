@@ -39,6 +39,6 @@ class TestBranchSwitching(TestCase):
         assert_almost_equal(actual, expected, decimal=4)
 
         # compare horizontal displacement
-        actual = predicted_model.get_dof_state(dof=('B','u'))
+        actual = predicted_model[('B', 'u')].delta
         expected = 0.031161882052543888
         assert_almost_equal(actual, expected)
