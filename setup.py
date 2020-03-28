@@ -25,6 +25,7 @@ setup(
     packages=['nfem', 'nfem.visualization'],
     python_requires='>3.6',
     install_requires=[
+        'ipython',
         'matplotlib',
         'numpy',
         'plotly',
