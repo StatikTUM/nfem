@@ -627,7 +627,7 @@ class Model(object):
 
             for i, dof in enumerate(assembler.free_dofs):
                 external_f[i] += self[dof].external_force
-                
+
             assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
             assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
 
@@ -712,7 +712,7 @@ class Model(object):
         print('Linearized prebuckling (LPB) analysis ...')
         assembler.assemble_matrix(k_e, lambda element: element.calculate_elastic_stiffness_matrix())
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix(linear=True))
-        
+
         # solve eigenvalue problem
         eigvals, eigvecs = eig((k_e[:free_count, :free_count]), -k_g[:free_count, :free_count])
 

@@ -10,10 +10,10 @@ from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 import matplotlib.animation as anim
 
-from .plot_symbols import get_force_arrow, get_tet4_polygons, get_dof_arrow
+from nfem.visualization.plot_symbols import get_force_arrow, get_tet4_polygons, get_dof_arrow
 
-from ..truss import Truss
-from ..model import ModelStatus
+from nfem.truss import Truss
+from nfem.model import ModelStatus
 
 
 def get_bounding_box(models):
@@ -51,8 +51,12 @@ def plot_scaled_model(ax, model, color, **options):
             node_a = element.node_a
             node_b = element.node_b
 
-            b = [node_b.reference_x+scaling_factor*node_b.u, node_b.reference_y+scaling_factor*node_b.v, node_b.reference_z+scaling_factor*node_b.w]
-            a = [node_a.reference_x+scaling_factor*node_a.u, node_a.reference_y+scaling_factor*node_a.v, node_a.reference_z+scaling_factor*node_a.w]
+            b = [node_b.reference_x+scaling_factor*node_b.u,
+                 node_b.reference_y+scaling_factor*node_b.v,
+                 node_b.reference_z+scaling_factor*node_b.w]
+            a = [node_a.reference_x+scaling_factor*node_a.u,
+                 node_a.reference_y+scaling_factor*node_a.v,
+                 node_a.reference_z+scaling_factor*node_a.w]
 
             lines.append([a, b])
 

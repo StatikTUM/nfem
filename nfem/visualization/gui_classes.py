@@ -4,12 +4,11 @@ Helper classes to be used in interactive.py
 
 import numpy as np
 
-from .python_ui import (Widget, Figure, FigureCanvasQTAgg, NavigationToolbar2QT,
-                        QtWidgets)
-from .plot import (plot_model, plot_bounding_cube, plot_history_curve,
-                   plot_crosshair, plot_scaled_model, get_bounding_box)
-from .plot import animate_model
-from ..assembler import Assembler
+from nfem.visualization.python_ui import Widget, Figure, FigureCanvasQTAgg, NavigationToolbar2QT, QtWidgets
+from nfem.visualization.plot import plot_model, plot_bounding_cube, plot_history_curve, plot_crosshair, plot_scaled_model, get_bounding_box
+from nfem.visualization.plot import animate_model
+from nfem.assembler import Assembler
+
 
 class AnalysisTab(Widget):
     def build(self, builder):
@@ -206,6 +205,7 @@ class LoadControlConstraintSettings(Widget):
     def build(self, builder):
         pass
 
+
 class DisplacementControlConstraintSettings(Widget):
     def build(self, builder):
         # get the free dofs from the model
@@ -215,10 +215,10 @@ class DisplacementControlConstraintSettings(Widget):
             items=dof_strings,
             option=builder.context.options['nonlinear/constraint/dof_idx'])
 
+
 class ArclengthConstaintSettings(Widget):
     def build(self, builder):
         pass
-
 
 
 class NewtonRaphsonGroup(Widget):
@@ -255,12 +255,10 @@ class LinearLoadFactorGroup(Widget):
             option=builder.context.options['linear/lambda'])
 
 
-
 class PredefinedSettingsGroup(Widget):
     def build(self, builder):
         builder.add_label(label="Predictor: Arclength")
         builder.add_label(label="Constraint: Arclength")
-
 
 
 class BracketingGroup(Widget):
@@ -278,7 +276,6 @@ class BracketingGroup(Widget):
             minimum=-10,
             maximum=-1,
             option=builder.context.options['bracketing/tolerance_power'])
-
 
 
 class VisualisationTab(Widget):
@@ -300,6 +297,7 @@ class VisualisationTab(Widget):
 
     def show_stiffness_matrix(self, main_window):
         main_window.show_dialog(StiffnessMatrixDialog, title='Stiffness Matrix')
+
 
 class StiffnessMatrixDialog(Widget):
     def build(self, builder):
@@ -324,6 +322,7 @@ class StiffnessMatrixDialog(Widget):
         builder.add_array(
             readonly=True,
             option=builder.context.options['stiffness/matrix'])
+
 
 def set_stiffness_matrix(model, debugger=print, **options):
     if options['stiffness/system_idx'].value == 0:
@@ -434,6 +433,7 @@ class AnimationWindow(Widget):
         )
         self.show()
 
+
 class FigureCanvas(FigureCanvasQTAgg):
     """
     subclass of FigureCanvasQTAgg to be able to use
@@ -441,6 +441,7 @@ class FigureCanvas(FigureCanvasQTAgg):
     """
     def __call__(self):
         return self
+
     def build(self, builder):
         pass
 
@@ -616,19 +617,24 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
 class LoadDisplacementLogger(object):
     def __init__(self, dof):
         self.dof = dof
+
     @property
     def title(self):
         node_id, dof_type = self.dof
         return f'Load-displacement diagram for {dof_type} at node {node_id}'
+
     @property
     def xlabel(self):
         node_id, dof_type = self.dof
         return f'{dof_type} at node {node_id}'
+
     @property
     def ylabel(self):
         return 'Load factor (\u03BB)'
+
     def __call__(self, model):
         return model[self.dof].delta, model.lam
+
 
 class CustomLogger(object):
     def __init__(self, x_fct, y_fct, x_label, y_label):
@@ -636,8 +642,10 @@ class CustomLogger(object):
         self.y_fct = y_fct
         self.xlabel = x_label
         self.ylabel = y_label
+
     @property
     def title(self):
         return '{} : {}'.format(self.xlabel, self.ylabel)
+
     def __call__(self, model):
         return self.x_fct(model), self.y_fct(model)
