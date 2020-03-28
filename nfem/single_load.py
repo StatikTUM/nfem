@@ -22,11 +22,10 @@ class SingleLoad(ElementBase):
     def dofs(self):
         """FIXME"""
 
-        node_id = self.node.id
-
-        return [(node_id, 'u'), (node_id, 'v'), (node_id, 'w')]
+        node = self.node
+        return [node._dof_x, node._dof_y, node._dof_z]
 
     def calculate_external_forces(self):
         """FIXME"""
-
+        
         return np.array([self.fu, self.fv, self.fw])
