@@ -180,7 +180,7 @@ class Model(object):
 
         >>> model.add_node(id='B', x=5, y=2, z=0)
         """
-        if id in self._nodes:
+        if id in self.nodes:
             raise RuntimeError('The model already contains a node with id {}'.format(id))
 
         node = Node(id, x, y, z)
@@ -225,16 +225,16 @@ class Model(object):
 
         >>> model.add_truss(node_a='A', node_a='B', youngs_modulus=20, area=1)
         """
-        if id in self._elements:
+        if id in self.elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))
 
-        if node_a not in self._nodes:
+        if node_a not in self.nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_a))
 
-        if node_b not in self._nodes:
+        if node_b not in self.nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_b))
 
-        element = Truss(id, self._nodes[node_a], self._nodes[node_b], youngs_modulus, area)
+        element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area)
 
         self._elements[id] = element
 
