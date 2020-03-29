@@ -300,7 +300,7 @@ class Model(object):
         if node_id not in self._nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
 
-        node = self.get_node(node_id)
+        node = self.nodes[node_id]
 
         for dof_type in dof_types:
             dof = node.dof(dof_type)
@@ -314,7 +314,7 @@ class Model(object):
             node_key, dof_type = key.key
         else:
             node_key, dof_type = key
-        return self.get_node(node_key).dof(dof_type)
+        return self.nodes[node_key].dof(dof_type)
 
     # === increment
 

@@ -180,7 +180,7 @@ def plot_dof_higlight(ax, model, initial, **options):
 
     node_id, dof_type = dof
 
-    node = model.get_node(node_id)
+    node = model.nodes[node_id]
 
     dx, dy, dz = 0, 0, 0
     if dof_type == 'u':

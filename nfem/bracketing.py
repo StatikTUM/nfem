@@ -194,8 +194,8 @@ def bisection(model, **options):
     tmp_model = lower_limit_model.get_duplicate()
 
     for node in tmp_model.nodes:
-        lower_node = lower_limit_model.get_node(id=node.id)
-        upper_node = upper_limit_model.get_node(id=node.id)
+        lower_node = lower_limit_model.nodes[node.id]
+        upper_node = upper_limit_model.nodes[node.id]
 
         node.u = (lower_node.u + upper_node.u)/2
         node.v = (lower_node.v + upper_node.v)/2
