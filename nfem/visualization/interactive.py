@@ -245,14 +245,14 @@ class MainWindow(ApplicationWindow):
         self.redraw()
 
     def solve_linear(self, model, lam):
-        model.lam = lam
+        model.load_factor = lam
         model.perform_linear_solution_step()
         return model
 
     def solve_LPB(self, model, lam):
         if model.get_previous_model().get_previous_model() is not None:
             raise RuntimeError('LPB can only be done on the initial model')
-        model.lam = lam
+        model.load_factor = lam
         model.perform_linear_solution_step()
         model.solve_linear_eigenvalues()
         return model
@@ -266,14 +266,14 @@ class MainWindow(ApplicationWindow):
             if tangential_flag:
                 model.predict_tangential(strategy=predictor, value=value)
             else:
-                model.lam = value
+                model.load_factor = value
 
         elif predictor == 'delta-lambda':
             value = options['nonlinear/predictor/delta_lambda']
             if tangential_flag:
                 model.predict_tangential(strategy=predictor, value=value)
             else:
-                model.lam += value
+                model.load_factor += value
 
         elif predictor == 'dof':
             dof = model.free_dofs[options['nonlinear/predictor/dof_idx']]

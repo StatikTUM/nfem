@@ -2,34 +2,34 @@
 Tests for the Truss element
 """
 
+import nfem
 import pytest
 from numpy.testing import assert_equal, assert_almost_equal
-from .. import Node, Truss
 
 
 @pytest.fixture
 def undeformed_truss():
-    node_a = Node('A', 1, 2, 3)
-    node_b = Node('B', 4, 6, 3)
-    return Truss('1', node_a, node_b, 2, 1)
+    node_a = nfem.Node('A', 1, 2, 3)
+    node_b = nfem.Node('B', 4, 6, 3)
+    return nfem.Truss('1', node_a, node_b, 2, 1)
 
 
 @pytest.fixture
 def truss():
-    node_a = Node('A', 1, 2, 3)
-    node_b = Node('B', 4, 6, 3)
+    node_a = nfem.Node('A', 1, 2, 3)
+    node_b = nfem.Node('B', 4, 6, 3)
     node_b.u = 3
     node_b.v = 4
     node_b.w = 0
-    return Truss('1', node_a, node_b, 2, 1)
+    return nfem.Truss('1', node_a, node_b, 2, 1)
 
 
 @pytest.fixture
 def truss_xls():
-    node_a = Node('A', 0, 0, 0)
-    node_b = Node('B', 1, 2, 3)
+    node_a = nfem.Node('A', 0, 0, 0)
+    node_b = nfem.Node('B', 1, 2, 3)
     node_b.u += 0.1
-    return Truss('1', node_a, node_b, 1, 1)
+    return nfem.Truss('1', node_a, node_b, 1, 1)
 
 
 def test_truss_ref_length(truss):
@@ -51,7 +51,7 @@ def test_truss_green_lagrange_strain_is_zero(undeformed_truss):
 def test_truss_stiffness(truss_xls):
     k_actual = truss_xls.calculate_stiffness_matrix()
 
-    # values from Truss.xls
+    # values from nfem.Truss.xls
     k_expected = [
         [ 0.025103466943026,  0.041998194741606,  0.062997292612409, -0.025103466943026, -0.041998194741606, -0.062997292612409],
         [ 0.041998194741606,  0.07836481431434 ,  0.114540532      , -0.041998194741606, -0.07836481431434 , -0.114540532      ],
@@ -67,7 +67,7 @@ def test_truss_stiffness(truss_xls):
 def test_truss_elastic_stiffness(truss_xls):
     k_e_actual = truss_xls.calculate_elastic_stiffness_matrix()
 
-    # values from Truss.xls
+    # values from nfem.Truss.xls
     k_e_expected = [
         [ 0.019090089,  0.038180177,  0.057270266, -0.019090089, -0.038180177, -0.057270266],
         [ 0.038180177,  0.076360355,  0.114540532, -0.038180177, -0.076360355, -0.114540532],
@@ -83,7 +83,7 @@ def test_truss_elastic_stiffness(truss_xls):
 def test_truss_initial_displacement_stiffness(truss_xls):
     k_u_actual = truss_xls.calculate_initial_displacement_stiffness_matrix()
 
-    # values from Truss.xls
+    # values from nfem.Truss.xls
     k_u_expected = [
         [ 0.004008918628686,  0.003818017741606,  0.005727026612409, -0.004008918628686, -0.003818017741606, -0.005727026612409],
         [ 0.003818017741606,  0.000000000000000,  0.000000000000000, -0.003818017741606,  0.000000000000000,  0.000000000000000],
@@ -99,7 +99,7 @@ def test_truss_initial_displacement_stiffness(truss_xls):
 def test_truss_geometric_stiffness(truss_xls):
     k_g_actual = truss_xls.calculate_geometric_stiffness_matrix()
 
-    # values from Truss.xls
+    # values from nfem.Truss.xls
     k_g_expected = [
         [ 2.00445931434E-03,  0.00000000000E+00,  0.00000000000E+00, -2.00445931434E-03,  0.00000000000E+00,  0.00000000000E+00],
         [ 0.00000000000E+00,  2.00445931434E-03,  0.00000000000E+00,  0.00000000000E+00, -2.00445931434E-03,  0.00000000000E+00],

@@ -4,7 +4,7 @@ Author: Thomas Oberbichler
 """
 
 
-class Assembler(object):
+class Assembler:
     """An Assembler helps to generate system matrices/vectors from elements.
 
     Attributes

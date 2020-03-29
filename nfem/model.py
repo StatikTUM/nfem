@@ -3,6 +3,7 @@
 Authors: Thomas Oberbichler, Armin Geiser
 """
 
+from collections import OrderedDict
 from copy import deepcopy
 from enum import Enum
 
@@ -21,37 +22,7 @@ from nfem.newton_raphson import newton_raphson_solve
 from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 
 
-class ModelStatus(Enum):
-    """Enum for the model status """
-    initial = 0
-    duplicate = 1
-    prediction = 2
-    iteration = 3
-    equilibrium = 4
-    eigenvector = 5
-
-
-class CompletionsView:
-    def __init__(self, dictionary):
-        self._dictionary = dictionary
-
-    def __getitem__(self, key):
-        return self._dictionary[key]
-
-    def __len__(self):
-        return self._dictionary.values().__len__()
-
-    def __iter__(self):
-        return self._dictionary.values().__iter__()
-
-    def __next__(self):
-        return self._dictionary.values().__next__()
-
-    def _ipython_key_completions_(self):
-        return list(self._dictionary.keys())
-
-
-class Model(object):
+class Model:
     """A Model contains all the objects that build the finite element model.
         Nodes, elements, loads, dirichlet conditions...
 
@@ -80,113 +51,13 @@ class Model(object):
 
         self.name = name
         self.status = ModelStatus.initial
-        self._nodes = dict()
-        self._elements = dict()
-        self.lam = 0.0
+        self.nodes = KeyCollection()
+        self.elements = KeyCollection()
+        self.load_factor = 0.0
         self._previous_model = None
         self.det_k = None
         self.first_eigenvalue = None
         self.first_eigenvector_model = None
-
-    def get_previous_model(self, skip_iterations=True):
-        """Get the previous model of the current model.
-
-        Parameters
-        ----------
-        skip_iterations : bool
-            Flag if iteration or predicted previous models should be skipped
-
-        Returns
-        -------
-        model : Model
-            The previous model object
-        """
-        if not skip_iterations:
-            return self._previous_model
-
-        # find the most previous model that is not an iteration or prediction
-        previous_model = self._previous_model
-
-        while previous_model is not None and previous_model.status in [ModelStatus.duplicate,
-                                                                       ModelStatus.prediction, ModelStatus.iteration]:
-            previous_model = previous_model._previous_model
-
-        return previous_model
-
-    @property
-    def load_factor(self):
-        return self.lam
-
-    @load_factor.setter
-    def load_factor(self, value):
-        self.lam = value
-
-    @property
-    def nodes(self):
-        """Get a list of all nodes in the model.
-
-        Returns
-        -------
-        nodes : list
-            List of all nodes in the model.
-        """
-        return CompletionsView(self._nodes)
-
-    def get_node(self, id):
-        """Get a node by its ID.
-
-        Parameters
-        ----------
-        id : int or str
-            ID of the node.
-
-        Returns
-        -------
-        node : list
-            Node with the given ID.
-        """
-        return self._nodes[id]
-
-    @property
-    def elements(self):
-        """Get a list of all elements in the model.
-
-        Returns
-        -------
-        elements : list
-            List of all elements in the model.
-        """
-        return CompletionsView(self._elements)
-
-    @property
-    def structural_elements(self):
-        """
-        FIXME
-        """
-        elements = []
-        for element in self.elements:
-            if isinstance(element, Truss):
-                elements.append(element)
-        return elements
-
-    def get_element(self, id):
-        """Get an element by its ID.
-
-        Parameters
-        ----------
-        id : int or str
-            ID of the element.
-
-        Returns
-        -------
-        element : list
-            Element with the given ID.
-        """
-        return self._elements[id]
-
-    @property
-    def free_dofs(self):
-        return Assembler(self).free_dofs
 
     # === modeling
 
@@ -215,12 +86,12 @@ class Model(object):
 
         >>> model.add_node(id='B', x=5, y=2, z=0)
         """
-        if id in self._nodes:
+        if id in self.nodes:
             raise RuntimeError('The model already contains a node with id {}'.format(id))
 
         node = Node(id, x, y, z)
 
-        self._nodes[id] = node
+        self.nodes._add(node)
 
         if 'x' in support:
             node.dof('u').is_active = False
@@ -233,7 +104,7 @@ class Model(object):
         node.dof('v').external_force = fy
         node.dof('w').external_force = fz
 
-    def add_truss_element(self, id, node_a, node_b, youngs_modulus, area):
+    def add_truss(self, id, node_a, node_b, youngs_modulus, area):
         """Add a three dimensional truss element to the model.
 
         Parameters
@@ -258,54 +129,20 @@ class Model(object):
         --------
         Add a truss element from node `A` to node `B`:
 
-        >>> model.add_truss_element(node_a='A', node_a='B', youngs_modulus=20, area=1)
+        >>> model.add_truss(node_a='A', node_a='B', youngs_modulus=20, area=1)
         """
-        if id in self._elements:
+        if id in self.elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))
 
-        if node_a not in self._nodes:
+        if node_a not in self.nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_a))
 
-        if node_b not in self._nodes:
+        if node_b not in self.nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_b))
 
-        element = Truss(id, self._nodes[node_a], self._nodes[node_b], youngs_modulus, area)
+        element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area)
 
-        self._elements[id] = element
-
-    def add_dirichlet_condition(self, node_id, dof_types, value):
-        """Apply a dirichlet condition to the given dof types of a node.
-
-        Parameters
-        ----------
-        id : int or str
-            Unique ID of the element.
-        node_id : int or str
-            ID of the node.
-        dof_types : list or str
-            List with the dof types
-        value : float
-            Value of the boundary condition.
-
-        Examples
-        --------
-        Add a support for the vertical displacement `v` at node `A`:
-
-        >>> model.add_dirichlet_condition(node_id='A', dof_types='v', value=0)
-
-        Lock all displacements (`u`, `v` and `w`) for a fixed support:
-
-        >>> model.add_dirichlet_condition(node_id='B', dof_types='uvw', value=0)
-        """
-        if node_id not in self._nodes:
-            raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
-
-        node = self.get_node(node_id)
-
-        for dof_type in dof_types:
-            dof = node.dof(dof_type)
-            dof.is_active = False
-            dof.delta = value
+        self.elements._add(element)
 
     # === degree of freedoms
 
@@ -314,7 +151,11 @@ class Model(object):
             node_key, dof_type = key.key
         else:
             node_key, dof_type = key
-        return self.get_node(node_key).dof(dof_type)
+        return self.nodes[node_key].dof(dof_type)
+
+    @property
+    def free_dofs(self):
+        return Assembler(self).free_dofs
 
     # === increment
 
@@ -352,8 +193,8 @@ class Model(object):
         if self.get_previous_model() is None:
             return 0.0
 
-        current_value = self.lam
-        previous_value = self.get_previous_model().lam
+        current_value = self.load_factor
+        previous_value = self.get_previous_model().load_factor
 
         return current_value - previous_value
 
@@ -384,6 +225,31 @@ class Model(object):
         return la.norm(increment)
 
     # === model history
+
+    def get_previous_model(self, skip_iterations=True):
+        """Get the previous model of the current model.
+
+        Parameters
+        ----------
+        skip_iterations : bool
+            Flag if iteration or predicted previous models should be skipped
+
+        Returns
+        -------
+        model : Model
+            The previous model object
+        """
+        if not skip_iterations:
+            return self._previous_model
+
+        # find the most previous model that is not an iteration or prediction
+        previous_model = self._previous_model
+
+        while previous_model is not None and previous_model.status in [ModelStatus.duplicate,
+                                                                       ModelStatus.prediction, ModelStatus.iteration]:
+            previous_model = previous_model._previous_model
+
+        return previous_model
 
     def get_initial_model(self):
         """Gets the initial model of this model.
@@ -495,14 +361,14 @@ class Model(object):
 
     def perform_linear_solution_step(self):
         """Performs a linear solution step on the model.
-            It uses the member variable `lam` as load factor.
+            It uses the current load factor.
             The results are stored at the dofs and used to update the current
             coordinates of the nodes.
         """
 
         print("\n=================================")
         print("Start linear solution step...")
-        print("lambda : {}".format(self.lam))
+        print("lambda : {}".format(self.load_factor))
 
         assembler = Assembler(self)
 
@@ -521,9 +387,8 @@ class Model(object):
             f[i] += self[dof].external_force
 
         assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
-        assembler.assemble_vector(f, lambda element: element.calculate_external_forces())
 
-        f *= self.lam
+        f *= self.load_factor
 
         free_count = assembler.free_dof_count
 
@@ -613,7 +478,7 @@ class Model(object):
                 self[dof].delta = x[index]
 
             # update lambda
-            self.lam = x[-1]
+            self.load_factor = x[-1]
 
             # initialize with zeros
             k = np.zeros((dof_count, dof_count))
@@ -628,7 +493,6 @@ class Model(object):
             for i, dof in enumerate(assembler.free_dofs):
                 external_f[i] += self[dof].external_force
 
-            assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
             assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
 
             # assemble left and right hand side for newton raphson
@@ -638,7 +502,7 @@ class Model(object):
             # mechanical system
             lhs[:free_count, :free_count] = k[:free_count, :free_count]
             lhs[:free_count, -1] = -external_f[:free_count]
-            rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
+            rhs[:free_count] = internal_f[:free_count] - self.load_factor * external_f[:free_count]
 
             # assemble contribution from constraint
             constraint.calculate_derivatives(self, lhs[-1, :])
@@ -651,7 +515,7 @@ class Model(object):
         for index, dof in enumerate(assembler.free_dofs):
             x[index] = self[dof].delta
 
-        x[-1] = self.lam
+        x[-1] = self.load_factor
 
         # solve newton raphson
         x, n_iter = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
@@ -739,7 +603,7 @@ class Model(object):
         eigvecs = eigvecs[:, i:]
 
         print('First linear eigenvalue: {}'.format(eigvals[0]))
-        print('First linear eigenvalue * lambda: {}'.format(eigvals[0] * self.lam))  # this is printed in TRUSS
+        print('First linear eigenvalue * lambda: {}'.format(eigvals[0] * self.load_factor))  # this is printed in TRUSS
         if len(eigvecs[0]) < 10:
             print('First linear eigenvector: {}'.format(eigvecs[0]))
 
@@ -752,7 +616,7 @@ class Model(object):
         model.det_k = None
         model.first_eigenvalue = None
         model.first_eigenvector_model = None
-        model.lam = None
+        model.load_factor = None
 
         for index, dof in enumerate(assembler.free_dofs):
             model[dof].delta = eigvecs[index][0]
@@ -798,7 +662,7 @@ class Model(object):
         idx = (np.abs(eigvals - 1.0)).argmin()
 
         print('Closest eigenvalue: {}'.format(eigvals[idx]))
-        print('Closest eigenvalue * lambda: {}'.format(eigvals[idx] * self.lam))  # this is printed in TRUSS
+        print('Closest eigenvalue * lambda: {}'.format(eigvals[idx] * self.load_factor))  # this is printed in TRUSS
         if len(eigvecs[idx]) < 10:
             print('Closest eigenvector: {}'.format(eigvecs[idx]))
 
@@ -811,7 +675,7 @@ class Model(object):
         model.det_k = None
         model.first_eigenvalue = None
         model.first_eigenvector_model = None
-        model.lam = None
+        model.load_factor = None
 
         for index, dof in enumerate(assembler.free_dofs):
             model[dof].delta = eigvecs[index][idx]
@@ -852,8 +716,6 @@ class Model(object):
         for i, dof in enumerate(assembler.free_dofs):
             external_f[i] += self[dof].external_force
 
-        assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
-
         lhs = k[:free_count, :free_count]
         rhs = external_f[:free_count] - k[:free_count, free_count:] @ v[free_count:]
 
@@ -875,7 +737,7 @@ class Model(object):
             Value for the new load factor lambda.
         """
         self.status = ModelStatus.prediction
-        self.lam = value
+        self.load_factor = value
 
     def predict_load_increment(self, value):
         """Predicts the solution by incrementing lambda
@@ -886,7 +748,7 @@ class Model(object):
             Value that is used to increment the load factor lambda.
         """
         self.status = ModelStatus.prediction
-        self.lam += value
+        self.load_factor += value
 
     def predict_dof_state(self, dof, value):
         """Predicts the solution by predictor_method the dof
@@ -950,7 +812,7 @@ class Model(object):
             self[dof].delta += last_increment[index]
 
         # update lam at model
-        self.lam += last_increment[-1]
+        self.load_factor += last_increment[-1]
 
     def predict_tangential(self, strategy, **options):
         """ Make a tangential prediction
@@ -984,7 +846,7 @@ class Model(object):
         if strategy == 'lambda':
             prescribed_lam = options['value']
 
-            delta_lambda = prescribed_lam - self.lam
+            delta_lambda = prescribed_lam - self.load_factor
             factor = delta_lambda
 
         elif strategy == 'delta-lambda':
@@ -1051,7 +913,7 @@ class Model(object):
             self[dof].delta += tangent[index]
 
         # update lambda at model
-        self.lam += tangent[-1]
+        self.load_factor += tangent[-1]
 
     def combine_prediction_with_eigenvector(self, beta):
         """Combine the prediciton with the first eigenvector
@@ -1105,7 +967,7 @@ class Model(object):
             self[dof].delta += delta_prediction[index]
 
         # update lambda at model
-        self.lam += delta_lam
+        self.load_factor += delta_lam
 
     def scale_prediction(self, factor):
         """scale the prediction with a factor
@@ -1138,7 +1000,7 @@ class Model(object):
 
         delta_dof_vector = self.get_delta_dof_vector(previous_model, assembler=assembler)
 
-        delta_lambda = self.lam - previous_model.lam
+        delta_lambda = self.load_factor - previous_model.load_factor
 
         delta_dof_vector *= (factor - 1.0)
         delta_lambda *= (factor - 1.0)
@@ -1146,7 +1008,7 @@ class Model(object):
         for i, dof in enumerate(assembler.free_dofs):
             self[dof].delta += delta_dof_vector[i]
 
-        self.lam += delta_lambda
+        self.load_factor += delta_lambda
 
     def get_delta_dof_vector(self, model_b=None, assembler=None):
         """gets the delta dof between this and a given model_b as a numpy array
@@ -1193,10 +1055,48 @@ class Model(object):
 
         for i, self in enumerate(history):
             data[0, i] = self[dof].delta
-            data[1, i] = self.lam
+            data[1, i] = self.load_factor
 
         return data
 
     def _repr_html_(self):
         from nfem.visualization.notebook_animation import show_animation
         return show_animation(self).data
+
+
+class ModelStatus(Enum):
+    """Enum for the model status """
+    initial = 0
+    duplicate = 1
+    prediction = 2
+    iteration = 3
+    equilibrium = 4
+    eigenvector = 5
+
+
+class KeyCollection:
+    def __init__(self):
+        self._dictionary = OrderedDict()
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list(self._dictionary.values())[key]
+        return self._dictionary[key]
+
+    def _add(self, value):
+        self._dictionary[value.id] = value
+
+    def __contains__(self, key):
+        return self._dictionary.__contains__(key)
+
+    def __len__(self):
+        return self._dictionary.values().__len__()
+
+    def __iter__(self):
+        return self._dictionary.values().__iter__()
+
+    def __next__(self):
+        return self._dictionary.values().__next__()
+
+    def _ipython_key_completions_(self):
+        return list(self._dictionary.keys())

@@ -6,10 +6,8 @@ Authors: Thomas Oberbichler, Klaus Sautter
 import numpy as np
 import numpy.linalg as la
 
-from nfem.element_base import ElementBase
 
-
-class Truss(ElementBase):
+class Truss:
     """FIXME"""
 
     def __init__(self, id, node_a, node_b, youngs_modulus, area, prestress=0):

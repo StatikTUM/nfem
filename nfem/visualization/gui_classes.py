@@ -301,7 +301,7 @@ class VisualisationTab(Widget):
 
 class StiffnessMatrixDialog(Widget):
     def build(self, builder):
-        element_ids = ['Element '+str(element.id) for element in builder.context.model.structural_elements]
+        element_ids = ['Element '+str(element.id) for element in builder.context.model.elements]
         systems = ['Total System']
         systems.extend(element_ids)
         builder.add_combobox(
@@ -349,9 +349,7 @@ def set_stiffness_matrix(model, debugger=print, **options):
         debugger(str(k[:assembler.free_dof_count, :assembler.free_dof_count]) + '\n')
 
     else:
-        element = model.structural_elements[
-            options['stiffness/system_idx'].value - 1
-            ]
+        element = model.elements[options['stiffness/system_idx'].value - 1]
 
         if options['stiffness/component_idx'].value == 0:
             k = element.calculate_stiffness_matrix()
@@ -564,7 +562,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
             plot_crosshair(
                 ax=ax2d,
                 x=parent.model[dof].delta,
-                y=parent.model.lam,
+                y=parent.model.load_factor,
                 linestyle='-.',
                 color='tab:blue',
                 linewidth=0.75)
@@ -601,7 +599,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         if options['plot/eigenvalue_flag']:
             logger = CustomLogger(
                 x_fct=lambda model: model[dof].delta,
-                y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.lam,
+                y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.load_factor,
                 x_label=f'{dof[1]} at node {dof[0]}',
                 y_label='Eigenvalue')
             plot_history_curve(
@@ -614,7 +612,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
 
 
 # == Loggers to be used in plots
-class LoadDisplacementLogger(object):
+class LoadDisplacementLogger:
     def __init__(self, dof):
         self.dof = dof
 
@@ -633,10 +631,10 @@ class LoadDisplacementLogger(object):
         return 'Load factor (\u03BB)'
 
     def __call__(self, model):
-        return model[self.dof].delta, model.lam
+        return model[self.dof].delta, model.load_factor
 
 
-class CustomLogger(object):
+class CustomLogger:
     def __init__(self, x_fct, y_fct, x_label, y_label):
         self.x_fct = x_fct
         self.y_fct = y_fct

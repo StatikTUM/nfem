@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
     """Finds next critical point
 
@@ -89,15 +90,13 @@ def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
         print('Bracketing step {}'.format(step))
 
         if not in_min_max and np.sign(det_k_0) == np.sign(det_k_1) and np.sign(delta_0) == np.sign(delta_1):
-
             print('  Arclength step...')
 
             model_0 = model_0.get_duplicate()
 
             model_0.predict_tangential(strategy="arc-length")
 
-            model_0.perform_non_linear_solution_step(strategy='arc-length-control',
-                                                    **options)
+            model_0.perform_non_linear_solution_step(strategy='arc-length-control', **options)
 
         elif bisectioning or np.sign(det_k_0) != np.sign(det_k_1):
             # sign of the determinant changed, target is between det_k_1 and det_k_0
@@ -123,7 +122,6 @@ def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
 
         delta_1 = det_k_1 - det_k_2
         delta_0 = det_k_0 - det_k_1
-
 
     if not success:
         msg = 'Bracketing: No critical point found!'
@@ -156,9 +154,9 @@ def minmax(model, **options):
     denom = (x1 - x2) * (x1 - x3) * (x2 - x3)
     A = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom
     B = (x3*x3 * (y1 - y2) + x2*x2 * (y3 - y1) + x1*x1 * (y2 - y3)) / denom
-    C = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom
-    xv = -B / (2*A)
-    #yv = C - B*B / (4*A)
+    # C = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom
+    xv = -B / (2 * A)
+    # yv = C - B*B / (4*A)
 
     if xv >= x3:
         return model_3
@@ -196,14 +194,14 @@ def bisection(model, **options):
     tmp_model = lower_limit_model.get_duplicate()
 
     for node in tmp_model.nodes:
-        lower_node = lower_limit_model.get_node(id=node.id)
-        upper_node = upper_limit_model.get_node(id=node.id)
+        lower_node = lower_limit_model.nodes[node.id]
+        upper_node = upper_limit_model.nodes[node.id]
 
         node.u = (lower_node.u + upper_node.u)/2
         node.v = (lower_node.v + upper_node.v)/2
         node.w = (lower_node.w + upper_node.w)/2
 
-    tmp_model.lam = (lower_limit_model.lam + upper_limit_model.lam)/2
+    tmp_model.load_factor = (lower_limit_model.load_factor + upper_limit_model.load_factor) / 2
 
     tmp_model.perform_non_linear_solution_step(strategy='arc-length-control', **options)
 

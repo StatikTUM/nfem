@@ -15,7 +15,7 @@ from nfem.truss import Truss
 from nfem.model import ModelStatus
 
 
-class Plot2D(object):
+class Plot2D:
     def __init__(self, x_label='Displacement', y_label=r'Load factor ($\lambda$)',
                  title='Load-displacement diagram'):
         self.fig, self.ax = plt.subplots()
@@ -72,13 +72,13 @@ class Plot2D(object):
         plt.show(block=block)
 
 
-class Animation3D(object):
+class Animation3D:
     def show(self, model, speed=200):
         print("WARNING: Please use the function 'show_animation' instead of this class!")
         self.animation = show_animation(model, speed)
 
 
-class DeformationPlot3D(object):
+class DeformationPlot3D:
     def show(self, model, step=None):
         print("WARNING: Please use the function 'show_deformation_plot' instead of this class!")
         show_deformation_plot(model, step)
@@ -180,7 +180,7 @@ def plot_dof_higlight(ax, model, initial, **options):
 
     node_id, dof_type = dof
 
-    node = model.get_node(node_id)
+    node = model.nodes[node_id]
 
     dx, dy, dz = 0, 0, 0
     if dof_type == 'u':
@@ -277,7 +277,7 @@ def plot_load_displacement_iterations(ax, model, dof, label=None):
 
     for i, model in enumerate(history):
         x_data[i] = model[dof].delta
-        y_data[i] = model.lam
+        y_data[i] = model.load_factor
 
     if label is None:
         label = r'$\lambda$ : {} at node {} (iter)'.format(dof_type, node_id)
@@ -296,7 +296,7 @@ def plot_load_displacement_curve(ax, model, dof, label=None):
 
     for i, model in enumerate(history):
         x_data[i] = model[dof].delta
-        y_data[i] = model.lam
+        y_data[i] = model.load_factor
 
     if label is None:
         label = r'$\lambda$ : {} at node {}'.format(dof_type, node_id)

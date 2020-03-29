@@ -2,7 +2,7 @@ import plotly.graph_objects as go
 import numpy as np
 
 
-class Plot2D(object):
+class Plot2D:
     def __init__(self, x_label='Displacement', y_label=r'Load factor (λ)', title='Load-displacement diagram'):
         self.title = title
         self.x_label = x_label
@@ -67,7 +67,7 @@ def _add_load_displacement_curve(data, model, dof, label):
 
     for i, model in enumerate(history):
         x[i] = model[dof].delta
-        y[i] = model.lam
+        y[i] = model.load_factor
 
     node_id, dof_type = dof
 
@@ -92,7 +92,7 @@ def _plot_load_displacement_iterations(data, model, dof, label):
 
     for i, model in enumerate(history):
         x[i] = model[dof].delta
-        y[i] = model.lam
+        y[i] = model.load_factor
 
     if label is None:
         label = f'λ : {dof_type} at node {node_id} (iter)'
