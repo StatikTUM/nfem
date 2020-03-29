@@ -41,6 +41,9 @@ class CompletionsView:
             return list(self._dictionary.values())[key]
         return self._dictionary[key]
 
+    def __contains__(self, key):
+        return self._dictionary.__contains__(key)
+
     def __len__(self):
         return self._dictionary.values().__len__()
 
