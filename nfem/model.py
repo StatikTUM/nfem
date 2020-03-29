@@ -132,21 +132,6 @@ class Model(object):
         """
         return CompletionsView(self._nodes)
 
-    def get_node(self, id):
-        """Get a node by its ID.
-
-        Parameters
-        ----------
-        id : int or str
-            ID of the node.
-
-        Returns
-        -------
-        node : list
-            Node with the given ID.
-        """
-        return self._nodes[id]
-
     @property
     def elements(self):
         """Get a list of all elements in the model.
