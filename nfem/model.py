@@ -235,40 +235,6 @@ class Model(object):
 
         self._elements[id] = element
 
-    def add_dirichlet_condition(self, node_id, dof_types, value):
-        """Apply a dirichlet condition to the given dof types of a node.
-
-        Parameters
-        ----------
-        id : int or str
-            Unique ID of the element.
-        node_id : int or str
-            ID of the node.
-        dof_types : list or str
-            List with the dof types
-        value : float
-            Value of the boundary condition.
-
-        Examples
-        --------
-        Add a support for the vertical displacement `v` at node `A`:
-
-        >>> model.add_dirichlet_condition(node_id='A', dof_types='v', value=0)
-
-        Lock all displacements (`u`, `v` and `w`) for a fixed support:
-
-        >>> model.add_dirichlet_condition(node_id='B', dof_types='uvw', value=0)
-        """
-        if node_id not in self._nodes:
-            raise RuntimeError('The model does not contain a node with id {}'.format(node_id))
-
-        node = self.nodes[node_id]
-
-        for dof_type in dof_types:
-            dof = node.dof(dof_type)
-            dof.is_active = False
-            dof.delta = value
-
     # === degree of freedoms
 
     def __getitem__(self, key):
