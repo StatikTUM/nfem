@@ -32,10 +32,10 @@ def test_limit_point(model):
 
     # test eigenvector [0.0, 1.0]
     eigenvector_model = model.first_eigenvector_model
-    u_actual = eigenvector_model[('B', 'u')].delta
+    u_actual = eigenvector_model.nodes['B'].u
     u_expected = 0.0
     assert_almost_equal(u_actual, u_expected)
-    v_actual = eigenvector_model[('B', 'v')].delta
+    v_actual = eigenvector_model.nodes['B'].v
     v_expected = 1.0
     assert_almost_equal(v_actual, v_expected)
 
@@ -53,10 +53,10 @@ def test_bifurcation_point(model):
 
     # test eigenvector [1.0, 0.0]
     eigenvector_model = model.first_eigenvector_model
-    u_actual = eigenvector_model[('B', 'u')].delta
+    u_actual = eigenvector_model.nodes['B'].u
     u_expected = 1.0
     assert_almost_equal(u_actual, u_expected)
-    v_actual = eigenvector_model[('B', 'v')].delta
+    v_actual = eigenvector_model.nodes['B'].v
     v_expected = 0.0
     assert_almost_equal(v_actual, v_expected)
 
