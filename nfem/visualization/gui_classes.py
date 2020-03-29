@@ -301,7 +301,7 @@ class VisualisationTab(Widget):
 
 class StiffnessMatrixDialog(Widget):
     def build(self, builder):
-        element_ids = ['Element '+str(element.id) for element in builder.context.model.structural_elements]
+        element_ids = ['Element '+str(element.id) for element in builder.context.model.elements]
         systems = ['Total System']
         systems.extend(element_ids)
         builder.add_combobox(
@@ -349,9 +349,7 @@ def set_stiffness_matrix(model, debugger=print, **options):
         debugger(str(k[:assembler.free_dof_count, :assembler.free_dof_count]) + '\n')
 
     else:
-        element = model.structural_elements[
-            options['stiffness/system_idx'].value - 1
-            ]
+        element = model.elements[options['stiffness/system_idx'].value - 1]
 
         if options['stiffness/component_idx'].value == 0:
             k = element.calculate_stiffness_matrix()

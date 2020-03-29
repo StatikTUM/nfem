@@ -147,17 +147,6 @@ class Model(object):
         return CompletionsView(self._elements)
 
     @property
-    def structural_elements(self):
-        """
-        FIXME
-        """
-        elements = []
-        for element in self.elements:
-            if isinstance(element, Truss):
-                elements.append(element)
-        return elements
-
-    @property
     def free_dofs(self):
         return Assembler(self).free_dofs
 
