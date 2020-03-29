@@ -124,8 +124,8 @@ class IncrementLoadFactorPredictorSettings(Widget):
 
 class SetDofValuePredictorSettings(Widget):
     def build(self, builder):
-        free_dofs = builder.context.model.free_dofs
-        dof_strings = [dof[1] + ' at node ' + str(dof[0]) for dof in free_dofs]
+        dofs = builder.context.model.dofs
+        dof_strings = [dof[1] + ' at node ' + str(dof[0]) for dof in dofs]
         builder.add_combobox(
             items=dof_strings,
             option=builder.context.options['nonlinear/predictor/dof_idx'])
@@ -140,8 +140,8 @@ class SetDofValuePredictorSettings(Widget):
 class IncrementDofValuePredictorSettings(Widget):
     def build(self, builder):
         # get the free dofs from the model
-        free_dofs = builder.context.model.free_dofs
-        dof_strings = [dof[1] + ' at node ' + str(dof[0]) for dof in free_dofs]
+        dofs = builder.context.model.dofs
+        dof_strings = [dof[1] + ' at node ' + str(dof[0]) for dof in dofs]
         builder.add_combobox(
             items=dof_strings,
             option=builder.context.options['nonlinear/predictor/dof_idx'])
@@ -209,8 +209,8 @@ class LoadControlConstraintSettings(Widget):
 class DisplacementControlConstraintSettings(Widget):
     def build(self, builder):
         # get the free dofs from the model
-        free_dofs = builder.context.model.free_dofs
-        dof_strings = [dof[1] + ' at node ' + str(dof[0]) for dof in free_dofs]
+        dofs = builder.context.model.dofs
+        dof_strings = [dof[1] + ' at node ' + str(dof[0]) for dof in dofs]
         builder.add_combobox(
             items=dof_strings,
             option=builder.context.options['nonlinear/constraint/dof_idx'])
@@ -345,8 +345,8 @@ def set_stiffness_matrix(model, debugger=print, **options):
         else:
             raise NotImplementedError(f'Wrong stiffness matrix component index.')
 
-        options['stiffness/matrix'].change(k[:assembler.free_dof_count, :assembler.free_dof_count])
-        debugger(str(k[:assembler.free_dof_count, :assembler.free_dof_count]) + '\n')
+        options['stiffness/matrix'].change(k)
+        debugger(str(k) + '\n')
 
     else:
         element = model.elements[options['stiffness/system_idx'].value - 1]
@@ -391,8 +391,8 @@ class Plot3DSettingsGroup(Widget):
 
 class Plot2DSettingsGroup(Widget):
     def build(self, builder):
-        free_dofs = builder.context.model.free_dofs
-        dof_strings = [dof[1] + ' at node ' + str(dof[0]) for dof in free_dofs]
+        dofs = builder.context.model.dofs
+        dof_strings = [dof[1] + ' at node ' + str(dof[0]) for dof in dofs]
 
         builder.add_combobox(
             items=dof_strings,
@@ -513,7 +513,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         # get variables
         parent = self.parent
         options = parent.option_values
-        dof = parent.model.free_dofs[options['plot/dof_idx']]
+        dof = parent.model.dofs[options['plot/dof_idx']]
 
         # plot bounding cube
         bounding_box = get_bounding_box(parent.model.get_model_history())

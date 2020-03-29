@@ -60,10 +60,10 @@ class MainWindow(ApplicationWindow):
 
         # Check if the given dof is a free dof in the model
         try:
-            dof_index = model.free_dofs.index(dof)
+            dof_index = model.dofs.index(dof)
         except ValueError:
-            self.WARNING(f'Selected dof {dof} is not part of the free_dofs: {model.free_dofs}')
-            self.WARNING(f'Running the tool with the first free dof: {model.free_dofs[0]}')
+            self.WARNING(f'Selected dof {dof} is not part of the dofs: {model.dofs}')
+            self.WARNING(f'Running the tool with the first free dof: {model.dofs[0]}')
             dof_index = 0
 
         self.options = dict()
@@ -276,7 +276,7 @@ class MainWindow(ApplicationWindow):
                 model.load_factor += value
 
         elif predictor == 'dof':
-            dof = model.free_dofs[options['nonlinear/predictor/dof_idx']]
+            dof = model.dofs[options['nonlinear/predictor/dof_idx']]
             dof_value = options['nonlinear/predictor/dof_value']
             if tangential_flag:
                 model.predict_tangential(strategy=predictor, dof=dof, value=dof_value)
@@ -284,7 +284,7 @@ class MainWindow(ApplicationWindow):
                 model[dof].delta = dof_value
 
         elif predictor == 'delta-dof':
-            dof = model.free_dofs[options['nonlinear/predictor/dof_idx']]
+            dof = model.dofs[options['nonlinear/predictor/dof_idx']]
             dof_value_increment = options['nonlinear/predictor/delta-dof']
             if tangential_flag:
                 model.predict_tangential(strategy=predictor, dof=dof, value=dof_value_increment)
@@ -309,7 +309,7 @@ class MainWindow(ApplicationWindow):
             raise Exception('Unknown predictor {}'.format(predictor))
 
         constraint = self.constraints[options['nonlinear/constraint_idx']]
-        constraint_dof = model.free_dofs[options['nonlinear/constraint/dof_idx']]
+        constraint_dof = model.dofs[options['nonlinear/constraint/dof_idx']]
         tolerance_power = options['nonlinear/newtonraphson/tolerance_power']
         max_iterations = options['nonlinear/newtonraphson/maxiterations']
         determinant = options['nonlinear/solution/det(K)_flag']

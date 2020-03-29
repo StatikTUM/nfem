@@ -16,10 +16,6 @@ class Assembler:
         in the dofs-list.
     dof_count : int
         Total number of dofs.
-    free_dof_count : int
-        Number of dofs without dirichlet constraints.
-    fixed_dof_count : int
-        Number of dofs with dirichlet constraints.
     element_freedom_table : list
         List with tuples containing the elements and the coresponding dof indices.
     """
@@ -35,24 +31,15 @@ class Assembler:
 
         # --- dof indices
 
-        processed_dofs = set()
-
-        free_dofs = list()
-        fixed_dofs = list()
+        dofs = list()
 
         for element in model.elements:
             for dof in element.dofs:
-                if dof in processed_dofs:
+                if dof in dofs or not dof.is_active:
                     continue
-                else:
-                    processed_dofs.add(dof)
+                dofs.append(dof)
 
-                if not dof.is_active:
-                    fixed_dofs.append(dof)
-                else:
-                    free_dofs.append(dof)
-
-        dofs = free_dofs + fixed_dofs
+        dofs = dofs
 
         dof_indices = {dof: index for index, dof in enumerate(dofs)}
 
@@ -61,7 +48,15 @@ class Assembler:
         element_freedom_table = list()
 
         for element in model.elements:
-            indices = [dof_indices[dof] for dof in element.dofs]
+            indices = []
+
+            for local_index, dof in enumerate(element.dofs):
+                if not dof.is_active:
+                    continue
+
+                global_index = dof_indices[dof]
+
+                indices.append((local_index, global_index))
 
             element_freedom_table.append((element, indices))
 
@@ -70,8 +65,6 @@ class Assembler:
         self.dofs = dofs
         self.dof_indices = dof_indices
         self.dof_count = len(dofs)
-        self.free_dof_count = len(free_dofs)
-        self.fixed_dof_count = len(fixed_dofs)
         self.element_freedom_table = element_freedom_table
 
     def index_of_dof(self, dof):
@@ -89,17 +82,6 @@ class Assembler:
         """
         return self.dof_indices[dof]
 
-    @property
-    def free_dofs(self):
-        """Get a list with the unconstrained dofs
-
-        Returns
-        -------
-        free_dofs : list
-            List with the unconstrained dofs
-        """
-        return self.dofs[:self.free_dof_count]
-
     def assemble_matrix(self, system_matrix, calculate_element_matrix):
         """Assemble element matrices into a system matrix.
 
@@ -116,8 +98,8 @@ class Assembler:
             if element_matrix is None:
                 continue
 
-            for element_row, system_row in enumerate(indices):
-                for element_col, system_col in enumerate(indices):
+            for element_row, system_row in indices:
+                for element_col, system_col in indices:
                     value = element_matrix[element_row, element_col]
                     system_matrix[system_row, system_col] += value
 
@@ -137,5 +119,5 @@ class Assembler:
             if element_vector is None:
                 continue
 
-            for element_row, system_row in enumerate(indices):
+            for element_row, system_row in indices:
                 system_vector[system_row] += element_vector[element_row]
