@@ -32,14 +32,17 @@ class ModelStatus(Enum):
     eigenvector = 5
 
 
-class CompletionsView:
-    def __init__(self, dictionary):
-        self._dictionary = dictionary
+class KeyCollection:
+    def __init__(self):
+        self._dictionary = OrderedDict()
 
     def __getitem__(self, key):
         if isinstance(key, int):
             return list(self._dictionary.values())[key]
         return self._dictionary[key]
+
+    def _add(self, value):
+        self._dictionary[value.id] = value
 
     def __contains__(self, key):
         return self._dictionary.__contains__(key)
@@ -86,8 +89,8 @@ class Model(object):
 
         self.name = name
         self.status = ModelStatus.initial
-        self._nodes = OrderedDict()
-        self._elements = OrderedDict()
+        self.nodes = KeyCollection()
+        self.elements = KeyCollection()
         self.lam = 0.0
         self._previous_model = None
         self.det_k = None
@@ -128,28 +131,6 @@ class Model(object):
         self.lam = value
 
     @property
-    def nodes(self):
-        """Get a list of all nodes in the model.
-
-        Returns
-        -------
-        nodes : list
-            List of all nodes in the model.
-        """
-        return CompletionsView(self._nodes)
-
-    @property
-    def elements(self):
-        """Get a list of all elements in the model.
-
-        Returns
-        -------
-        elements : list
-            List of all elements in the model.
-        """
-        return CompletionsView(self._elements)
-
-    @property
     def free_dofs(self):
         return Assembler(self).free_dofs
 
@@ -185,7 +166,7 @@ class Model(object):
 
         node = Node(id, x, y, z)
 
-        self._nodes[id] = node
+        self.nodes._add(node)
 
         if 'x' in support:
             node.dof('u').is_active = False
@@ -236,7 +217,7 @@ class Model(object):
 
         element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area)
 
-        self._elements[id] = element
+        self.elements._add(element)
 
     # === degree of freedoms
 
