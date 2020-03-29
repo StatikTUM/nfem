@@ -37,6 +37,8 @@ class CompletionsView:
         self._dictionary = dictionary
 
     def __getitem__(self, key):
+        if isinstance(key, int):
+            return list(self._dictionary.values())[key]
         return self._dictionary[key]
 
     def __len__(self):
