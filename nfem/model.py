@@ -3,6 +3,7 @@
 Authors: Thomas Oberbichler, Armin Geiser
 """
 
+from collections import OrderedDict
 from copy import deepcopy
 from enum import Enum
 
@@ -80,8 +81,8 @@ class Model(object):
 
         self.name = name
         self.status = ModelStatus.initial
-        self._nodes = dict()
-        self._elements = dict()
+        self._nodes = OrderedDict()
+        self._elements = OrderedDict()
         self.lam = 0.0
         self._previous_model = None
         self.det_k = None
