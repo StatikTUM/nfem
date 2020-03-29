@@ -1,16 +1,16 @@
+import nfem
 import pytest
 from numpy.testing import assert_equal
-from nfem.node import Node
 
 
 @pytest.fixture
 def node():
-    return Node('A', 4, 5, 6)
+    return nfem.Node('A', 4, 5, 6)
 
 
 @pytest.fixture
 def node_with_displacement():
-    node = Node('A', 4, 5, 6)
+    node = nfem.Node('A', 4, 5, 6)
     node.u = 1
     node.v = 2
     node.w = 3

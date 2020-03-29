@@ -2,43 +2,48 @@
 Tests for the eigenvalue analysis
 '''
 
+import pytest
+import nfem
 from numpy.testing import assert_almost_equal
-from unittest import TestCase
 
-from . import test_two_bar_truss_model
-from ..bracketing import bracketing
 
-class TestBranchSwitching(TestCase):
-    def setUp(self):
-        # two bar truss model
-        self.model = test_two_bar_truss_model.get_model()
-        # modify two bar truss so it has a bifurcation point
-        self.model._nodes['B'].reference_y = 3.0
-        self.model._nodes['B'].y = 3.0
+@pytest.fixture
+def model():
+    model = nfem.Model()
 
-    def test_branch_switching(self):
-        bifurcation_model = self.model.get_duplicate()
-        bifurcation_model.lam = 0.1
-        bifurcation_model.perform_non_linear_solution_step(strategy='load-control')
+    model.add_node(id='A', x=0, y=0, z=0, support='xyz')
+    model.add_node(id='B', x=1, y=3, z=0, support='z', fy=-1)
+    model.add_node(id='C', x=2, y=0, z=0, support='xyz')
 
-        critical_model = bracketing(bifurcation_model)
+    model.add_truss(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
+    model.add_truss(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
 
-        predicted_model = critical_model.get_duplicate()
+    return model
 
-        predicted_model.predict_tangential(strategy='arc-length')
 
-        predicted_model.combine_prediction_with_eigenvector(beta=1.0)
+def test_branch_switching(model):
+    bifurcation_model = model.get_duplicate()
+    bifurcation_model.lam = 0.1
+    bifurcation_model.perform_non_linear_solution_step(strategy='load-control')
 
-        predicted_model.scale_prediction(factor=20000)
+    critical_model = nfem.bracketing(bifurcation_model)
 
-        predicted_model.perform_non_linear_solution_step(strategy='arc-length-control')
+    predicted_model = critical_model.get_duplicate()
 
-        # compare lambda
-        actual = predicted_model.lam
-        expected = 0.1673296703967696
-        assert_almost_equal(actual, expected, decimal=4)
+    predicted_model.predict_tangential(strategy='arc-length')
 
-        # compare horizontal displacement
-        actual = predicted_model[('B', 'u')].delta
-        expected = 0.031161882052543888
-        assert_almost_equal(actual, expected)
+    predicted_model.combine_prediction_with_eigenvector(beta=1.0)
+
+    predicted_model.scale_prediction(factor=20000)
+
+    predicted_model.perform_non_linear_solution_step(strategy='arc-length-control')
+
+    # compare lambda
+    actual = predicted_model.load_factor
+    expected = 0.1673296703967696
+    assert_almost_equal(actual, expected, decimal=4)
+
+    # compare horizontal displacement
+    actual = predicted_model.nodes['B'].u
+    expected = 0.031161882052543888
+    assert_almost_equal(actual, expected)

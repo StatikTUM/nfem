@@ -1,7 +1,7 @@
 import pytest
-from numpy.testing import assert_equal
 from nfem.dof import Dof
 from copy import deepcopy
+from numpy.testing import assert_equal
 
 
 @pytest.fixture

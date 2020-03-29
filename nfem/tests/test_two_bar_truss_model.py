@@ -1,33 +1,29 @@
 '''
 Tests for model creation
 '''
-from unittest import TestCase
+import pytest
+from numpy.testing import assert_equal
 
 from nfem import Model
 
-class TestModel(TestCase):
-    def setUp(self):
-        self.model = Model('Two-Bar Truss')
 
-        self.model.add_node(id='A', x=0, y=0, z=0, support='xyz')
-        self.model.add_node(id='B', x=1, y=1, z=0, support='z', fy=-1)
-        self.model.add_node(id='C', x=2, y=0, z=0, support='xyz')
+@pytest.fixture
+def model():
+    model = Model()
 
-        self.model.add_truss(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
-        self.model.add_truss(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
+    model.add_node(id='A', x=0, y=0, z=0, support='xyz')
+    model.add_node(id='B', x=1, y=1, z=0, support='z', fy=-1)
+    model.add_node(id='C', x=2, y=0, z=0, support='xyz')
 
-    def test_node_container(self):
-        actual = len(self.model._nodes)
-        expected = 3
-        assert(actual == expected)
+    model.add_truss(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
+    model.add_truss(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
 
-    def test_elements_container(self):
-        actual = len(self.model.elements) 
-        expected = 2
-        assert(actual == expected)
+    return model
 
-def get_model():
-    '''Make this model available for further tests'''
-    test = TestModel()
-    test.setUp()
-    return test.model
+
+def test_model_nodes(model):
+    assert_equal(len(model.nodes), 3)
+
+
+def test_model_elements(model):
+    assert_equal(len(model.elements), 2)
