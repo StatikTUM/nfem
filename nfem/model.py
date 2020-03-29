@@ -226,8 +226,8 @@ class Model(object):
         if self.get_previous_model() is None:
             return 0.0
 
-        current_value = self.lam
-        previous_value = self.get_previous_model().lam
+        current_value = self.load_factor
+        previous_value = self.get_previous_model().load_factor
 
         return current_value - previous_value
 
@@ -369,14 +369,14 @@ class Model(object):
 
     def perform_linear_solution_step(self):
         """Performs a linear solution step on the model.
-            It uses the member variable `lam` as load factor.
+            It uses the current load factor.
             The results are stored at the dofs and used to update the current
             coordinates of the nodes.
         """
 
         print("\n=================================")
         print("Start linear solution step...")
-        print("lambda : {}".format(self.lam))
+        print("lambda : {}".format(self.load_factor))
 
         assembler = Assembler(self)
 
@@ -397,7 +397,7 @@ class Model(object):
         assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
         assembler.assemble_vector(f, lambda element: element.calculate_external_forces())
 
-        f *= self.lam
+        f *= self.load_factor
 
         free_count = assembler.free_dof_count
 
@@ -487,7 +487,7 @@ class Model(object):
                 self[dof].delta = x[index]
 
             # update lambda
-            self.lam = x[-1]
+            self.load_factor = x[-1]
 
             # initialize with zeros
             k = np.zeros((dof_count, dof_count))
@@ -512,7 +512,7 @@ class Model(object):
             # mechanical system
             lhs[:free_count, :free_count] = k[:free_count, :free_count]
             lhs[:free_count, -1] = -external_f[:free_count]
-            rhs[:free_count] = internal_f[:free_count] - self.lam * external_f[:free_count]
+            rhs[:free_count] = internal_f[:free_count] - self.load_factor * external_f[:free_count]
 
             # assemble contribution from constraint
             constraint.calculate_derivatives(self, lhs[-1, :])
@@ -525,7 +525,7 @@ class Model(object):
         for index, dof in enumerate(assembler.free_dofs):
             x[index] = self[dof].delta
 
-        x[-1] = self.lam
+        x[-1] = self.load_factor
 
         # solve newton raphson
         x, n_iter = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
@@ -613,7 +613,7 @@ class Model(object):
         eigvecs = eigvecs[:, i:]
 
         print('First linear eigenvalue: {}'.format(eigvals[0]))
-        print('First linear eigenvalue * lambda: {}'.format(eigvals[0] * self.lam))  # this is printed in TRUSS
+        print('First linear eigenvalue * lambda: {}'.format(eigvals[0] * self.load_factor))  # this is printed in TRUSS
         if len(eigvecs[0]) < 10:
             print('First linear eigenvector: {}'.format(eigvecs[0]))
 
@@ -626,7 +626,7 @@ class Model(object):
         model.det_k = None
         model.first_eigenvalue = None
         model.first_eigenvector_model = None
-        model.lam = None
+        model.load_factor = None
 
         for index, dof in enumerate(assembler.free_dofs):
             model[dof].delta = eigvecs[index][0]
@@ -672,7 +672,7 @@ class Model(object):
         idx = (np.abs(eigvals - 1.0)).argmin()
 
         print('Closest eigenvalue: {}'.format(eigvals[idx]))
-        print('Closest eigenvalue * lambda: {}'.format(eigvals[idx] * self.lam))  # this is printed in TRUSS
+        print('Closest eigenvalue * lambda: {}'.format(eigvals[idx] * self.load_factor))  # this is printed in TRUSS
         if len(eigvecs[idx]) < 10:
             print('Closest eigenvector: {}'.format(eigvecs[idx]))
 
@@ -685,7 +685,7 @@ class Model(object):
         model.det_k = None
         model.first_eigenvalue = None
         model.first_eigenvector_model = None
-        model.lam = None
+        model.load_factor = None
 
         for index, dof in enumerate(assembler.free_dofs):
             model[dof].delta = eigvecs[index][idx]
@@ -749,7 +749,7 @@ class Model(object):
             Value for the new load factor lambda.
         """
         self.status = ModelStatus.prediction
-        self.lam = value
+        self.load_factor = value
 
     def predict_load_increment(self, value):
         """Predicts the solution by incrementing lambda
@@ -760,7 +760,7 @@ class Model(object):
             Value that is used to increment the load factor lambda.
         """
         self.status = ModelStatus.prediction
-        self.lam += value
+        self.load_factor += value
 
     def predict_dof_state(self, dof, value):
         """Predicts the solution by predictor_method the dof
@@ -824,7 +824,7 @@ class Model(object):
             self[dof].delta += last_increment[index]
 
         # update lam at model
-        self.lam += last_increment[-1]
+        self.load_factor += last_increment[-1]
 
     def predict_tangential(self, strategy, **options):
         """ Make a tangential prediction
@@ -858,7 +858,7 @@ class Model(object):
         if strategy == 'lambda':
             prescribed_lam = options['value']
 
-            delta_lambda = prescribed_lam - self.lam
+            delta_lambda = prescribed_lam - self.load_factor
             factor = delta_lambda
 
         elif strategy == 'delta-lambda':
@@ -925,7 +925,7 @@ class Model(object):
             self[dof].delta += tangent[index]
 
         # update lambda at model
-        self.lam += tangent[-1]
+        self.load_factor += tangent[-1]
 
     def combine_prediction_with_eigenvector(self, beta):
         """Combine the prediciton with the first eigenvector
@@ -979,7 +979,7 @@ class Model(object):
             self[dof].delta += delta_prediction[index]
 
         # update lambda at model
-        self.lam += delta_lam
+        self.load_factor += delta_lam
 
     def scale_prediction(self, factor):
         """scale the prediction with a factor
@@ -1012,7 +1012,7 @@ class Model(object):
 
         delta_dof_vector = self.get_delta_dof_vector(previous_model, assembler=assembler)
 
-        delta_lambda = self.lam - previous_model.lam
+        delta_lambda = self.load_factor - previous_model.load_factor
 
         delta_dof_vector *= (factor - 1.0)
         delta_lambda *= (factor - 1.0)
@@ -1020,7 +1020,7 @@ class Model(object):
         for i, dof in enumerate(assembler.free_dofs):
             self[dof].delta += delta_dof_vector[i]
 
-        self.lam += delta_lambda
+        self.load_factor += delta_lambda
 
     def get_delta_dof_vector(self, model_b=None, assembler=None):
         """gets the delta dof between this and a given model_b as a numpy array
@@ -1067,7 +1067,7 @@ class Model(object):
 
         for i, self in enumerate(history):
             data[0, i] = self[dof].delta
-            data[1, i] = self.lam
+            data[1, i] = self.load_factor
 
         return data
 

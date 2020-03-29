@@ -39,7 +39,7 @@ class LoadControl(PathFollowingMethod):
             Prescribed value for the load factor
         """
         super(LoadControl, self).__init__()
-        self.lam_hat = model.lam
+        self.lam_hat = model.load_factor
 
     def calculate_constraint(self, model):
         """Calculates the constraint
@@ -54,7 +54,7 @@ class LoadControl(PathFollowingMethod):
         constraint : float
             Value of the constraint.
         """
-        return model.lam - self.lam_hat
+        return model.load_factor - self.lam_hat
 
     def calculate_derivatives(self, model, dc):
         """Assembles the constraint derivative [dc/du, dc/dlam] into the vector dc
@@ -190,7 +190,7 @@ class ArcLengthControl(PathFollowingMethod):
 
             dc[index] = 2 * (current_value - previous_value)
 
-        dc[-1] = 2 * (model.lam - model.get_previous_model().lam)
+        dc[-1] = 2 * (model.load_factor - model.get_previous_model().load_factor)
 
     def _calculate_squared_predictor_length(self, model):
         previous_model = model.get_previous_model()
@@ -201,7 +201,7 @@ class ArcLengthControl(PathFollowingMethod):
             dx, dy, dz = node.location - previous_node.location
             squared_l += dx**2 + dy**2 + dz**2
 
-        delta_lam = model.lam - previous_model.lam
+        delta_lam = model.load_factor - previous_model.load_factor
 
         squared_l += delta_lam**2
 

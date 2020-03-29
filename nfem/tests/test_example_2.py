@@ -65,7 +65,7 @@ def test_1a(model_1):
 
     for load_factor in load_curve:
         model_1 = model_1.get_duplicate()
-        model_1.lam = load_factor
+        model_1.load_factor = load_factor
         model_1.perform_non_linear_solution_step(strategy='load-control', max_iterations=1000)
 
     actual = model_1.load_displacement_curve(('B', 'v'), skip_iterations=False)

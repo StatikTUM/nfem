@@ -25,7 +25,7 @@ def load_curve():
 def test_linear(model, load_curve):
     for load_factor in load_curve:
         model = model.get_duplicate()
-        model.lam = load_factor
+        model.load_factor = load_factor
         model.perform_linear_solution_step()
 
     actual = model.load_displacement_curve(('B', 'v'), skip_iterations=False)

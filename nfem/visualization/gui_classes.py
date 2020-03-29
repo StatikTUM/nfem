@@ -562,7 +562,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
             plot_crosshair(
                 ax=ax2d,
                 x=parent.model[dof].delta,
-                y=parent.model.lam,
+                y=parent.model.load_factor,
                 linestyle='-.',
                 color='tab:blue',
                 linewidth=0.75)
@@ -599,7 +599,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
         if options['plot/eigenvalue_flag']:
             logger = CustomLogger(
                 x_fct=lambda model: model[dof].delta,
-                y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.lam,
+                y_fct=lambda model: None if not model.first_eigenvalue else model.first_eigenvalue*model.load_factor,
                 x_label=f'{dof[1]} at node {dof[0]}',
                 y_label='Eigenvalue')
             plot_history_curve(
@@ -631,7 +631,7 @@ class LoadDisplacementLogger(object):
         return 'Load factor (\u03BB)'
 
     def __call__(self, model):
-        return model[self.dof].delta, model.lam
+        return model[self.dof].delta, model.load_factor
 
 
 class CustomLogger(object):

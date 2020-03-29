@@ -277,7 +277,7 @@ def plot_load_displacement_iterations(ax, model, dof, label=None):
 
     for i, model in enumerate(history):
         x_data[i] = model[dof].delta
-        y_data[i] = model.lam
+        y_data[i] = model.load_factor
 
     if label is None:
         label = r'$\lambda$ : {} at node {} (iter)'.format(dof_type, node_id)
@@ -296,7 +296,7 @@ def plot_load_displacement_curve(ax, model, dof, label=None):
 
     for i, model in enumerate(history):
         x_data[i] = model[dof].delta
-        y_data[i] = model.lam
+        y_data[i] = model.load_factor
 
     if label is None:
         label = r'$\lambda$ : {} at node {}'.format(dof_type, node_id)

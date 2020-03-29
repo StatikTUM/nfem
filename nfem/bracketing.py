@@ -201,7 +201,7 @@ def bisection(model, **options):
         node.v = (lower_node.v + upper_node.v)/2
         node.w = (lower_node.w + upper_node.w)/2
 
-    tmp_model.lam = (lower_limit_model.lam + upper_limit_model.lam)/2
+    tmp_model.load_factor = (lower_limit_model.load_factor + upper_limit_model.load_factor) / 2
 
     tmp_model.perform_non_linear_solution_step(strategy='arc-length-control', **options)
 

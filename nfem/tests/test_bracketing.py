@@ -43,7 +43,7 @@ def test_bracketing_limit_point(model_1):
 
     critical_model = nfem.bracketing(model)
 
-    actual = critical_model.lam
+    actual = critical_model.load_factor
     expected = 0.13607744543608463
     assert_almost_equal(actual, expected)
 
@@ -55,6 +55,6 @@ def test_bracketing_bifurcation_point(model_2):
     model.perform_non_linear_solution_step(strategy="load-control")
 
     critical_model = nfem.bracketing(model)
-    actual = critical_model.lam
+    actual = critical_model.load_factor
     expected = 0.16733018783531955
     assert_almost_equal(actual, expected)

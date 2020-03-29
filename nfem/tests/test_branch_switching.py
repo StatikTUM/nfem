@@ -23,7 +23,7 @@ def model():
 
 def test_branch_switching(model):
     bifurcation_model = model.get_duplicate()
-    bifurcation_model.lam = 0.1
+    bifurcation_model.load_factor = 0.1
     bifurcation_model.perform_non_linear_solution_step(strategy='load-control')
 
     critical_model = nfem.bracketing(bifurcation_model)
