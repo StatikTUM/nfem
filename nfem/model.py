@@ -154,21 +154,6 @@ class Model(object):
                 elements.append(element)
         return elements
 
-    def get_element(self, id):
-        """Get an element by its ID.
-
-        Parameters
-        ----------
-        id : int or str
-            ID of the element.
-
-        Returns
-        -------
-        element : list
-            Element with the given ID.
-        """
-        return self._elements[id]
-
     @property
     def free_dofs(self):
         return Assembler(self).free_dofs
