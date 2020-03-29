@@ -8,7 +8,7 @@ from numpy.testing import assert_almost_equal
 
 
 @pytest.fixture
-def model():
+def model_1():
     model = nfem.Model()
 
     model.add_node(id='A', x=0, y=0, z=0, support='xyz')
@@ -21,7 +21,22 @@ def model():
     return model
 
 
-def test_limit_point(model):
+@pytest.fixture
+def model_2():
+    model = nfem.Model()
+
+    model.add_node(id='A', x=0, y=0, z=0, support='xyz')
+    model.add_node(id='B', x=1, y=1, z=0, support='z', fy=-1)
+    model.add_node(id='C', x=2, y=0, z=0, support='xyz')
+
+    model.add_truss(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
+    model.add_truss(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
+
+    return model
+
+
+def test_limit_point(model_1):
+    model = model_1
     model.lam = 0.1
     model.perform_non_linear_solution_step(strategy="load-control")
     model.solve_eigenvalues()
@@ -40,9 +55,8 @@ def test_limit_point(model):
     assert_almost_equal(v_actual, v_expected)
 
 
-def test_bifurcation_point(model):
-    model.nodes['B'].reference_y = 3.0
-    model.nodes['B'].y = 3.0
+def test_bifurcation_point(model_2):
+    model = model_2
     model.lam = 0.1
     model.perform_non_linear_solution_step(strategy="load-control")
     model.solve_eigenvalues()
@@ -61,7 +75,8 @@ def test_bifurcation_point(model):
     assert_almost_equal(v_actual, v_expected)
 
 
-def test_lpb_limit_point(model):
+def test_lpb_limit_point(model_1):
+    model = model_1
     model.lam = 0.1
     model.perform_linear_solution_step()
     model.solve_linear_eigenvalues()
