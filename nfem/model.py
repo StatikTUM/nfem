@@ -59,35 +59,6 @@ class Model(object):
         self.first_eigenvalue = None
         self.first_eigenvector_model = None
 
-    def get_previous_model(self, skip_iterations=True):
-        """Get the previous model of the current model.
-
-        Parameters
-        ----------
-        skip_iterations : bool
-            Flag if iteration or predicted previous models should be skipped
-
-        Returns
-        -------
-        model : Model
-            The previous model object
-        """
-        if not skip_iterations:
-            return self._previous_model
-
-        # find the most previous model that is not an iteration or prediction
-        previous_model = self._previous_model
-
-        while previous_model is not None and previous_model.status in [ModelStatus.duplicate,
-                                                                       ModelStatus.prediction, ModelStatus.iteration]:
-            previous_model = previous_model._previous_model
-
-        return previous_model
-
-    @property
-    def free_dofs(self):
-        return Assembler(self).free_dofs
-
     # === modeling
 
     def add_node(self, id, x, y, z, support='', fx=0.0, fy=0.0, fz=0.0):
@@ -182,6 +153,10 @@ class Model(object):
             node_key, dof_type = key
         return self.nodes[node_key].dof(dof_type)
 
+    @property
+    def free_dofs(self):
+        return Assembler(self).free_dofs
+
     # === increment
 
     def get_dof_increment(self, dof):
@@ -250,6 +225,31 @@ class Model(object):
         return la.norm(increment)
 
     # === model history
+
+    def get_previous_model(self, skip_iterations=True):
+        """Get the previous model of the current model.
+
+        Parameters
+        ----------
+        skip_iterations : bool
+            Flag if iteration or predicted previous models should be skipped
+
+        Returns
+        -------
+        model : Model
+            The previous model object
+        """
+        if not skip_iterations:
+            return self._previous_model
+
+        # find the most previous model that is not an iteration or prediction
+        previous_model = self._previous_model
+
+        while previous_model is not None and previous_model.status in [ModelStatus.duplicate,
+                                                                       ModelStatus.prediction, ModelStatus.iteration]:
+            previous_model = previous_model._previous_model
+
+        return previous_model
 
     def get_initial_model(self):
         """Gets the initial model of this model.
