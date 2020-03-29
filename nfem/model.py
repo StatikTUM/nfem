@@ -22,44 +22,6 @@ from nfem.newton_raphson import newton_raphson_solve
 from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 
 
-class ModelStatus(Enum):
-    """Enum for the model status """
-    initial = 0
-    duplicate = 1
-    prediction = 2
-    iteration = 3
-    equilibrium = 4
-    eigenvector = 5
-
-
-class KeyCollection:
-    def __init__(self):
-        self._dictionary = OrderedDict()
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list(self._dictionary.values())[key]
-        return self._dictionary[key]
-
-    def _add(self, value):
-        self._dictionary[value.id] = value
-
-    def __contains__(self, key):
-        return self._dictionary.__contains__(key)
-
-    def __len__(self):
-        return self._dictionary.values().__len__()
-
-    def __iter__(self):
-        return self._dictionary.values().__iter__()
-
-    def __next__(self):
-        return self._dictionary.values().__next__()
-
-    def _ipython_key_completions_(self):
-        return list(self._dictionary.keys())
-
-
 class Model(object):
     """A Model contains all the objects that build the finite element model.
         Nodes, elements, loads, dirichlet conditions...
@@ -1112,3 +1074,41 @@ class Model(object):
     def _repr_html_(self):
         from nfem.visualization.notebook_animation import show_animation
         return show_animation(self).data
+
+
+class ModelStatus(Enum):
+    """Enum for the model status """
+    initial = 0
+    duplicate = 1
+    prediction = 2
+    iteration = 3
+    equilibrium = 4
+    eigenvector = 5
+
+
+class KeyCollection:
+    def __init__(self):
+        self._dictionary = OrderedDict()
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list(self._dictionary.values())[key]
+        return self._dictionary[key]
+
+    def _add(self, value):
+        self._dictionary[value.id] = value
+
+    def __contains__(self, key):
+        return self._dictionary.__contains__(key)
+
+    def __len__(self):
+        return self._dictionary.values().__len__()
+
+    def __iter__(self):
+        return self._dictionary.values().__iter__()
+
+    def __next__(self):
+        return self._dictionary.values().__next__()
+
+    def _ipython_key_completions_(self):
+        return list(self._dictionary.keys())
