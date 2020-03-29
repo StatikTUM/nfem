@@ -387,7 +387,6 @@ class Model:
             f[i] += self[dof].external_force
 
         assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
-        assembler.assemble_vector(f, lambda element: element.calculate_external_forces())
 
         f *= self.load_factor
 
@@ -494,7 +493,6 @@ class Model:
             for i, dof in enumerate(assembler.free_dofs):
                 external_f[i] += self[dof].external_force
 
-            assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
             assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
 
             # assemble left and right hand side for newton raphson
@@ -717,8 +715,6 @@ class Model:
 
         for i, dof in enumerate(assembler.free_dofs):
             external_f[i] += self[dof].external_force
-
-        assembler.assemble_vector(external_f, lambda element: element.calculate_external_forces())
 
         lhs = k[:free_count, :free_count]
         rhs = external_f[:free_count] - k[:free_count, free_count:] @ v[free_count:]
