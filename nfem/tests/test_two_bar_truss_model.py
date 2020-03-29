@@ -13,8 +13,8 @@ class TestModel(TestCase):
         self.model.add_node(id='B', x=1, y=1, z=0, fy=-1)
         self.model.add_node(id='C', x=2, y=0, z=0)
 
-        self.model.add_truss_element(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
-        self.model.add_truss_element(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
+        self.model.add_truss(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
+        self.model.add_truss(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
 
         self.model.add_dirichlet_condition(node_id='A', dof_types='uvw', value=0)
         self.model.add_dirichlet_condition(node_id='B', dof_types='w', value=0)

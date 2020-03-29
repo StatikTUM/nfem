@@ -195,7 +195,7 @@ class Model(object):
         node.dof('v').external_force = fy
         node.dof('w').external_force = fz
 
-    def add_truss_element(self, id, node_a, node_b, youngs_modulus, area):
+    def add_truss(self, id, node_a, node_b, youngs_modulus, area):
         """Add a three dimensional truss element to the model.
 
         Parameters
@@ -220,7 +220,7 @@ class Model(object):
         --------
         Add a truss element from node `A` to node `B`:
 
-        >>> model.add_truss_element(node_a='A', node_a='B', youngs_modulus=20, area=1)
+        >>> model.add_truss(node_a='A', node_a='B', youngs_modulus=20, area=1)
         """
         if id in self._elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))

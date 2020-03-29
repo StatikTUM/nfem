@@ -12,8 +12,8 @@ def model_1():
     model.add_node(id='B', x=1, y=1, z=0, support='z', fy=-1)
     model.add_node(id='C', x=2, y=0, z=0, support='xyz')
 
-    model.add_truss_element(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
-    model.add_truss_element(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
+    model.add_truss(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
+    model.add_truss(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
 
     return model
 
@@ -28,13 +28,13 @@ def model_2():
     model.add_node(id='D', x=3, y=1, z=0, support='z')
     model.add_node(id='E', x=4, y=0, z=0, support='xyz')
 
-    model.add_truss_element(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
-    model.add_truss_element(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
-    model.add_truss_element(id=3, node_a='C', node_b='D', youngs_modulus=1, area=1)
-    model.add_truss_element(id=4, node_a='D', node_b='E', youngs_modulus=1, area=1)
-    model.add_truss_element(id=5, node_a='B', node_b='D', youngs_modulus=1, area=1)
-    model.add_truss_element(id=6, node_a='A', node_b='D', youngs_modulus=1, area=1)
-    model.add_truss_element(id=7, node_a='B', node_b='E', youngs_modulus=1, area=1)
+    model.add_truss(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
+    model.add_truss(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
+    model.add_truss(id=3, node_a='C', node_b='D', youngs_modulus=1, area=1)
+    model.add_truss(id=4, node_a='D', node_b='E', youngs_modulus=1, area=1)
+    model.add_truss(id=5, node_a='B', node_b='D', youngs_modulus=1, area=1)
+    model.add_truss(id=6, node_a='A', node_b='D', youngs_modulus=1, area=1)
+    model.add_truss(id=7, node_a='B', node_b='E', youngs_modulus=1, area=1)
 
     return model
 
@@ -49,13 +49,13 @@ def model_3():
     model.add_node(id='D', x=3, y=1, z=0, support='z', fy = -0.25)
     model.add_node(id='E', x=4, y=0, z=0, support='xyz')
 
-    model.add_truss_element(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
-    model.add_truss_element(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
-    model.add_truss_element(id=3, node_a='C', node_b='D', youngs_modulus=1, area=1)
-    model.add_truss_element(id=4, node_a='D', node_b='E', youngs_modulus=1, area=1)
-    model.add_truss_element(id=5, node_a='B', node_b='D', youngs_modulus=1, area=1)
-    model.add_truss_element(id=6, node_a='A', node_b='D', youngs_modulus=1, area=1)
-    model.add_truss_element(id=7, node_a='B', node_b='E', youngs_modulus=1, area=1)
+    model.add_truss(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
+    model.add_truss(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
+    model.add_truss(id=3, node_a='C', node_b='D', youngs_modulus=1, area=1)
+    model.add_truss(id=4, node_a='D', node_b='E', youngs_modulus=1, area=1)
+    model.add_truss(id=5, node_a='B', node_b='D', youngs_modulus=1, area=1)
+    model.add_truss(id=6, node_a='A', node_b='D', youngs_modulus=1, area=1)
+    model.add_truss(id=7, node_a='B', node_b='E', youngs_modulus=1, area=1)
 
     return model
 
