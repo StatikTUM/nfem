@@ -53,7 +53,7 @@ class Model(object):
         self.status = ModelStatus.initial
         self.nodes = KeyCollection()
         self.elements = KeyCollection()
-        self.lam = 0.0
+        self.load_factor = 0.0
         self._previous_model = None
         self.det_k = None
         self.first_eigenvalue = None
@@ -83,14 +83,6 @@ class Model(object):
             previous_model = previous_model._previous_model
 
         return previous_model
-
-    @property
-    def load_factor(self):
-        return self.lam
-
-    @load_factor.setter
-    def load_factor(self, value):
-        self.lam = value
 
     @property
     def free_dofs(self):
