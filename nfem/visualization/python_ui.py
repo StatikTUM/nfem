@@ -32,7 +32,7 @@ class _GenericValidator(QtGui.QValidator):
 
 
 class Option(QtCore.QObject):
-    _changed = QtCore.pyqtSignal(object)
+    _changed = QtCore.pyqtSignal
 
     def __init__(self, value, action=None):
         super(Option, self).__init__()
@@ -63,7 +63,7 @@ class Option(QtCore.QObject):
         self._changed.emit(self._value)
 
 
-class Fore(object):
+class Fore:
     BLACK = '\033[30m'
     RED = '\033[31m'
     GREEN = '\033[32m'
@@ -75,7 +75,7 @@ class Fore(object):
     RESET = '\033[39m'
 
 
-class Back(object):
+class Back:
     BLACK = '\033[40m'
     RED = '\033[41m'
     GREEN = '\033[42m'
@@ -87,7 +87,7 @@ class Back(object):
     RESET = '\033[49m'
 
 
-class Style(object):
+class Style:
     DIM = '\033[2m'
     NORMAL = '\033[22m'
     BRIGHT = '\033[1m'
@@ -216,7 +216,7 @@ class Console(QtWidgets.QTextEdit):
         pass
 
 
-class WidgetBuilder(object):
+class WidgetBuilder:
     def __init__(self, ground, context):
         self._ground = ground
         self.context = context

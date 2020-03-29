@@ -6,7 +6,7 @@ Author: Armin Geiser
 from nfem.assembler import Assembler
 
 
-class PathFollowingMethod(object):
+class PathFollowingMethod:
 
     def scale_predictor(self, model):
         raise NotImplementedError

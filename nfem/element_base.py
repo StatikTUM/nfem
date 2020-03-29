@@ -3,7 +3,7 @@
 Author: Thomas Oberbichler
 """
 
-class ElementBase(object):
+class ElementBase:
     """FIXME"""
 
     @property

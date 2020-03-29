@@ -2,7 +2,7 @@ import plotly.graph_objects as go
 import numpy as np
 
 
-class Plot2D(object):
+class Plot2D:
     def __init__(self, x_label='Displacement', y_label=r'Load factor (λ)', title='Load-displacement diagram'):
         self.title = title
         self.x_label = x_label

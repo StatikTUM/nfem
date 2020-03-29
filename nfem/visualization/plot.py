@@ -15,7 +15,7 @@ from nfem.truss import Truss
 from nfem.model import ModelStatus
 
 
-class Plot2D(object):
+class Plot2D:
     def __init__(self, x_label='Displacement', y_label=r'Load factor ($\lambda$)',
                  title='Load-displacement diagram'):
         self.fig, self.ax = plt.subplots()
@@ -72,13 +72,13 @@ class Plot2D(object):
         plt.show(block=block)
 
 
-class Animation3D(object):
+class Animation3D:
     def show(self, model, speed=200):
         print("WARNING: Please use the function 'show_animation' instead of this class!")
         self.animation = show_animation(model, speed)
 
 
-class DeformationPlot3D(object):
+class DeformationPlot3D:
     def show(self, model, step=None):
         print("WARNING: Please use the function 'show_deformation_plot' instead of this class!")
         show_deformation_plot(model, step)

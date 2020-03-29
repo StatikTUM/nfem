@@ -612,7 +612,7 @@ class SideBySide2D3DPlots(QtWidgets.QWidget):
 
 
 # == Loggers to be used in plots
-class LoadDisplacementLogger(object):
+class LoadDisplacementLogger:
     def __init__(self, dof):
         self.dof = dof
 
@@ -634,7 +634,7 @@ class LoadDisplacementLogger(object):
         return model[self.dof].delta, model.load_factor
 
 
-class CustomLogger(object):
+class CustomLogger:
     def __init__(self, x_fct, y_fct, x_label, y_label):
         self.x_fct = x_fct
         self.y_fct = y_fct

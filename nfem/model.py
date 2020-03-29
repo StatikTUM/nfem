@@ -22,7 +22,7 @@ from nfem.newton_raphson import newton_raphson_solve
 from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 
 
-class Model(object):
+class Model:
     """A Model contains all the objects that build the finite element model.
         Nodes, elements, loads, dirichlet conditions...
 

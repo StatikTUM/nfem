@@ -7,7 +7,7 @@ import numpy as np
 from nfem.dof import Dof
 
 
-class Node(object):
+class Node:
     """Three dimensional Node providing Dofs for displacements.
 
     Attributes
