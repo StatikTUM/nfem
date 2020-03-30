@@ -184,7 +184,7 @@ class ArcLengthControl(PathFollowingMethod):
         assembler = Assembler(model)
         previous_model = model.get_previous_model()
 
-        for index, dof in enumerate(assembler.free_dofs):
+        for index, dof in enumerate(assembler.dofs):
             current_value = model[dof].delta
             previous_value = previous_model[dof].delta
 

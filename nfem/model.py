@@ -154,8 +154,8 @@ class Model:
         return self.nodes[node_key].dof(dof_type)
 
     @property
-    def free_dofs(self):
-        return Assembler(self).free_dofs
+    def dofs(self):
+        return Assembler(self).dofs
 
     # === increment
 
@@ -376,26 +376,21 @@ class Model:
 
         u = np.zeros(dof_count)
 
-        for dof in assembler.dofs[assembler.free_dof_count:]:
+        for dof in assembler.dofs:
             index = assembler.index_of_dof(dof)
             u[index] = self[dof].delta
 
         k = np.zeros((dof_count, dof_count))
         f = np.zeros(dof_count)
 
-        for i, dof in enumerate(assembler.free_dofs):
+        for i, dof in enumerate(assembler.dofs):
             f[i] += self[dof].external_force
 
         assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
 
         f *= self.load_factor
 
-        free_count = assembler.free_dof_count
-
-        a = k[:free_count, :free_count]
-        b = f[:free_count] - k[:free_count, free_count:] @ u[free_count:]
-
-        u[:free_count] = la.solve(a, b)
+        u = la.solve(k, f)
 
         for index, dof in enumerate(assembler.dofs):
             self[dof].delta = u[index]
@@ -443,7 +438,6 @@ class Model:
         # initialize working matrices and functions for newton raphson
         assembler = Assembler(self)
         dof_count = assembler.dof_count
-        free_count = assembler.free_dof_count
 
         def calculate_system(x):
             """Callback function for the newton raphson method that calculates the
@@ -474,7 +468,7 @@ class Model:
             self.status = ModelStatus.iteration
 
             # update actual coordinates
-            for index, dof in enumerate(assembler.free_dofs):
+            for index, dof in enumerate(assembler.dofs):
                 self[dof].delta = x[index]
 
             # update lambda
@@ -490,19 +484,19 @@ class Model:
 
             # assemble force
 
-            for i, dof in enumerate(assembler.free_dofs):
+            for i, dof in enumerate(assembler.dofs):
                 external_f[i] += self[dof].external_force
 
             assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
 
             # assemble left and right hand side for newton raphson
-            lhs = np.zeros((free_count + 1, free_count + 1))
-            rhs = np.zeros(free_count + 1)
+            lhs = np.zeros((dof_count + 1, dof_count + 1))
+            rhs = np.zeros(dof_count + 1)
 
             # mechanical system
-            lhs[:free_count, :free_count] = k[:free_count, :free_count]
-            lhs[:free_count, -1] = -external_f[:free_count]
-            rhs[:free_count] = internal_f[:free_count] - self.load_factor * external_f[:free_count]
+            lhs[:dof_count, :dof_count] = k
+            lhs[:dof_count, -1] = -external_f
+            rhs[:dof_count] = internal_f - self.load_factor * external_f
 
             # assemble contribution from constraint
             constraint.calculate_derivatives(self, lhs[-1, :])
@@ -511,8 +505,8 @@ class Model:
             return lhs, rhs
 
         # prediction as vector for newton raphson
-        x = np.zeros(free_count + 1)
-        for index, dof in enumerate(assembler.free_dofs):
+        x = np.zeros(dof_count + 1)
+        for index, dof in enumerate(assembler.dofs):
             x[index] = self[dof].delta
 
         x[-1] = self.load_factor
@@ -547,10 +541,9 @@ class Model:
             if assembler is None:
                 assembler = Assembler(self)
             dof_count = assembler.dof_count
-            free_count = assembler.free_dof_count
             k = np.zeros((dof_count, dof_count))
             assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
-        self.det_k = la.det(k[:free_count, :free_count])
+        self.det_k = la.det(k)
         print("Det(K): {}".format(self.det_k))
 
     def solve_linear_eigenvalues(self, assembler=None):
@@ -567,7 +560,6 @@ class Model:
             assembler = Assembler(self)
 
         dof_count = assembler.dof_count
-        free_count = assembler.free_dof_count
 
         # assemble matrices
         k_e = np.zeros((dof_count, dof_count))
@@ -578,7 +570,7 @@ class Model:
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix(linear=True))
 
         # solve eigenvalue problem
-        eigvals, eigvecs = eig((k_e[:free_count, :free_count]), -k_g[:free_count, :free_count])
+        eigvals, eigvecs = eig(k_e, -k_g)
 
         # extract real parts of eigenvalues
         eigvals = np.array([x.real for x in eigvals])
@@ -618,7 +610,7 @@ class Model:
         model.first_eigenvector_model = None
         model.load_factor = None
 
-        for index, dof in enumerate(assembler.free_dofs):
+        for index, dof in enumerate(assembler.dofs):
             model[dof].delta = eigvecs[index][0]
 
         self.first_eigenvector_model = model
@@ -637,7 +629,6 @@ class Model:
             assembler = Assembler(self)
 
         dof_count = assembler.dof_count
-        free_count = assembler.free_dof_count
 
         # assemble matrices
         k_m = np.zeros((dof_count, dof_count))
@@ -648,7 +639,7 @@ class Model:
         assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
 
         # solve eigenvalue problem
-        eigvals, eigvecs = eig((k_m[:free_count, :free_count]), -k_g[:free_count, :free_count])
+        eigvals, eigvecs = eig(k_m, -k_g)
 
         # extract real parts of eigenvalues
         eigvals = np.array([x.real for x in eigvals])
@@ -677,7 +668,7 @@ class Model:
         model.first_eigenvector_model = None
         model.load_factor = None
 
-        for index, dof in enumerate(assembler.free_dofs):
+        for index, dof in enumerate(assembler.dofs):
             model[dof].delta = eigvecs[index][idx]
 
         self.first_eigenvector_model = model
@@ -695,15 +686,10 @@ class Model:
             assembler = Assembler(self)
 
         dof_count = assembler.dof_count
-        free_count = assembler.free_dof_count
 
         tangent = np.zeros(dof_count + 1)
 
         v = tangent[:-1]
-
-        for dof in assembler.dofs[assembler.free_dof_count:]:
-            index = assembler.index_of_dof(dof)
-            v[index] = self[dof].delta
 
         k = np.zeros((dof_count, dof_count))
         external_f = np.zeros(dof_count)
@@ -713,13 +699,13 @@ class Model:
 
         # assemble force
 
-        for i, dof in enumerate(assembler.free_dofs):
+        for i, dof in enumerate(assembler.dofs):
             external_f[i] += self[dof].external_force
 
-        lhs = k[:free_count, :free_count]
-        rhs = external_f[:free_count] - k[:free_count, free_count:] @ v[free_count:]
+        lhs = k
+        rhs = external_f
 
-        v[:free_count] = la.solve(lhs, rhs)
+        v[:dof_count] = la.solve(lhs, rhs)
 
         # lambda = 1
         tangent[-1] = 1
@@ -963,7 +949,7 @@ class Model:
         delta_lam = - self.get_lam_increment()
 
         # update dofs at model
-        for index, dof in enumerate(assembler.free_dofs):
+        for index, dof in enumerate(assembler.dofs):
             self[dof].delta += delta_prediction[index]
 
         # update lambda at model
@@ -1005,7 +991,7 @@ class Model:
         delta_dof_vector *= (factor - 1.0)
         delta_lambda *= (factor - 1.0)
 
-        for i, dof in enumerate(assembler.free_dofs):
+        for i, dof in enumerate(assembler.dofs):
             self[dof].delta += delta_dof_vector[i]
 
         self.load_factor += delta_lambda
@@ -1043,7 +1029,7 @@ class Model:
 
         delta = np.zeros(assembler.dof_count)
 
-        for index, dof in enumerate(assembler.free_dofs):
+        for index, dof in enumerate(assembler.dofs):
             delta[index] = self[dof].delta - model_b[dof].delta
 
         return delta

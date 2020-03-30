@@ -174,7 +174,7 @@ def get_max_axes_delta(ax):
 def plot_dof_higlight(ax, model, initial, **options):
     size = get_max_axes_delta(ax)/25 * options.get('plot/symbol_size', 5)
 
-    dof = model.free_dofs[options.get('plot/dof_idx', None)]
+    dof = model.dofs[options.get('plot/dof_idx', None)]
     if dof is None:
         return
 
