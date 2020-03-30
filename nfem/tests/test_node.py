@@ -23,6 +23,15 @@ def test_node_init(node):
     assert_equal(node.displacement, [0, 0, 0])
 
 
+def test_node_dof(node):
+    assert_equal(node.dof('u'), node._dof_x)
+    assert_equal(node.dof('v'), node._dof_y)
+    assert_equal(node.dof('w'), node._dof_z)
+
+    with pytest.raises(AttributeError):
+        node.dof('a')
+
+
 def test_node_reference_x(node):
     node.reference_x = 9
 
