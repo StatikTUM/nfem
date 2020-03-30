@@ -104,7 +104,7 @@ class Model:
         node.dof('v').external_force = fy
         node.dof('w').external_force = fz
 
-    def add_truss(self, id, node_a, node_b, youngs_modulus, area):
+    def add_truss(self, id, node_a, node_b, youngs_modulus, area, prestress=0):
         """Add a three dimensional truss element to the model.
 
         Parameters
@@ -140,7 +140,7 @@ class Model:
         if node_b not in self.nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_b))
 
-        element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area)
+        element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, prestress)
 
         self.elements._add(element)
 
