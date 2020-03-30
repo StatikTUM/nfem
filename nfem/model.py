@@ -390,7 +390,10 @@ class Model:
 
         f *= self.load_factor
 
-        u = la.solve(k, f)
+        try:
+            u = la.solve(k, f)
+        except np.linalg.LinAlgError:
+            raise RuntimeError('Stiffness matrix is singular')
 
         for index, dof in enumerate(assembler.dofs):
             self[dof].delta = u[index]
@@ -702,10 +705,10 @@ class Model:
         for i, dof in enumerate(assembler.dofs):
             external_f[i] += self[dof].external_force
 
-        lhs = k
-        rhs = external_f
-
-        v[:dof_count] = la.solve(lhs, rhs)
+        try:
+            v[:dof_count] = la.solve(k, external_f)
+        except np.linalg.LinAlgError:
+            raise RuntimeError('Stiffness matrix is singular')
 
         # lambda = 1
         tangent[-1] = 1

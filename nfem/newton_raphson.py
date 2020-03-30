@@ -3,11 +3,12 @@
 Author: Armin Geiser
 """
 
+import numpy as np
 import numpy.linalg as la
 
 def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolerance=1e-7):
     """Solves the nonlinear system defined by the `calculate_system` callback.
-    
+
     The array with the initial solution is updated during the solve and contains
     the solution at convergence.
 
@@ -52,7 +53,11 @@ def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolera
             return x, i
 
         # compute delta_x
-        delta_x = la.solve(lhs, rhs)
+
+        try:
+            delta_x = la.solve(lhs, rhs)
+        except np.linalg.LinAlgError:
+            raise RuntimeError('Stiffness matrix is singular')
 
         # update x
         x -= delta_x

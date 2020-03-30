@@ -41,14 +41,14 @@ def model_2():
 
 
 def test_linear_solution_fails(model_1):
-    with pytest.raises(np.linalg.LinAlgError):
+    with pytest.raises(RuntimeError):
         model = model_1.get_duplicate()
         model.load_factor = 1.0
         model.perform_linear_solution_step()
 
 
 def test_nonlinear_solution_fails(model_1):
-    with pytest.raises(np.linalg.LinAlgError):
+    with pytest.raises(RuntimeError):
         model = model_1.get_duplicate()
         model.predict_load_factor(value=0.1)
         model.perform_non_linear_solution_step(strategy='load-control')
