@@ -26,12 +26,7 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest
-        pytest --cov=./ --cov-report=xml
-    - name: Upload coverage to Codecov  
-      uses: codecov/codecov-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: true
+        pytest
 
   coverage:
 
