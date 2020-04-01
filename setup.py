@@ -18,7 +18,7 @@ setup(
     name='nfem',
     version=get_version(os.path.join('nfem', '__init__.py')),
     description='NFEM Teaching Tools',
-    url='https://github.com/ChairOfStructuralAnalysisTUM/nfem',
+    url='https://github.com/StatikTUM/nfem',
     author='Thomas Oberbichler, Armin Geiser, Klaus Sautter, Aditya Ghantasala, Mahmoud Zidan',
     author_email='',
     license='',
