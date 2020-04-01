@@ -1,5 +1,0 @@
-ignore:
-  - "setup.py"
-  - "nfem/tests/*"
-  - "nfem/visualization/*"
-comment: false
