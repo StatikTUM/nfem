@@ -27,3 +27,19 @@ def test_model_nodes(model):
 
 def test_model_elements(model):
     assert_equal(len(model.elements), 2)
+
+
+def test_integer_node_key_raises(model):
+    with pytest.raises(TypeError):
+        model.add_node(id=9, x=0, y=0, z=0)
+
+
+def test_integer_truss_key_raises(model):
+    with pytest.raises(TypeError):
+        model.add_truss(id=9, node_a='A', node_b='B', youngs_modulus=1, area=1)
+
+    with pytest.raises(TypeError):
+        model.add_truss(id='9', node_a=0, node_b='B', youngs_modulus=1, area=1)
+
+    with pytest.raises(TypeError):
+        model.add_truss(id='9', node_a='A', node_b=1, youngs_modulus=1, area=1)
