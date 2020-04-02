@@ -61,7 +61,7 @@ class Model:
 
     # === modeling
 
-    def add_node(self, id, x, y, z, support='', fx=0.0, fy=0.0, fz=0.0):
+    def add_node(self, id, x, y, z=None, support='', fx=0.0, fy=0.0, fz=0.0):
         """Add a three dimensional node to the model.
 
         Parameters
@@ -100,7 +100,7 @@ class Model:
         if id in self.nodes:
             raise KeyError('The model already contains a node with id {}'.format(id))
 
-        node = Node(id, x, y, z)
+        node = Node(id, x, y, 0 if z is None else z)
 
         self.nodes._add(node)
 
@@ -108,7 +108,7 @@ class Model:
             node.dof('u').is_active = False
         if 'y' in support:
             node.dof('v').is_active = False
-        if 'z' in support:
+        if z is None or 'z' in support:
             node.dof('w').is_active = False
 
         node.dof('u').external_force = fx
