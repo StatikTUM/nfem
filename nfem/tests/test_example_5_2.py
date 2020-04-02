@@ -33,3 +33,7 @@ def model():
     model.add_truss(id='12', node_a='5', node_b='6', youngs_modulus=1, area=1)
 
     return model
+
+
+def test_example(model):
+    pass
