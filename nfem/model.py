@@ -74,6 +74,14 @@ class Model:
             Y coordinate.
         z : float
             Z coordinate.
+        support : str
+            Directions in which the displacements are fixed.
+        fx : float
+            External force in x direction.
+        fy : float
+            External force in y direction.
+        fz : float
+            External force in z direction.
 
         Returns
         ----------
