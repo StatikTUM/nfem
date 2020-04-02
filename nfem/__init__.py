@@ -21,6 +21,8 @@ from .bracketing import bracketing
 
 from .visualization import *
 
+import sys
+
 
 def info():
     print(f'--------------------------------------------------------------------------------')
@@ -58,10 +60,9 @@ __all__ = [
     'Plot2D',
 ]
 
-try:
+
+if 'ipykernel' not in sys.modules:
     from .visualization import interact
     __all__ += [
         'interact',
     ]
-except Exception as _:
-    pass
