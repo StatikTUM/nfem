@@ -49,9 +49,9 @@ class Node:
             Initial Z coordinate of the node.
         """
         self.id = id
-        self._dof_x = Dof(key=(id, 'u'), value=x)
-        self._dof_y = Dof(key=(id, 'v'), value=y)
-        self._dof_z = Dof(key=(id, 'w'), value=z)
+        self._dof_x = Dof(id=(id, 'u'), value=x)
+        self._dof_y = Dof(id=(id, 'v'), value=y)
+        self._dof_z = Dof(id=(id, 'w'), value=z)
 
     def dof(self, dof_type):
         if dof_type == 'u':

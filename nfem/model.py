@@ -148,7 +148,7 @@ class Model:
 
     def __getitem__(self, key):
         if isinstance(key, Dof):
-            node_key, dof_type = key.key
+            node_key, dof_type = key.id
         else:
             node_key, dof_type = key
         return self.nodes[node_key].dof(dof_type)
