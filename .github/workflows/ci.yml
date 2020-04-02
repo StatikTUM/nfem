@@ -26,6 +26,12 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --cov
+    - name: Submit to coveralls
+      env:
+        COVERALLS_PARALLEL: true
+        COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        coveralls
         
   complete_coverals:
     needs: build
