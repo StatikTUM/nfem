@@ -90,7 +90,7 @@ class Model:
             raise TypeError('The node id is not a text string')
 
         if id in self.nodes:
-            raise RuntimeError('The model already contains a node with id {}'.format(id))
+            raise KeyError('The model already contains a node with id {}'.format(id))
 
         node = Node(id, x, y, z)
 
@@ -144,13 +144,13 @@ class Model:
             raise TypeError('The id of node_b is not a text string')
 
         if id in self.elements:
-            raise RuntimeError('The model already contains an element with id {}'.format(id))
+            raise KeyError('The model already contains an element with id {}'.format(id))
 
         if node_a not in self.nodes:
-            raise RuntimeError('The model does not contain a node with id {}'.format(node_a))
+            raise KeyError('The model does not contain a node with id {}'.format(node_a))
 
         if node_b not in self.nodes:
-            raise RuntimeError('The model does not contain a node with id {}'.format(node_b))
+            raise KeyError('The model does not contain a node with id {}'.format(node_b))
 
         element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, prestress)
 
