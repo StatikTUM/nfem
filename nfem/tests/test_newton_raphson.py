@@ -8,7 +8,7 @@ from nfem import newton_raphson_solve
 def calculate_system():
     def f(x):
         rhs = np.array([np.sin(x[0])])
-        lhs = np.array([np.cos(x[0])])
+        lhs = np.array([[np.cos(x[0])]])
 
         return lhs, rhs
 
