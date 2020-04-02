@@ -116,3 +116,11 @@ def test_predict_dof_increment(model):
 def test_predict_with_last_increment(model):
     with pytest.raises(AttributeError):
         model.predict_with_last_increment(5)
+
+
+def test_add_node_xy(model):
+    model.add_node(id='Z', x=1, y=2)
+    node = model.nodes['Z']
+
+    assert_equal(node.z, 0)
+    assert_equal(node.support_z, True)

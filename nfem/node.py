@@ -189,3 +189,27 @@ class Node:
     @displacement.setter
     def displacement(self, value):
         self._dof_x.delta, self._dof_y.delta, self._dof_z.delta = value
+
+    @property
+    def support_x(self):
+        return not self._dof_x.is_active
+
+    @support_x.setter
+    def support_x(self, value):
+        self._dof_x.is_active = not value
+
+    @property
+    def support_y(self):
+        return not self._dof_y.is_active
+
+    @support_y.setter
+    def support_y(self, value):
+        self._dof_y.is_active = not value
+
+    @property
+    def support_z(self):
+        return not self._dof_z.is_active
+
+    @support_z.setter
+    def support_z(self, value):
+        self._dof_z.is_active = not value
