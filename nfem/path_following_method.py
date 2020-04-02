@@ -6,21 +6,7 @@ Author: Armin Geiser
 from nfem.assembler import Assembler
 
 
-class PathFollowingMethod:
-
-    def scale_predictor(self, model):
-        raise NotImplementedError
-
-    def calculate_constraint(self, model):
-        # returns c
-        raise NotImplementedError
-
-    def calculate_derivatives(self, model, dc):
-        # returns dc_du, dc_dLambda
-        raise NotImplementedError
-
-
-class LoadControl(PathFollowingMethod):
+class LoadControl:
     """The LoadControl adds a constraint to the non linear problem that ensures
         a prescribed load factor at the equilibrium point.
 
@@ -70,7 +56,7 @@ class LoadControl(PathFollowingMethod):
         dc[-1] = 1.0
 
 
-class DisplacementControl(PathFollowingMethod):
+class DisplacementControl:
     """The DisplacementControl adds a constraint to the non linear problem that ensures
         a prescribed displacement of the controlled dof at the equilibrium point.
 
@@ -131,7 +117,7 @@ class DisplacementControl(PathFollowingMethod):
         dc[index] = 1.0
 
 
-class ArcLengthControl(PathFollowingMethod):
+class ArcLengthControl:
     """The ArcLengthControl adds a constraint to the non linear problem that ensures
         a prescribed length of the increment between the new and the last equilibrium point.
 

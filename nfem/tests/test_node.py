@@ -8,15 +8,6 @@ def node():
     return nfem.Node('A', 4, 5, 6)
 
 
-@pytest.fixture
-def node_with_displacement():
-    node = nfem.Node('A', 4, 5, 6)
-    node.u = 1
-    node.v = 2
-    node.w = 3
-    return node
-
-
 def test_node_init(node):
     assert_equal(node.reference_location, [4, 5, 6])
     assert_equal(node.location, [4, 5, 6])

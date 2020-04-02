@@ -12,7 +12,7 @@ class Node:
 
     Attributes
     ----------
-    id : int or str
+    id : str
         Unique ID.
     reference_x : float
         Reference X coordinate.
@@ -39,7 +39,7 @@ class Node:
 
         Parameters
         ----------
-        id : int or str
+        id : str
             Unique ID of the node.
         x : float
             Initial X coordinate of the node.
@@ -49,9 +49,9 @@ class Node:
             Initial Z coordinate of the node.
         """
         self.id = id
-        self._dof_x = Dof(key=(id, 'u'), value=x)
-        self._dof_y = Dof(key=(id, 'v'), value=y)
-        self._dof_z = Dof(key=(id, 'w'), value=z)
+        self._dof_x = Dof(id=(id, 'u'), value=x)
+        self._dof_y = Dof(id=(id, 'v'), value=y)
+        self._dof_z = Dof(id=(id, 'w'), value=z)
 
     def dof(self, dof_type):
         if dof_type == 'u':

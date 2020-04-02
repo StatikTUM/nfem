@@ -66,7 +66,7 @@ class Model:
 
         Parameters
         ----------
-        id : int or str
+        id : str
             Unique ID of the node.
         x : float
             X coordinate.
@@ -86,8 +86,11 @@ class Model:
 
         >>> model.add_node(id='B', x=5, y=2, z=0)
         """
+        if not isinstance(id, str):
+            raise TypeError('The node id is not a text string')
+
         if id in self.nodes:
-            raise RuntimeError('The model already contains a node with id {}'.format(id))
+            raise KeyError('The model already contains a node with id {}'.format(id))
 
         node = Node(id, x, y, z)
 
@@ -109,11 +112,11 @@ class Model:
 
         Parameters
         ----------
-        id : int or str
+        id : str
             Unique ID of the element.
-        node_a : int or str
+        node_a : str
             ID of the first node.
-        node_b : int or str
+        node_b : str
             ID of the second node.
         youngs_modulus : float
             Youngs modulus of the material for the truss.
@@ -131,14 +134,23 @@ class Model:
 
         >>> model.add_truss(node_a='A', node_a='B', youngs_modulus=20, area=1)
         """
+        if not isinstance(id, str):
+            raise TypeError('The element id is not a text string')
+
+        if not isinstance(node_a, str):
+            raise TypeError('The id of node_a is not a text string')
+
+        if not isinstance(node_b, str):
+            raise TypeError('The id of node_b is not a text string')
+
         if id in self.elements:
-            raise RuntimeError('The model already contains an element with id {}'.format(id))
+            raise KeyError('The model already contains an element with id {}'.format(id))
 
         if node_a not in self.nodes:
-            raise RuntimeError('The model does not contain a node with id {}'.format(node_a))
+            raise KeyError('The model does not contain a node with id {}'.format(node_a))
 
         if node_b not in self.nodes:
-            raise RuntimeError('The model does not contain a node with id {}'.format(node_b))
+            raise KeyError('The model does not contain a node with id {}'.format(node_b))
 
         element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, prestress)
 
@@ -148,7 +160,7 @@ class Model:
 
     def __getitem__(self, key):
         if isinstance(key, Dof):
-            node_key, dof_type = key.key
+            node_key, dof_type = key.id
         else:
             node_key, dof_type = key
         return self.nodes[node_key].dof(dof_type)

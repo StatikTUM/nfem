@@ -17,19 +17,23 @@ def model():
     model.add_node(id='9', x=2, y=2, z=0, support='xyz')
 
     # outer elements
-    model.add_truss(id=1, node_a='1', node_b='2', youngs_modulus=1, area=1)
-    model.add_truss(id=2, node_a='2', node_b='3', youngs_modulus=1, area=1)
-    model.add_truss(id=3, node_a='3', node_b='6', youngs_modulus=1, area=1)
-    model.add_truss(id=4, node_a='6', node_b='9', youngs_modulus=1, area=1)
-    model.add_truss(id=5, node_a='8', node_b='9', youngs_modulus=1, area=1)
-    model.add_truss(id=6, node_a='7', node_b='8', youngs_modulus=1, area=1)
-    model.add_truss(id=7, node_a='4', node_b='7', youngs_modulus=1, area=1)
-    model.add_truss(id=8, node_a='1', node_b='4', youngs_modulus=1, area=1)
+    model.add_truss(id='1', node_a='1', node_b='2', youngs_modulus=1, area=1)
+    model.add_truss(id='2', node_a='2', node_b='3', youngs_modulus=1, area=1)
+    model.add_truss(id='3', node_a='3', node_b='6', youngs_modulus=1, area=1)
+    model.add_truss(id='4', node_a='6', node_b='9', youngs_modulus=1, area=1)
+    model.add_truss(id='5', node_a='8', node_b='9', youngs_modulus=1, area=1)
+    model.add_truss(id='6', node_a='7', node_b='8', youngs_modulus=1, area=1)
+    model.add_truss(id='7', node_a='4', node_b='7', youngs_modulus=1, area=1)
+    model.add_truss(id='8', node_a='1', node_b='4', youngs_modulus=1, area=1)
 
     # inner elements
-    model.add_truss(id=9, node_a='2', node_b='5', youngs_modulus=1, area=1)
-    model.add_truss(id=10, node_a='5', node_b='8', youngs_modulus=1, area=1)
-    model.add_truss(id=11, node_a='4', node_b='5', youngs_modulus=1, area=1)
-    model.add_truss(id=12, node_a='5', node_b='6', youngs_modulus=1, area=1)
+    model.add_truss(id='9', node_a='2', node_b='5', youngs_modulus=1, area=1)
+    model.add_truss(id='10', node_a='5', node_b='8', youngs_modulus=1, area=1)
+    model.add_truss(id='11', node_a='4', node_b='5', youngs_modulus=1, area=1)
+    model.add_truss(id='12', node_a='5', node_b='6', youngs_modulus=1, area=1)
 
     return model
+
+
+def test_example(model):
+    pass
