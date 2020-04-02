@@ -12,7 +12,7 @@ class Node:
 
     Attributes
     ----------
-    id : int or str
+    id : str
         Unique ID.
     reference_x : float
         Reference X coordinate.
@@ -39,7 +39,7 @@ class Node:
 
         Parameters
         ----------
-        id : int or str
+        id : str
             Unique ID of the node.
         x : float
             Initial X coordinate of the node.

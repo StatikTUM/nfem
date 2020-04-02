@@ -66,7 +66,7 @@ class Model:
 
         Parameters
         ----------
-        id : int or str
+        id : str
             Unique ID of the node.
         x : float
             X coordinate.
@@ -86,6 +86,9 @@ class Model:
 
         >>> model.add_node(id='B', x=5, y=2, z=0)
         """
+        if not isinstance(id, str):
+            raise TypeError('The node id is not a text string')
+
         if id in self.nodes:
             raise RuntimeError('The model already contains a node with id {}'.format(id))
 
@@ -109,11 +112,11 @@ class Model:
 
         Parameters
         ----------
-        id : int or str
+        id : str
             Unique ID of the element.
-        node_a : int or str
+        node_a : str
             ID of the first node.
-        node_b : int or str
+        node_b : str
             ID of the second node.
         youngs_modulus : float
             Youngs modulus of the material for the truss.
@@ -131,9 +134,18 @@ class Model:
 
         >>> model.add_truss(node_a='A', node_a='B', youngs_modulus=20, area=1)
         """
+        if not isinstance(id, str):
+            raise TypeError('The element id is not a text string')
+
+        if not isinstance(node_a, str):
+            raise TypeError('The id of node_a is not a text string')
+
+        if not isinstance(node_b, str):
+            raise TypeError('The id of node_b is not a text string')
+
         if id in self.elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))
-
+    
         if node_a not in self.nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_a))
 

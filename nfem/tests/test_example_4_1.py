@@ -12,8 +12,8 @@ def model():
     model.add_node(id='B', x=1, y=3, z=0, support='z', fy=-1)
     model.add_node(id='C', x=2, y=0, z=0, support='xyz')
 
-    model.add_truss(id=1, node_a='A', node_b='B', youngs_modulus=1, area=1)
-    model.add_truss(id=2, node_a='B', node_b='C', youngs_modulus=1, area=1)
+    model.add_truss(id='1', node_a='A', node_b='B', youngs_modulus=1, area=1)
+    model.add_truss(id='2', node_a='B', node_b='C', youngs_modulus=1, area=1)
 
     return model
 
