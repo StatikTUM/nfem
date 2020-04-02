@@ -7,19 +7,19 @@ A light weight object oriented FEM code and some usefull postprocessing tools.
 
 __version__ = 'dev'
 
-from .model import Model
-from .node import Node
-from .truss import Truss
-from .assembler import Assembler
+from nfem.model import Model
+from nfem.node import Node
+from nfem.truss import Truss
+from nfem.assembler import Assembler
 
-from .newton_raphson import newton_raphson_solve
-from .path_following_method import LoadControl
-from .path_following_method import DisplacementControl
-from .path_following_method import ArcLengthControl
+from nfem.newton_raphson import newton_raphson_solve
+from nfem.path_following_method import LoadControl
+from nfem.path_following_method import DisplacementControl
+from nfem.path_following_method import ArcLengthControl
 
-from .bracketing import bracketing
+from nfem.bracketing import bracketing
 
-from .visualization import *
+from nfem.visualization import *
 
 import sys
 
