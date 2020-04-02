@@ -145,7 +145,7 @@ class Model:
 
         if id in self.elements:
             raise RuntimeError('The model already contains an element with id {}'.format(id))
-    
+
         if node_a not in self.nodes:
             raise RuntimeError('The model does not contain a node with id {}'.format(node_a))
 
