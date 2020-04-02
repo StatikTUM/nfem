@@ -24,7 +24,7 @@ jobs:
         pip install .
     - name: Test with pytest
       run: |
-        pytest . --cov
+        pytest --cov=nfem
 
   release:
     runs-on: ubuntu-latest
