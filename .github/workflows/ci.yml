@@ -43,10 +43,10 @@ jobs:
         pip install -r requirements.txt
     - name: Install package
       run: |
-        pip install .
+        pip install -e .
     - name: Generate coverage report
       run: |
-        pytest --cov
+        pytest --cov nfem
     - name: Upload coverage to Coveralls
       run: |
         coveralls
