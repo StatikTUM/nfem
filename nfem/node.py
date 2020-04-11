@@ -168,27 +168,27 @@ class Node:
 
     @property
     def reference_location(self):
-        return np.array([self._dof_x.reference_value, self._dof_y.reference_value, self._dof_z.reference_value])
+        return np.array([self.reference_x, self.reference_y, self.reference_z])
 
     @reference_location.setter
     def reference_location(self, value):
-        self._dof_x.reference_value, self._dof_y.reference_value, self._dof_z.reference_value = value
+        self.reference_x, self.reference_y, self.reference_z = value
 
     @property
     def location(self):
-        return np.array([self._dof_x.value, self._dof_y.value, self._dof_z.value])
+        return np.array([self.x, self.y, self.z])
 
     @location.setter
     def location(self, value):
-        self._dof_x.value, self._dof_y.value, self._dof_z.value = value
+        self.x, self.y, self.z = value
 
     @property
     def displacement(self):
-        return np.array([self._dof_x.delta, self._dof_y.delta, self._dof_z.delta])
+        return np.array([self.u, self.v, self.w])
 
     @displacement.setter
     def displacement(self, value):
-        self._dof_x.delta, self._dof_y.delta, self._dof_z.delta = value
+        self.u, self.v, self.w = value
 
     @property
     def support_x(self):
