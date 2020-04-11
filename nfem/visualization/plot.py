@@ -270,52 +270,48 @@ def animate_model(fig, ax, models, speed=200, **options):
 def plot_load_displacement_iterations(ax, model, dof, label=None):
     history = model.get_model_history(skip_iterations=False)
 
-    x_data, y_data = np.zeros((2, len(history)))
+    data = np.zeros((2, len(history)))
 
     node_id, dof_type = dof
 
     for i, model in enumerate(history):
-        x_data[i] = model[dof].delta
-        y_data[i] = model.load_factor
+        data[:, i] = [model[dof].delta, model.load_factor]
 
     if label is None:
         label = r'$\lambda$ : {} at node {} (iter)'.format(dof_type, node_id)
     else:
         label += ' (iter)'
-    ax.plot(x_data, y_data, '--o', linewidth=0.75, markersize=2.0, label=label)
+    ax.plot(data[0], data[1], '--o', linewidth=0.75, markersize=2.0, label=label)
 
 
 def plot_load_displacement_curve(ax, model, dof, label=None):
     history = model.get_model_history()
 
-    x_data, y_data = np.zeros((2, len(history)))
+    data = np.zeros((2, len(history)))
 
     node_id, dof_type = dof
 
     for i, model in enumerate(history):
-        x_data[i] = model[dof].delta
-        y_data[i] = model.load_factor
+        data[:, i] = [model[dof].delta, model.load_factor]
 
     if label is None:
         label = r'$\lambda$ : {} at node {}'.format(dof_type, node_id)
-    ax.plot(x_data, y_data, '-o', label=label)
+    ax.plot(data[0], data[1], '-o', label=label)
 
 
 def plot_det_k_curve(ax, model, dof, label=None):
     history = model.get_model_history()
 
-    x_data = np.zeros(len(history))
-    y_data = np.zeros(len(history))
+    data = np.zeros((2, len(history)))
 
     node_id, dof_type = dof
 
     for i, model in enumerate(history):
-        x_data[i] = model[dof].delta
-        y_data[i] = model.det_k
+        data[:, i] = [model[dof].delta, model.load_factor]
 
     if label is None:
         label = 'det(K) : {} at node {}'.format(dof_type, node_id)
-    ax.plot(x_data, y_data, '-o', label=label)
+    ax.plot(data[0], data[1], '-o', label=label)
 
 
 def plot_history_curve(ax, model, xy_function, fmt, skip_iterations=True, **kwargs):
