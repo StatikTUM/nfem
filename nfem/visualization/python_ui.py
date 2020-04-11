@@ -303,14 +303,14 @@ class WidgetBuilder:
 
         if dtype is int:
             spinbox_widget = QtWidgets.QSpinBox()
-            spinbox_widget.setMinimum(minimum or -2147483648)
-            spinbox_widget.setMaximum(maximum or 2147483647)
+            spinbox_widget.setMinimum(minimum if minimum is not None else -2147483648)
+            spinbox_widget.setMaximum(maximum if maximum is not None else 2147483647)
             spinbox_widget.setSingleStep(step or 1)
             spinbox_widget.setValue(option.value)
         elif dtype is float:
             spinbox_widget = QtWidgets.QDoubleSpinBox()
-            spinbox_widget.setMinimum(minimum or -Qt.qInf())
-            spinbox_widget.setMaximum(maximum or Qt.qInf())
+            spinbox_widget.setMinimum(minimum if minimum is not None else -Qt.qInf())
+            spinbox_widget.setMaximum(maximum if maximum is not None else Qt.qInf())
             spinbox_widget.setSingleStep(step or 0.1)
             spinbox_widget.setDecimals(decimals or 5)
             spinbox_widget.setValue(option.value)
