@@ -15,6 +15,7 @@ from scipy.linalg import eig
 from nfem.dof import Dof
 from nfem.node import Node
 from nfem.truss import Truss
+from nfem.spring import Spring
 
 from nfem.assembler import Assembler
 from nfem.newton_raphson import newton_raphson_solve
@@ -161,6 +162,23 @@ class Model:
             raise KeyError('The model does not contain a node with id {}'.format(node_b))
 
         element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, prestress)
+
+        self.elements._add(element)
+
+    def add_spring(self, id, node, kx=0, ky=0, kz=0):
+        if not isinstance(id, str):
+            raise TypeError('The element id is not a text string')
+
+        if not isinstance(node, str):
+            raise TypeError('The id of node is not a text string')
+
+        if id in self.elements:
+            raise KeyError('The model already contains an element with id {}'.format(id))
+
+        if node not in self.nodes:
+            raise KeyError('The model does not contain a node with id {}'.format(node))
+
+        element = Spring(id, self.nodes[node], kx, ky, kz)
 
         self.elements._add(element)
 

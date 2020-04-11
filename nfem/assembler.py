@@ -95,6 +95,9 @@ class Assembler:
         for element, indices in self.element_freedom_table:
             element_matrix = calculate_element_matrix(element)
 
+            if element_matrix is None:
+                continue
+
             for element_row, system_row in indices:
                 for element_col, system_col in indices:
                     value = element_matrix[element_row, element_col]
@@ -112,6 +115,9 @@ class Assembler:
         """
         for element, indices in self.element_freedom_table:
             element_vector = calculate_element_vector(element)
+
+            if element_vector is None:
+                continue
 
             for element_row, system_row in indices:
                 system_vector[system_row] += element_vector[element_row]
