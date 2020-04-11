@@ -270,8 +270,7 @@ def animate_model(fig, ax, models, speed=200, **options):
 def plot_load_displacement_iterations(ax, model, dof, label=None):
     history = model.get_model_history(skip_iterations=False)
 
-    x_data = np.zeros(len(history))
-    y_data = np.zeros(len(history))
+    x_data, y_data = np.zeros((2, len(history)))
 
     node_id, dof_type = dof
 
@@ -289,8 +288,7 @@ def plot_load_displacement_iterations(ax, model, dof, label=None):
 def plot_load_displacement_curve(ax, model, dof, label=None):
     history = model.get_model_history()
 
-    x_data = np.zeros(len(history))
-    y_data = np.zeros(len(history))
+    x_data, y_data = np.zeros((2, len(history)))
 
     node_id, dof_type = dof
 
