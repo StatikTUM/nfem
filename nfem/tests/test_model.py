@@ -105,11 +105,11 @@ def test_predict_load_increment(model):
     model.predict_load_increment(5)
 
 
-def test_predict_dof_state(model): 
+def test_predict_dof_state(model):
     model.predict_dof_state(dof=('B', 'v'), value=5)
 
 
-def test_predict_dof_increment(model): 
+def test_predict_dof_increment(model):
     model.predict_dof_increment(dof=('B', 'v'), value=5)
 
 
