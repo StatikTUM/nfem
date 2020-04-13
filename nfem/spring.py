@@ -4,7 +4,6 @@ Authors: Thomas Oberbichler
 """
 
 import numpy as np
-import numpy.linalg as la
 
 
 class Spring:
