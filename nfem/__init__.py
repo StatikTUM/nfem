@@ -10,6 +10,7 @@ __version__ = 'dev'
 from nfem.model import Model
 from nfem.node import Node
 from nfem.truss import Truss
+from nfem.spring import Spring
 from nfem.assembler import Assembler
 
 from nfem.newton_raphson import newton_raphson_solve
@@ -47,6 +48,7 @@ __all__ = [
     'Model',
     'Node',
     'Truss',
+    'Spring',
     'Assembler',
     'newton_raphson_solve',
     'LoadControl',

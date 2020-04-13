@@ -4,10 +4,35 @@ Authors: Thomas Oberbichler
 """
 
 import numpy as np
-import numpy.linalg as la
 
 
 class Spring:
+    """
+    Linear spring element.
+
+    Attributes
+    ----------
+    id : str
+        Unique id of the spring element.
+    node : Node
+        Node.
+    kx : float
+        Stiffness in x direction.
+    ky : float
+        Stiffness in y direction.
+    kz : float
+        Stiffness in z direction.
+    dofs
+
+    Methods
+    -------
+    colorspace(c='rgb')
+        Represent the photo in the given colorspace.
+    gamma(n=1.0)
+        Change the photo's gamma exposure.
+
+    """
+
     def __init__(self, id, node, kx=0, ky=0, kz=0):
         self.id = id
         self.node = node

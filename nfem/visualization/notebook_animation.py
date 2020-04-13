@@ -12,6 +12,7 @@ import matplotlib.animation as anim
 
 from nfem.visualization.plot_symbols import get_force_arrow, get_tet4_polygons, get_dof_arrow
 
+from nfem.spring import Spring
 from nfem.truss import Truss
 from nfem.model import ModelStatus
 
@@ -67,6 +68,45 @@ def plot_scaled_model(ax, model, color, **options):
     plot_symbols(ax, model, color, initial=False, **options)
 
 
+def plot_spring(ax, location, direction, **options):
+    size = get_max_axes_delta(ax) / 100.0 * options.get('plot/symbol_size', 10)
+
+    n = 1000
+
+    points = np.empty((3, n + 4))
+
+    points[:, 0] = [0, 0, 0]
+    points[:, 1] = [5, 0, 0]
+
+    # Plot a helix along the x-axis
+    theta_max = 8 * np.pi
+    theta = np.linspace(0, theta_max, n)
+    points[0, 2:-2] = theta + 4
+    points[1, 2:-2] = np.sin(theta) * 3
+    points[2, 2:-2] = np.cos(theta) * 3
+    points[:, -2] = [theta_max+4, 0, 0]
+    points[:, -1] = [theta_max+8, 0, 0]
+
+    points *= size / (8 * np.pi + 8)
+
+    x, y, z = points
+
+    if direction == 'x':
+        x, y, z = -x, y, z
+    elif direction == 'y':
+        x, y, z = y, -x, z
+    elif direction == 'z':
+        x, y, z = z, y, -x
+    else:
+        raise RuntimeError()
+
+    x += location[0]
+    y += location[1]
+    z += location[2]
+
+    ax.plot(x, y, z, 'b', lw=1)
+
+
 def plot_model(ax, model, color, initial, **options):
     lines = list()
 
@@ -79,6 +119,14 @@ def plot_model(ax, model, color, initial, **options):
             b = [node_b.reference_x, node_b.reference_y, node_b.reference_z] if initial else [node_b.x, node_b.y, node_b.z]
 
             lines.append([a, b])
+        elif type(element) == Spring:
+            location = element.node.location
+            if element.kx != 0:
+                plot_spring(ax, location, 'x', **options)
+            if element.ky != 0:
+                plot_spring(ax, location, 'y', **options)
+            if element.kz != 0:
+                plot_spring(ax, location, 'z', **options)
 
     lc = Line3DCollection(lines, colors=color, linewidths=2)
 
