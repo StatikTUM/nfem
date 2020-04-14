@@ -2,6 +2,7 @@ import numpy as np
 from nfem.assembler import Assembler
 from nfem.model_status import ModelStatus
 from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
+from numpy.linalg import det, norm, solve as linear_solve
 from colorama import Fore, Style
 
 
@@ -52,6 +53,34 @@ def linear_step(model):
     model.status = ModelStatus.equilibrium
 
     return SolutionInfo(converged=True, iterations=1, residual_norm=0)
+
+
+def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolerance=1e-7):
+    x = x_initial
+    residual_norm = None
+
+    for iteration in range(1, max_iterations + 1):
+        # calculate left and right hand side
+        lhs, rhs = calculate_system(x)
+
+        # calculate residual
+        residual_norm = norm(rhs)
+
+        # check convergence
+        if residual_norm < tolerance:
+            return residual_norm, iteration
+
+        # compute delta_x
+        try:
+            delta_x = linear_solve(lhs, rhs)
+        except np.linalg.LinAlgError:
+            raise RuntimeError('Stiffness matrix is singular')
+
+        # update x
+        x -= delta_x
+
+    raise RuntimeError(f'Newthon-Raphson did not converge after {max_iterations} steps. Residual norm: {residual_norm}')
+
 
 def load_control_step(model, tolerance=1e-5, max_iterations=100, **options):
     constraint = LoadControl(model)
@@ -128,14 +157,24 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
     x[-1] = model.load_factor
 
     # solve newton raphson
-    x, n_iter = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
+    residual_norm, iterations = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
 
     model.status = ModelStatus.equilibrium
 
     if options.get('solve_det_k', True):
-        model.solve_det_k(assembler=assembler)
+        solve_det_k(model, assembler=assembler)
 
     if options.get('solve_attendant_eigenvalue', False):
         model.solve_eigenvalues(assembler=assembler)
 
     return SolutionInfo(True, iterations, residual_norm)
+
+
+def solve_det_k(model, k=None, assembler=None):
+    if k is None:
+        if assembler is None:
+            assembler = Assembler(model)
+        dof_count = assembler.dof_count
+        k = np.zeros((dof_count, dof_count))
+        assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+    model.det_k = det(k)

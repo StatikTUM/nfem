@@ -448,7 +448,8 @@ class Model:
         else:
             raise ValueError('Invalid path following strategy:' + strategy)
 
-        print("Solution found after {} iteration steps.".format(info.iterations))
+        print(f'Residual norm: {info.residual_norm}.')
+        print(f'Solution found after {info.iterations} iteration steps.')
 
     def solve_det_k(self, k=None, assembler=None):
         """Solves the determinant of k
@@ -460,14 +461,8 @@ class Model:
         assembler : Object (optional)
             assembler can be passed to speed up if k is not given
         """
-        if k is None:
-            if assembler is None:
-                assembler = Assembler(self)
-            dof_count = assembler.dof_count
-            k = np.zeros((dof_count, dof_count))
-            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
-        self.det_k = la.det(k)
-        print("Det(K): {}".format(self.det_k))
+        solve.solve_det_k(self)
+        print(f'Det(K): {self.det_k}')
 
     def solve_linear_eigenvalues(self, assembler=None):
         """Solves the linearized eigenvalue problem
