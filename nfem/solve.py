@@ -2,13 +2,22 @@ import numpy as np
 from nfem.assembler import Assembler
 from nfem.model_status import ModelStatus
 from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
-from nfem.newton_raphson import newton_raphson_solve
-from numpy.linalg import solve as linear_solve
+from colorama import Fore, Style
 
 
 class SolutionInfo:
-    def __init__(self, iterations):
+    def __init__(self, converged, iterations, residual_norm):
+        self.converged = converged
         self.iterations = iterations
+        self.residual_norm = residual_norm
+
+    def __repr__(self):
+        if self.converged:
+            print(Fore.GREEN + Style.BRIGHT + f'System converged!' + Style.NORMAL)
+        else:
+            print(Fore.RED + Style.BRIGHT + f'System not converged!' + Style.NORMAL)
+        print(f'# Iterations  = {self.iteration}')
+        print(f'Residual Norm = {self.residual_norm}')
 
 
 def linear_step(model):
@@ -42,6 +51,7 @@ def linear_step(model):
 
     model.status = ModelStatus.equilibrium
 
+    return SolutionInfo(converged=True, iterations=1, residual_norm=0)
 
 def load_control_step(model, tolerance=1e-5, max_iterations=100, **options):
     constraint = LoadControl(model)
@@ -128,4 +138,4 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
     if options.get('solve_attendant_eigenvalue', False):
         model.solve_eigenvalues(assembler=assembler)
 
-    return SolutionInfo(iterations=n_iter)
+    return SolutionInfo(True, iterations, residual_norm)
