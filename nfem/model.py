@@ -451,8 +451,9 @@ class Model:
             - solve_attendant_eigenvalue=True: for solving the attendant eigenvalue problem at convergence
         """
 
-        print("\n=================================")
-        print("Start non linear solution step...")
+        if options.get('info', False):
+            print("\n=================================")
+            print("Start non linear solution step...")
 
         if strategy == 'load-control':
             info = solve.load_control_step(self, tolerance, max_iterations, **options)
@@ -464,8 +465,9 @@ class Model:
         else:
             raise ValueError('Invalid path following strategy:' + strategy)
 
-        print(f'Residual norm: {info.residual_norm}.')
-        print(f'Solution found after {info.iterations} iteration steps.')
+        if options.get('info', False):
+            print(f'Residual norm: {info.residual_norm}.')
+            print(f'Solution found after {info.iterations} iteration steps.')
 
     def solve_det_k(self, k=None, assembler=None):
         """Solves the determinant of k
