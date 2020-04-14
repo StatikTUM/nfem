@@ -396,18 +396,34 @@ class Model:
 
     # === solving
 
-    def perform_linear_solution_step(self):
+    def perform_linear_solution_step(self, info=False):
         """Performs a linear solution step on the model.
             It uses the current load factor.
             The results are stored at the dofs and used to update the current
             coordinates of the nodes.
         """
 
-        print("\n=================================")
-        print("Start linear solution step...")
-        print("lambda : {}".format(self.load_factor))
+        if info:
+            print("\n=================================")
+            print("Start linear solution step...")
+            print("lambda : {}".format(self.load_factor))
 
         solve.linear_step(self)
+
+    def perform_load_control_step(self, tolerance=1e-5, max_iterations=100, info=False):
+        solution_info = solve.load_control_step(self, tolerance, max_iterations)
+        if info:
+            print(solution_info)
+
+    def perform_displacement_control_step(self, dof, tolerance=1e-5, max_iterations=100, info=False):
+        solution_info = solve.displacement_control_step(self, dof)
+        if info:
+            print(solution_info)
+
+    def perform_arc_length_control_step(self, tolerance=1e-5, max_iterations=100, info=False):
+        solution_info = solve.arc_length_control_step(self)
+        if info:
+            print(solution_info)
 
     def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
         """Performs a non linear solution step on the model.

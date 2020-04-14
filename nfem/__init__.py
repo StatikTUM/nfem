@@ -14,7 +14,6 @@ from nfem.spring import Spring
 from nfem.assembler import Assembler
 
 from nfem.newton_raphson import newton_raphson_solve
-from nfem.solve import linear_step, load_control_step, displacement_control_step, arc_length_control_step
 
 from nfem.bracketing import bracketing
 
@@ -49,10 +48,6 @@ __all__ = [
     'Spring',
     'Assembler',
     'newton_raphson_solve',
-    'linear_step',
-    'load_control_step',
-    'displacement_control_step',
-    'arc_length_control_step',
     'bracketing',
     'info',
     'show_load_displacement_curve',
