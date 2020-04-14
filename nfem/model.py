@@ -13,6 +13,7 @@ import numpy.linalg as la
 from scipy.linalg import eig
 
 from nfem.dof import Dof
+from nfem.model_status import ModelStatus
 from nfem.node import Node
 from nfem.truss import Truss
 from nfem.spring import Spring
@@ -1089,16 +1090,6 @@ class Model:
     def _repr_html_(self):
         from nfem.visualization.notebook_animation import show_animation
         return show_animation(self).data
-
-
-class ModelStatus(Enum):
-    """Enum for the model status """
-    initial = 0
-    duplicate = 1
-    prediction = 2
-    iteration = 3
-    equilibrium = 4
-    eigenvector = 5
 
 
 class KeyCollection:

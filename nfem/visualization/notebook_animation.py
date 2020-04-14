@@ -14,7 +14,7 @@ from nfem.visualization.plot_symbols import get_force_arrow, get_tet4_polygons, 
 
 from nfem.spring import Spring
 from nfem.truss import Truss
-from nfem.model import ModelStatus
+from nfem.model_status import ModelStatus
 
 
 def get_bounding_box(models):
