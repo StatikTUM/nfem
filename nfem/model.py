@@ -34,7 +34,7 @@ class Model:
         Dictionary that stores node_id : node object
     elements : str
         Dictionary that stores element_id : element object
-    lam : float
+    load_factor : float
         load factor
     previous_model : Model
         Previous state of this model
