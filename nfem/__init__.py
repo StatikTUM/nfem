@@ -20,10 +20,7 @@ from nfem.bracketing import bracketing
 
 from nfem.visualization import *
 
-import colorama
 import sys
-
-colorama.init()
 
 
 def info():

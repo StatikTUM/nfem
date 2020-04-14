@@ -3,7 +3,6 @@ from nfem.assembler import Assembler
 from nfem.model_status import ModelStatus
 from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 from numpy.linalg import det, norm, solve as linear_solve
-from colorama import Fore, Style
 import io
 
 
@@ -16,11 +15,11 @@ class SolutionInfo:
     def __repr__(self):
         output = io.StringIO()
         if self.converged:
-            print(Fore.GREEN + Style.BRIGHT + f'System converged!' + Style.NORMAL, file=output)
+            print(f'System converged!', file=output)
         else:
-            print(Fore.RED + Style.BRIGHT + f'System not converged!' + Style.NORMAL, file=output)
-        print(f'# Iterations  = {self.iterations}', file=output)
-        print(f'Residual Norm = {self.residual_norm}', file=output)
+            print(f'System not converged!', file=output)
+        print(f'  # Iterations  = {self.iterations}', file=output)
+        print(f'  Residual Norm = {self.residual_norm}', file=output)
         contents = output.getvalue()
         output.close()
         return contents

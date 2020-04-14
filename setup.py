@@ -25,7 +25,6 @@ setup(
     packages=['nfem', 'nfem.visualization'],
     python_requires='>3.6',
     install_requires=[
-        'colorama',
         'ipython',
         'matplotlib',
         'numpy',
