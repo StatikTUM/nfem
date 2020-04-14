@@ -5,7 +5,6 @@ Authors: Thomas Oberbichler, Armin Geiser
 
 from collections import OrderedDict
 from copy import deepcopy
-from enum import Enum
 
 import numpy as np
 import numpy.linalg as la
@@ -13,14 +12,14 @@ import numpy.linalg as la
 from scipy.linalg import eig
 
 from nfem.dof import Dof
+from nfem.model_status import ModelStatus
 from nfem.node import Node
 from nfem.truss import Truss
 from nfem.spring import Spring
 
 from nfem.assembler import Assembler
-from nfem.newton_raphson import newton_raphson_solve
 
-from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
+from nfem import solve
 
 
 class Model:
@@ -35,7 +34,7 @@ class Model:
         Dictionary that stores node_id : node object
     elements : str
         Dictionary that stores element_id : element object
-    lam : float
+    load_factor : float
         load factor
     previous_model : Model
         Previous state of this model
@@ -408,35 +407,7 @@ class Model:
         print("Start linear solution step...")
         print("lambda : {}".format(self.load_factor))
 
-        assembler = Assembler(self)
-
-        dof_count = assembler.dof_count
-
-        u = np.zeros(dof_count)
-
-        for dof in assembler.dofs:
-            index = assembler.index_of_dof(dof)
-            u[index] = self[dof].delta
-
-        k = np.zeros((dof_count, dof_count))
-        f = np.zeros(dof_count)
-
-        for i, dof in enumerate(assembler.dofs):
-            f[i] += self[dof].external_force
-
-        assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
-
-        f *= self.load_factor
-
-        try:
-            u = la.solve(k, f)
-        except np.linalg.LinAlgError:
-            raise RuntimeError('Stiffness matrix is singular')
-
-        for index, dof in enumerate(assembler.dofs):
-            self[dof].delta = u[index]
-
-        self.status = ModelStatus.equilibrium
+        solve.linear_step(self)
 
     def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
         """Performs a non linear solution step on the model.
@@ -468,105 +439,16 @@ class Model:
         print("Start non linear solution step...")
 
         if strategy == 'load-control':
-            constraint = LoadControl(self)
+            info = solve.load_control_step(self, tolerance, max_iterations, **options)
         elif strategy == 'displacement-control':
-            constraint = DisplacementControl(self, options['dof'])
+            dof = options.pop('dof')
+            info = solve.displacement_control_step(self, dof, tolerance, max_iterations, **options)
         elif strategy == 'arc-length-control':
-            constraint = ArcLengthControl(self)
+            info = solve.arc_length_control_step(self, tolerance, max_iterations, **options)
         else:
             raise ValueError('Invalid path following strategy:' + strategy)
 
-        # initialize working matrices and functions for newton raphson
-        assembler = Assembler(self)
-        dof_count = assembler.dof_count
-
-        def calculate_system(x):
-            """Callback function for the newton raphson method that calculates the
-                system for a given state x
-
-            Parameters
-            ----------
-            x : ndarray
-                Current state of dofs and lambda (unknowns of the non linear system)
-
-            Returns
-            ----------
-            lhs : ndarray
-                Left hand side matrix of size (n_free_dofs+1,n_free_dofs+1).
-                Containts the derivatives of the residuum and the constraint.
-            rhs : ndarray
-                Right hand side vector of size (n_free_dofs+1).
-                Contains the values of the residuum of the structure and the constraint.
-            """
-
-            # create a duplicate of the current state before updating and insert it in the history
-            duplicate = self.get_duplicate()
-            duplicate._previous_model = self._previous_model
-            self._previous_model = duplicate
-            duplicate.status = self.status
-
-            # update status flag
-            self.status = ModelStatus.iteration
-
-            # update actual coordinates
-            for index, dof in enumerate(assembler.dofs):
-                self[dof].delta = x[index]
-
-            # update lambda
-            self.load_factor = x[-1]
-
-            # initialize with zeros
-            k = np.zeros((dof_count, dof_count))
-            external_f = np.zeros(dof_count)
-            internal_f = np.zeros(dof_count)
-
-            # assemble stiffness
-            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
-
-            # assemble force
-
-            for i, dof in enumerate(assembler.dofs):
-                external_f[i] += self[dof].external_force
-
-            assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
-
-            # assemble left and right hand side for newton raphson
-            lhs = np.zeros((dof_count + 1, dof_count + 1))
-            rhs = np.zeros(dof_count + 1)
-
-            # mechanical system
-            lhs[:dof_count, :dof_count] = k
-            lhs[:dof_count, -1] = -external_f
-            rhs[:dof_count] = internal_f - self.load_factor * external_f
-
-            # assemble contribution from constraint
-            constraint.calculate_derivatives(self, lhs[-1, :])
-            rhs[-1] = constraint.calculate_constraint(self)
-
-            return lhs, rhs
-
-        # prediction as vector for newton raphson
-        x = np.zeros(dof_count + 1)
-        for index, dof in enumerate(assembler.dofs):
-            x[index] = self[dof].delta
-
-        x[-1] = self.load_factor
-
-        # solve newton raphson
-        x, n_iter = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
-
-        print("Solution found after {} iteration steps.".format(n_iter))
-
-        self.status = ModelStatus.equilibrium
-
-        if 'solve_det_k' in options and not options['solve_det_k']:
-            pass
-        else:
-            self.solve_det_k(assembler=assembler)
-
-        if 'solve_attendant_eigenvalue' in options:
-            if options['solve_attendant_eigenvalue']:
-                self.solve_eigenvalues(assembler=assembler)
+        print("Solution found after {} iteration steps.".format(info.iterations))
 
     def solve_det_k(self, k=None, assembler=None):
         """Solves the determinant of k
@@ -1089,16 +971,6 @@ class Model:
     def _repr_html_(self):
         from nfem.visualization.notebook_animation import show_animation
         return show_animation(self).data
-
-
-class ModelStatus(Enum):
-    """Enum for the model status """
-    initial = 0
-    duplicate = 1
-    prediction = 2
-    iteration = 3
-    equilibrium = 4
-    eigenvector = 5
 
 
 class KeyCollection:

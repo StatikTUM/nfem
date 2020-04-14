@@ -24,7 +24,7 @@ def model_2():
 
     model.add_node(id='A', x=0, y=0, z=0, support='xyz')
     model.add_node(id='B', x=1, y=1, z=0, support='z')
-    model.add_node(id='C', x=2, y=2, z=0, support='z', fy = -1)
+    model.add_node(id='C', x=2, y=2, z=0, support='z', fy=-1)
     model.add_node(id='D', x=3, y=1, z=0, support='z')
     model.add_node(id='E', x=4, y=0, z=0, support='xyz')
 
@@ -44,9 +44,9 @@ def model_3():
     model = nfem.Model()
 
     model.add_node(id='A', x=0, y=0, z=0, support='xyz')
-    model.add_node(id='B', x=1, y=1, z=0, support='z', fy = -0.25)
-    model.add_node(id='C', x=2, y=2, z=0, support='z', fy = -0.5)
-    model.add_node(id='D', x=3, y=1, z=0, support='z', fy = -0.25)
+    model.add_node(id='B', x=1, y=1, z=0, support='z', fy=-0.25)
+    model.add_node(id='C', x=2, y=2, z=0, support='z', fy=-0.5)
+    model.add_node(id='D', x=3, y=1, z=0, support='z', fy=-0.25)
     model.add_node(id='E', x=4, y=0, z=0, support='xyz')
 
     model.add_truss(id='1', node_a='A', node_b='B', youngs_modulus=1, area=1)

@@ -6,6 +6,7 @@ Author: Armin Geiser
 import numpy as np
 import numpy.linalg as la
 
+
 def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolerance=1e-7):
     """Solves the nonlinear system defined by the `calculate_system` callback.
 
@@ -14,8 +15,8 @@ def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolera
 
     Parameters
     ----------
-    calculate_system : function        
-        This function is called several times to evaluate the function (rhs) and the 
+    calculate_system : function
+        This function is called several times to evaluate the function (rhs) and the
         functions derivatives (lhs) with a given state (x)
 
         It should look like this:
@@ -33,7 +34,7 @@ def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolera
     Raises
     ----------
     RuntimeError
-        If the algorithm does not converge within `max_iterations`        
+        If the algorithm does not converge within `max_iterations`
     """
     x = x_initial
     residual_norm = None
