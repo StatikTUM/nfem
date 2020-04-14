@@ -18,8 +18,8 @@ class SolutionInfo:
             print(f'System converged!', file=output)
         else:
             print(f'System not converged!', file=output)
-        print(f'  # Iterations  = {self.iterations}', file=output)
-        print(f'  Residual Norm = {self.residual_norm}', file=output)
+        print(f'# Iterations  = {self.iterations}', file=output)
+        print(f'Residual Norm = {self.residual_norm}', file=output)
         contents = output.getvalue()
         output.close()
         return contents
