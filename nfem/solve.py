@@ -17,7 +17,7 @@ class SolutionInfo:
             print(Fore.GREEN + Style.BRIGHT + f'System converged!' + Style.NORMAL)
         else:
             print(Fore.RED + Style.BRIGHT + f'System not converged!' + Style.NORMAL)
-        print(f'# Iterations  = {self.iteration}')
+        print(f'# Iterations  = {self.iterations}')
         print(f'Residual Norm = {self.residual_norm}')
 
 
