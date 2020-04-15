@@ -1,5 +1,8 @@
 from mako.template import Template
 import uuid
+import sys
+
+IS_NOTEBOOK = 'ipykernel' in sys.modules
 
 
 class NonlinearSolutionInfo:
@@ -10,6 +13,13 @@ class NonlinearSolutionInfo:
     @property
     def iterations(self):
         return len(self.data)
+
+    def show(self):
+        if IS_NOTEBOOK:
+            from IPython.display import display
+            display(self)
+        else:
+            return f'Nonlinear solution converged in {len(data)} iterations'
 
     def _repr_html_(self):
         template = Template(TEMPLATE)
