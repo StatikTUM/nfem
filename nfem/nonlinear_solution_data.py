@@ -6,10 +6,11 @@ IS_NOTEBOOK = 'ipykernel' in sys.modules
 
 
 class NonlinearSolutionInfo:
-    def __init__(self, constraint, header, data):
+    def __init__(self, constraint, residual_norm, header, data):
         self.constraint = constraint
         self.header = header
         self.data = data
+        self.residual_norm = residual_norm
 
     @property
     def iterations(self):
