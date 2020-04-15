@@ -1,5 +1,6 @@
 coveralls
 ipython
+mako
 matplotlib
 nbval
 numpy
@@ -9,3 +10,4 @@ pytest
 pytest-cov
 pyyaml
 scipy
+uuid
