@@ -413,7 +413,9 @@ class Model:
     def perform_load_control_step(self, tolerance=1e-5, max_iterations=100, info=False):
         solution_info = solve.load_control_step(self, tolerance, max_iterations)
         if info:
-            print(solution_info)
+            print(f'Load-Control with λ = {self.load_factor}')
+            from IPython.display import display
+            display(solution_info)
 
     def perform_displacement_control_step(self, dof, tolerance=1e-5, max_iterations=100, info=False):
         solution_info = solve.displacement_control_step(self, dof)

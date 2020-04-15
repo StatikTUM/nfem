@@ -1,5 +1,6 @@
 import numpy as np
 from nfem.assembler import Assembler
+from nfem.nonlinear_solution_data import NonlinearSolutionInfo
 from nfem.model_status import ModelStatus
 from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 from numpy.linalg import det, norm, solve as linear_solve
@@ -106,6 +107,8 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
     assembler = Assembler(model)
     dof_count = assembler.dof_count
 
+    data = []
+
     def calculate_system(x):
         # create a duplicate of the current state before updating and insert it in the history
         duplicate = model.get_duplicate()
@@ -171,7 +174,7 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
     if options.get('solve_attendant_eigenvalue', False):
         model.solve_eigenvalues(assembler=assembler)
 
-    return SolutionInfo(True, iterations, residual_norm)
+    return NonlinearSolutionInfo(['lambda', '|r|', '|du|', 'det(K)'], data)
 
 
 def solve_det_k(model, k=None, assembler=None):
