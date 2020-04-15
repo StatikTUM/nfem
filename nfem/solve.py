@@ -189,7 +189,7 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
     if options.get('solve_attendant_eigenvalue', False):
         model.solve_eigenvalues(assembler=assembler)
 
-    return NonlinearSolutionInfo(constraint, ['λ', '|r|', '|du|'], data)
+    return NonlinearSolutionInfo(constraint, residual_norm, ['λ', '|r|', '|du|'], data)
 
 
 def solve_det_k(model, k=None, assembler=None):
