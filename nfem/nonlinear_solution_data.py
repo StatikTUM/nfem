@@ -20,31 +20,26 @@ class NonlinearSolutionInfo:
 TEMPLATE = '''
 <style>
     .collapsible, .content {
-    font-family: monospace;
+        font-family: monospace;
+        font-size: 14px;
+        margin: 0;
+        padding: 0;
+        background-color: white;
     }
 
     .collapsible {
-    color: #444;
-    text-decoration: underline;
-    cursor: pointer;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    border: none;
-    text-align: left;
-    outline: none;
-    font-size: 14px;
+        text-decoration: underline;
+        cursor: pointer;
+        width: 100%;
+        border: none;
+        text-align: left;
+        outline: none;
     }
 
     .content {
-    padding: 0 18px;
-    display: none;
-    overflow: hidden;
-    }
-
-    td {
-    text-align: center;
-    min-width: 100px;
+        display: none;
+        overflow: hidden;
+        width: 100%;
     }
 </style>
 
