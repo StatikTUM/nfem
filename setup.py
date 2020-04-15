@@ -26,11 +26,13 @@ setup(
     python_requires='>3.6',
     install_requires=[
         'ipython',
+        'mako',
         'matplotlib',
         'numpy',
         'plotly',
         'pyqt5',
         'scipy',
+        'uuid',
     ],
     zip_safe=False,
 )

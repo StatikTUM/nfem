@@ -413,17 +413,20 @@ class Model:
     def perform_load_control_step(self, tolerance=1e-5, max_iterations=100, info=False):
         solution_info = solve.load_control_step(self, tolerance, max_iterations)
         if info:
-            print(solution_info)
+            print(f'Load-Control with λ = {self.load_factor}')
+            solution_info.show()
 
     def perform_displacement_control_step(self, dof, tolerance=1e-5, max_iterations=100, info=False):
         solution_info = solve.displacement_control_step(self, dof)
         if info:
-            print(solution_info)
+            print(f'Displacement-Control with {dof[1]} at node {dof[0]} = {self[dof].delta}')
+            solution_info.show()
 
     def perform_arc_length_control_step(self, tolerance=1e-5, max_iterations=100, info=False):
         solution_info = solve.arc_length_control_step(self)
         if info:
-            print(solution_info)
+            print(f'Arc-Length-Control with length = {solution_info.constraint.squared_l_hat**0.5}')
+            solution_info.show()
 
     def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
         """Performs a non linear solution step on the model.

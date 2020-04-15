@@ -1,9 +1,14 @@
 import numpy as np
 from nfem.assembler import Assembler
+from nfem.nonlinear_solution_data import NonlinearSolutionInfo
 from nfem.model_status import ModelStatus
 from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 from numpy.linalg import det, norm, solve as linear_solve
 import io
+
+
+def format(value, digits=6):
+    return '{:.6e}'.format(value) if value is not None else ''
 
 
 class SolutionInfo:
@@ -59,7 +64,7 @@ def linear_step(model):
     return SolutionInfo(converged=True, iterations=1, residual_norm=0)
 
 
-def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolerance=1e-7):
+def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolerance=1e-7, callback=None):
     x = x_initial
     residual_norm = None
 
@@ -83,6 +88,9 @@ def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolera
         # update x
         x -= delta_x
 
+        if callback:
+            callback(iteration, residual_norm, norm(delta_x))
+
     raise RuntimeError(f'Newthon-Raphson did not converge after {max_iterations} steps. Residual norm: {residual_norm}')
 
 
@@ -105,6 +113,8 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
     # initialize working matrices and functions for newton raphson
     assembler = Assembler(model)
     dof_count = assembler.dof_count
+
+    data = []
 
     def calculate_system(x):
         # create a duplicate of the current state before updating and insert it in the history
@@ -153,6 +163,12 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
 
         return lhs, rhs
 
+    def callback(k, rnorm, xnorm):
+        load_factor_str = format(model.load_factor)
+        rnorm_str = format(rnorm)
+        xnorm_str = format(xnorm)
+        data.append([load_factor_str, rnorm_str, xnorm_str])
+
     # prediction as vector for newton raphson
     x = np.zeros(dof_count + 1)
     for index, dof in enumerate(assembler.dofs):
@@ -161,7 +177,9 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
     x[-1] = model.load_factor
 
     # solve newton raphson
-    residual_norm, iterations = newton_raphson_solve(calculate_system, x, max_iterations, tolerance)
+    residual_norm, iterations = newton_raphson_solve(calculate_system, x, max_iterations, tolerance, callback)
+
+    callback(iterations, residual_norm, None)
 
     model.status = ModelStatus.equilibrium
 
@@ -171,7 +189,7 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
     if options.get('solve_attendant_eigenvalue', False):
         model.solve_eigenvalues(assembler=assembler)
 
-    return SolutionInfo(True, iterations, residual_norm)
+    return NonlinearSolutionInfo(constraint, ['λ', '|r|', '|du|'], data)
 
 
 def solve_det_k(model, k=None, assembler=None):
