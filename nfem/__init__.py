@@ -21,6 +21,8 @@ from nfem.visualization import *
 
 import sys
 
+IS_NOTEBOOK = 'ipykernel' in sys.modules
+
 
 def info():
     print(f'--------------------------------------------------------------------------------')
@@ -42,6 +44,7 @@ def info():
 
 
 __all__ = [
+    'IS_NOTEBOOK',
     'Model',
     'Node',
     'Truss',
@@ -56,8 +59,7 @@ __all__ = [
     'Plot2D',
 ]
 
-
-if 'ipykernel' not in sys.modules:
+if not IS_NOTEBOOK:
     from .visualization import interact
     __all__ += [
         'interact',
