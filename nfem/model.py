@@ -425,7 +425,7 @@ class Model:
     def perform_arc_length_control_step(self, tolerance=1e-5, max_iterations=100, info=False):
         solution_info = solve.arc_length_control_step(self)
         if info:
-            print(f'Arc-Length-Control')
+            print(f'Arc-Length-Control with length = {solution_info.constraint.squared_l_hat**0.5}')
             solution_info.show()
 
     def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
