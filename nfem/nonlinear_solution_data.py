@@ -19,7 +19,7 @@ class NonlinearSolutionInfo:
             from IPython.display import display
             display(self)
         else:
-            return f'Nonlinear solution converged in {len(data)} iterations'
+            return f'Nonlinear solution converged after {len(data)} iterations'
 
     def _repr_html_(self):
         template = Template(TEMPLATE)
@@ -53,7 +53,7 @@ TEMPLATE = '''
     }
 </style>
 
-<button type="button" class="collapsible collapsible-${id}">Nonlinear solution converged in ${len(data)} iterations</button>
+<button type="button" class="collapsible collapsible-${id}">Nonlinear solution converged after ${len(data)} iterations</button>
 <div class="content">
     <table>
     <tr>
