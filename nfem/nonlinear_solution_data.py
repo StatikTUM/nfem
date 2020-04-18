@@ -53,6 +53,10 @@ TEMPLATE = '''
         overflow: hidden;
         width: 100%;
     }
+    
+    tr, td {
+        padding: 0 1em;
+    }
 </style>
 
 <button type="button" class="collapsible collapsible-${id}">Nonlinear solution converged after ${len(data)} iterations</button>
