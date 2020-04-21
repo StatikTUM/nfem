@@ -32,7 +32,6 @@ setup(
         'plotly',
         'pyqt5',
         'scipy',
-        'uuid',
     ],
     zip_safe=False,
 )
