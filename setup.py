@@ -14,6 +14,29 @@ def get_version(path):
     return version_match.group(1)
 
 
+def requirements():
+    import sys
+
+    IS_NOTEBOOK = 'ipykernel' in sys.modules
+
+    result = [
+        'ipython',
+        'mako',
+        'matplotlib',
+        'numpy',
+        'plotly',
+        'scipy',
+        'uuid',
+    ]
+
+    if not IS_NOTEBOOK:
+        result += [
+            'pyqt5',
+        ]
+
+    return result
+
+
 setup(
     name='nfem',
     version=get_version(os.path.join('nfem', '__init__.py')),
@@ -24,15 +47,6 @@ setup(
     license='',
     packages=['nfem', 'nfem.visualization'],
     python_requires='>3.6',
-    install_requires=[
-        'ipython',
-        'mako',
-        'matplotlib',
-        'numpy',
-        'plotly',
-        'pyqt5',
-        'scipy',
-        'uuid',
-    ],
+    install_requires=requirements(),
     zip_safe=False,
 )
