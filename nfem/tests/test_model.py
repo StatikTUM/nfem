@@ -2,14 +2,15 @@
 Tests for model creation
 '''
 import pytest
-from numpy.testing import assert_equal
+import numpy
+from numpy.testing import assert_almost_equal, assert_equal
 
-from nfem import Model
+import nfem
 
 
 @pytest.fixture
 def model():
-    model = Model()
+    model = nfem.Model()
 
     model.add_node(id='A', x=0, y=0, z=0, support='xyz')
     model.add_node(id='B', x=1, y=1, z=0, support='z', fy=-1)
@@ -124,3 +125,42 @@ def test_add_node_xy(model):
 
     assert_equal(node.z, 0)
     assert_equal(node.support_z, True)
+
+
+def test_add_element():
+    class Element:
+        def __init__(self, id, nodes, k):
+            self.id = id
+            self.nodes = nodes
+            self.k = k
+
+        @property
+        def dofs(self):
+            dofs = []
+            for node in self.nodes:
+                dofs.append(node._dof_x)
+                dofs.append(node._dof_y)
+                dofs.append(node._dof_z)
+            return dofs
+
+        def calculate_stiffness_matrix(self):
+            return numpy.eye(6) * self.k
+
+        def calculate_internal_forces(self):
+            u = numpy.array([dof.delta for dof in self.dofs])
+            return self.calculate_stiffness_matrix() @ u
+
+    model = nfem.Model()
+
+    model.add_node(id='A', x=0, y=0, z=0, support='xyz')
+    model.add_node(id='B', x=1, y=1, z=0, support='z', fy=-1)
+    model.add_node(id='C', x=2, y=0, z=0, support='xyz')
+
+    model.add_element(Element, id='1', nodes=['A', 'B'], k=5)
+    model.add_element(Element, id='2', nodes=['B', 'C'], k=5)
+
+    model.load_factor = 1
+    model.perform_load_control_step()
+
+    assert_almost_equal(model.nodes['B'].u, 0)
+    assert_almost_equal(model.nodes['B'].v, -0.1)

@@ -181,6 +181,28 @@ class Model:
 
         self.elements._add(element)
 
+    def add_element(self, element_type, id, nodes, **properties):
+        if not isinstance(id, str):
+            raise TypeError('The element id is not a text string')
+
+        if id in self.elements:
+            raise KeyError('The model already contains an element with id {}'.format(id))
+
+        node_list = []
+
+        for node in nodes:
+            if not isinstance(node, str):
+                raise TypeError(f'The id "{node}" is not a text string')
+
+            if node not in self.nodes:
+                raise KeyError('The model does not contain a node with id {}'.format(node))
+
+            node_list.append(self.nodes[node])
+
+        element = element_type(id, node_list, **properties)
+
+        self.elements._add(element)
+
     # === degree of freedoms
 
     def __getitem__(self, key):
