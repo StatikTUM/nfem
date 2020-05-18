@@ -46,7 +46,15 @@ setup(
     author_email='',
     license='',
     packages=['nfem', 'nfem.visualization'],
-    python_requires='>3.6',
-    install_requires=requirements(),
+    python_requires='>=3.6',
+    install_requires=[
+        'ipython',
+        'mako',
+        'matplotlib',
+        'numpy',
+        'plotly',
+        'PyQt5>=5.9.2,<5.13',
+        'scipy',
+    ],
     zip_safe=False,
 )
