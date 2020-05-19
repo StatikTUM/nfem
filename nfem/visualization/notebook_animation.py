@@ -127,6 +127,8 @@ def plot_model(ax, model, color, initial, **options):
                 plot_spring(ax, location, 'y', **options)
             if element.kz != 0:
                 plot_spring(ax, location, 'z', **options)
+        else:
+            element.plot(lines)
 
     lc = Line3DCollection(lines, colors=color, linewidths=2)
 
