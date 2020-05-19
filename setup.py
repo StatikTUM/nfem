@@ -14,29 +14,6 @@ def get_version(path):
     return version_match.group(1)
 
 
-def requirements():
-    import sys
-
-    IS_NOTEBOOK = 'ipykernel' in sys.modules
-
-    result = [
-        'ipython',
-        'mako',
-        'matplotlib',
-        'numpy',
-        'plotly',
-        'scipy',
-        'uuid',
-    ]
-
-    if not IS_NOTEBOOK:
-        result += [
-            'pyqt5',
-        ]
-
-    return result
-
-
 setup(
     name='nfem',
     version=get_version(os.path.join('nfem', '__init__.py')),
