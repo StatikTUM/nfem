@@ -159,7 +159,7 @@ def test_node_displacement(node):
     assert_equal(node.displacement, [3, 2, 1])
 
 
-def test_node_support(node):
+def test_node_support_xyz(node):
     assert_equal(node.support_x, False)
     assert_equal(node.support_y, False)
     assert_equal(node.support_z, False)
