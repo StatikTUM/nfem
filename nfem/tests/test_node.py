@@ -141,6 +141,16 @@ def test_node_location(node):
     assert_equal(node.displacement, [-1, -3, -5])
 
 
+def test_node_support(node):
+    node.support = 'xy'
+
+    assert_equal(node.support, 'xy')
+
+    node.support = 'z'
+
+    assert_equal(node.support, 'z')
+
+
 def test_node_displacement(node):
     node.displacement = [3, 2, 1]
 
