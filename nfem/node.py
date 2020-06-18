@@ -191,6 +191,23 @@ class Node:
         self.u, self.v, self.w = value
 
     @property
+    def support(self):
+        result = ''
+        if self.support_x:
+            result += 'x'
+        if self.support_y:
+            result += 'y'
+        if self.support_z:
+            result += 'z'
+        return result
+
+    @support.setter
+    def support(self, value):
+        self.support_x = 'x' in value
+        self.support_y = 'y' in value
+        self.support_z = 'z' in value
+
+    @property
     def support_x(self):
         return not self._dof_x.is_active
 
