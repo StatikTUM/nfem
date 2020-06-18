@@ -1,6 +1,6 @@
 import pytest
 import nfem
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 
 @pytest.fixture
@@ -118,3 +118,31 @@ def test_nonlinear_without_prestress(model_1):
         [-3.0000000000000004, 1.9959531892454738],
         [-3.2000000000000006, 2.4081771325499424],
     ])
+
+
+def test_stiffness_without_prestress(model_1):
+    model = model_1.get_duplicate()
+
+    print(model.get_stiffness())
+
+    assert_array_almost_equal(model.get_stiffness(),
+        [[ 2, 0, -1, 0,  0, 0],
+         [ 0, 0,  0, 0,  0, 0],
+         [-1, 0,  2, 0, -1, 0],
+         [ 0, 0,  0, 0,  0, 0],
+         [ 0, 0, -1, 0,  2, 0],
+         [ 0, 0,  0, 0,  0, 0]])
+
+
+def test_stiffness_with_prestress(model_2):
+    model = model_2.get_duplicate()
+
+    print(model.get_stiffness())
+
+    assert_array_almost_equal(model.get_stiffness(),
+        [[ 4,  0, -2,  0,  0,  0],
+         [ 0,  2,  0, -1,  0,  0],
+         [-2,  0,  4,  0, -2,  0],
+         [ 0, -1,  0,  2,  0, -1],
+         [ 0,  0, -2,  0,  4,  0],
+         [ 0,  0,  0, -1,  0,  2]])

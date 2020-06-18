@@ -498,6 +498,23 @@ class Model:
             print(f'Solution found after {info.iterations} iteration steps.')
             print()
 
+    def get_stiffness(self, mode='comp'):
+        assembler = Assembler(self)
+        k = np.zeros((assembler.dof_count, assembler.dof_count))
+
+        if mode == 'comp':
+            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+        elif mode == 'elas':
+            assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
+        elif mode == 'disp':
+            assembler.assemble_matrix(k, lambda element: element.calculate_initial_displacement_stiffness_matrix())
+        elif mode == 'geom':
+            assembler.assemble_matrix(k, lambda element: element.calculate_geometric_stiffness_matrix())
+        else:
+            raise ValueError('mode')
+
+        return k
+
     def solve_det_k(self, k=None, assembler=None):
         """Solves the determinant of k
 
