@@ -1,3 +1,4 @@
+TEMPLATE = """
 <div id="container"></div>
 <div id="slider">
     <input type="range" min="0" max="10" value="0" step="1" class="slider" id="timestep">
@@ -585,3 +586,4 @@
         clearInterval(animationTimer);
     });
 </script>
+"""

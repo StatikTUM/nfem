@@ -2,6 +2,7 @@ import json
 import numpy as np
 import os
 from IPython.display import HTML
+from nfem.visualization.canvas_3d_html import TEMPLATE
 
 
 class Canvas3D:
@@ -103,5 +104,4 @@ class Canvas3D:
         })
 
     def html(self):
-        TEMPLATE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'canvas_3d.html'), 'r').read()
         return HTML(TEMPLATE.replace("{{data}}", json.dumps(self.data)))
