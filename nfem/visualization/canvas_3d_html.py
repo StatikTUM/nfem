@@ -19,7 +19,7 @@ TEMPLATE = """
     let container = document.getElementById('container');
     let timestepSlider = document.getElementById('timestep');
 
-    let width = container.clientWidth - 7;
+    let width = container.clientWidth * 0.8;
     let height = data.height;
 
     let nbScenes = data.frames.length;
