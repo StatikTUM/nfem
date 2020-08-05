@@ -66,3 +66,12 @@ class Spring:
             self.ky * self.node.v,
             self.kz * self.node.w,
         ])
+
+    def draw(self, canvas):
+        location = self.node.location
+        if self.kx != 0:
+            canvas.spring(location, 'x')
+        if self.ky != 0:
+            canvas.spring(location, 'y')
+        if self.kz != 0:
+            canvas.spring(location, 'z')

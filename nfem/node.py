@@ -230,3 +230,44 @@ class Node:
     @support_z.setter
     def support_z(self, value):
         self._dof_z.is_active = not value
+
+    def draw(self, canvas):
+        canvas.support(
+            location=self.reference_location,
+            direction=self.support,
+            layer=10,
+            color='gray',
+        )
+        canvas.support(
+            location=self.location,
+            direction=self.support,
+            layer=20,
+            color='red',
+        )
+        canvas.point(
+            location=self.reference_location,
+            layer=10,
+            color='gray',
+        )
+        canvas.text(
+            location=self.location,
+            text=self.id,
+            layer=21,
+            color='gray',
+        )
+        canvas.point(
+            location=self.location,
+            layer=20,
+            color='red',
+        )
+
+        if np.linalg.norm(self.external_force) > 1e-8:
+            direction = self.external_force
+            direction /= np.linalg.norm(direction)
+
+            canvas.arrow(
+                location=(self.location - direction),
+                direction=direction,
+                layer=23,
+                color='blue',
+            )
