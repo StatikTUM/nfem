@@ -1031,6 +1031,24 @@ class Model:
         from nfem.visualization.notebook_animation import show_animation
         return show_animation(self).data
 
+    def show(self, height=600, timestep=0):
+        from nfem.visualization.canvas_3d import Canvas3D
+
+        canvas = Canvas3D(height=height)
+
+        canvas.frame = timestep
+
+        for model in self.get_model_history():
+            canvas.next_frame()
+
+            for node in model.nodes:
+                node.draw(canvas)
+
+            for element in model.elements:
+                element.draw(canvas)
+
+        return canvas.html()
+
 
 class KeyCollection:
     def __init__(self):

@@ -204,3 +204,22 @@ class Truss:
         global_internal_forces = actual_transform.T @ local_internal_forces
 
         return global_internal_forces
+
+    def draw(self, canvas):
+        canvas.line(
+            a=self.node_a.reference_location.tolist(),
+            b=self.node_b.reference_location.tolist(),
+            layer=10,
+            color='gray',
+        )
+        canvas.line(
+            a=self.node_a.location.tolist(),
+            b=self.node_b.location.tolist(),
+            layer=20,
+            color='red',
+        )
+        canvas.text(
+            location=((self.node_a.location + self.node_b.location) / 2).tolist(),
+            text=self.id,
+            layer=22,
+        )

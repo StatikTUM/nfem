@@ -58,9 +58,3 @@ __all__ = [
     'show_deformation_plot',
     'Plot2D',
 ]
-
-if not IS_NOTEBOOK:
-    from .visualization import interact
-    __all__ += [
-        'interact',
-    ]
