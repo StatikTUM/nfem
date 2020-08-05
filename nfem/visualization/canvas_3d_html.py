@@ -384,7 +384,7 @@ TEMPLATE = """
         theme: 'dark',
         align: 'right',
         width: 300,
-        barMode: 'offset',
+        barMode: 'none',
         panelMode: 'inner',
         opacity: 0.95,
         root: container,
