@@ -1,9 +1,4 @@
 try:
-    from nfem.visualization.interactive import interact # needs to be imported first, because it sets the matplotlib backend
-except Exception as _:
-    pass
-
-try:
     get_ipython()
     _is_notebook = True
 except Exception as _:
