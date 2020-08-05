@@ -5,7 +5,6 @@ matplotlib
 nbval
 numpy
 plotly
-pyqt5
 pytest
 pytest-cov
 pyyaml

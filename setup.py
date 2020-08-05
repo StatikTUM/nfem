@@ -30,7 +30,6 @@ setup(
         'matplotlib',
         'numpy',
         'plotly',
-        'PyQt5>=5.9.2,<5.13',
         'scipy',
     ],
     zip_safe=False,
