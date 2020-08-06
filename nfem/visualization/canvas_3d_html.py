@@ -91,7 +91,7 @@ TEMPLATE = """
 
         let pts = [];
         for (let point of item.points) {
-            pts.push(new THREE.Vector3(point.x || 0, point.z || 0, point.y || 0));
+            pts.push(new THREE.Vector3(point.y || 0, point.z || 0, point.x || 0));
         }
         let geometry = new THREE.BufferGeometry().setFromPoints(pts);
 
@@ -112,7 +112,7 @@ TEMPLATE = """
             sizeAttenuation: false,
         });
 
-        let pts = [new THREE.Vector3(item.location.x || 0, item.location.z || 0, item.location.y || 0)];
+        let pts = [new THREE.Vector3(item.location.y || 0, item.location.z || 0, item.location.x || 0)];
 
         let geometry = new THREE.BufferGeometry().setFromPoints(pts);
 
@@ -175,7 +175,7 @@ TEMPLATE = """
         let spriteMaterial = tags.get(item.text);
 
         let object = new THREE.Sprite(spriteMaterial);
-        object.position.set(item.location.x || 0, item.location.z || 0, item.location.y || 0);
+        object.position.set(item.location.y || 0, item.location.z || 0, item.location.x || 0);
         object.scale.set(0.05, 0.05, 1);
 
         if (item.layer !== undefined) {
@@ -226,15 +226,15 @@ TEMPLATE = """
                         const c = [+r, +r, -h];
                         const d = [+r, -r, -h];
 
-                        const dx = item.location.x || 0;
+                        const dx = item.location.y || 0;
                         const dy = item.location.z || 0;
-                        const dz = item.location.y || 0;
+                        const dz = item.location.x || 0;
 
                         function toVector3(point) {
                             const x = point[0] || 0;
                             const y = point[1] || 0;
                             const z = point[2] || 0;
-                            return new THREE.Vector3(x, z, y);
+                            return new THREE.Vector3(y, z, x);
                         }
 
                         const points = [p, a, b, c, d].map(toVector3);
@@ -246,7 +246,7 @@ TEMPLATE = """
 
                             const geometry = new THREE.Geometry().setFromPoints(points);
                             if (direction == "x") {
-                                geometry.rotateX(-Math.PI / 2);
+                                geometry.rotateY(-Math.PI / 2);
                             }
                             if (direction == "y") {
                                 geometry.rotateZ(-Math.PI / 2);
@@ -298,12 +298,12 @@ TEMPLATE = """
                     break;
                 case 'arrow':
                     {
-                        let lx = item.location.x || 0;
+                        let lx = item.location.y || 0;
                         let ly = item.location.z || 0;
-                        let lz = item.location.y || 0;
-                        let dx = item.direction.x || 0;
+                        let lz = item.location.x || 0;
+                        let dx = item.direction.y || 0;
                         let dy = item.direction.z || 0;
-                        let dz = item.direction.y || 0;
+                        let dz = item.direction.x || 0;
                         var dir = new THREE.Vector3(dx, dy, dz);
 
                         dir.normalize();
