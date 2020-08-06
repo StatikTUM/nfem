@@ -34,7 +34,7 @@ TEMPLATE = """
     let far = 1000;
 
     let camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(-3, 3, -3)
+    camera.position.set(-3, 3, 3);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     camera.layers.enable(1);
