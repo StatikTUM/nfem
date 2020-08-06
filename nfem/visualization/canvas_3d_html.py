@@ -402,7 +402,7 @@ TEMPLATE = """
         nodal_results: 'None',
         element_results: 'None',
         custom: true,
-        ms_per_timestep: 500,
+        timestep_per_sec: 2.0,
         loop: true,
         reverse: false,
     };
@@ -548,12 +548,12 @@ TEMPLATE = """
 
     gui.Register({
         type: 'range',
-        label: 'ms/timestep',
-        min: 0, max: 2000, step: 1,
-        object: settings, property: "ms_per_timestep",
+        label: 'timesteps/sec',
+        min: 0.5, max: 60, step: 0.1,
+        object: settings, property: "timestep_per_sec",
         onChange: (data) => {
             clearInterval(animationTimer);
-            animationTimer = setInterval(animate, data);
+            animationTimer = setInterval(animate, 1000 / data);
         }
     });
 
@@ -579,7 +579,7 @@ TEMPLATE = """
 
     d3.select("#start").on("click", function () {
         clearInterval(animationTimer);
-        animationTimer = setInterval(animate, settings.ms_per_timestep);
+        animationTimer = setInterval(animate, 1000 / settings.timestep_per_sec);
     });
 
     d3.select("#stop").on("click", function () {
