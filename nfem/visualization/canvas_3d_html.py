@@ -549,7 +549,7 @@ TEMPLATE = """
     gui.Register({
         type: 'range',
         label: 'timesteps/sec',
-        min: 0.5, max: 60, step: 0.1,
+        min: 0.5, max: 30, step: 0.1,
         object: settings, property: "timestep_per_sec",
         onChange: (data) => {
             clearInterval(animationTimer);
