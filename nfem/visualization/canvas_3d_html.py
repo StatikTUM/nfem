@@ -192,7 +192,7 @@ TEMPLATE = """
 
         scenes.push(scene);
 
-        let grid = new THREE.GridHelper(20, 20);
+        let grid = new THREE.GridHelper(20, 20, 0xbbbbbb, 0xdddddd);
         grid.layers.set(1);
         scene.add(grid);
 
