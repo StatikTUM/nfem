@@ -18,8 +18,7 @@ TEMPLATE = """
 <div id="container"></div>
 <div id="slider">
     <input type="range" min="0" max="10" value="0" step="1" class="slider" id="timestep" style="width:100%;">
-    <button type="button" id="start">start</button>
-    <button type="button" id="stop">stop</button>
+    <button type="button" id="start">Start/Stop</button>
 </div>
 
 <script src="https://unpkg.com/three@0.119.1/build/three.min.js"></script>
@@ -601,6 +600,15 @@ TEMPLATE = """
         onChange: (data) => {
         }
     });
+
+    gui.Register({
+        type: 'button',
+        label: 'Start/Stop',
+        action: () => {
+            startStopAnimation();
+        }
+    });
+
 
     // animation
 
