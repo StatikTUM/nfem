@@ -18,8 +18,7 @@ TEMPLATE = """
 <div id="container"></div>
 <div id="slider">
     <input type="range" min="0" max="10" value="0" step="1" class="slider" id="timestep" style="width:100%;">
-    <button type="button" id="start">start</button>
-    <button type="button" id="stop">stop</button>
+    <button type="button" id="start">Start/Stop</button>
 </div>
 
 <script src="https://unpkg.com/three@0.119.1/build/three.min.js"></script>
@@ -389,8 +388,21 @@ TEMPLATE = """
     render();
 
 
-
     controls.addEventListener('change', () => render());
+
+
+    function openFullscreen() {
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.mozRequestFullScreen) { /* Firefox */
+            container.mozRequestFullScreen();
+        } else if (container.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) { /* IE/Edge */
+            container.msRequestFullscreen();
+        }
+    }
+
 
     // gui
 
@@ -460,13 +472,21 @@ TEMPLATE = """
             render();
         }
     });
-  
+
     gui.Register({
         type: 'button',
         label: 'Zoom all',
         action: () => {
             fitCameraToSelection(camera, controls, selection);
             render();
+        }
+    });
+
+    gui.Register({
+        type: 'button',
+        label: 'Fullscreen',
+        action: () => {
+            openFullscreen();
         }
     });
 
@@ -581,6 +601,15 @@ TEMPLATE = """
         }
     });
 
+    gui.Register({
+        type: 'button',
+        label: 'Start/Stop',
+        action: () => {
+            startStopAnimation();
+        }
+    });
+
+
     // animation
 
     let animationTimer;
@@ -592,19 +621,30 @@ TEMPLATE = """
         update(t);
     }
 
-    d3.select("#start").on("click", function () {
-        clearInterval(animationTimer);
-        animationTimer = setInterval(animate, 1000 / settings.timestep_per_sec);
-    });
+    let animationRunning = false;
 
-    d3.select("#stop").on("click", function () {
-        clearInterval(animationTimer);
+    function startStopAnimation() {
+        if (animationRunning) {
+            clearInterval(animationTimer);
+            animationRunning = false;
+        } else {
+            animationTimer = setInterval(animate, 1000 / settings.timestep_per_sec);
+            animationRunning = true;
+        }
+    }
+
+    d3.select("#start").on("click", function () {
+        startStopAnimation();
     });
 
 
     window.addEventListener('resize', onWindowResize, false);
 
     function onWindowResize(){
+        const fullscreen = document.fullscreenEnabled || document.mozFullscreenEnabled || document.webkitFullscreenEnabled ? true : false;
+
+        const height = fullscreen ? window.innerHeight : height;
+
         camera.aspect = window.innerWidth / height;
         camera.updateProjectionMatrix();
 
