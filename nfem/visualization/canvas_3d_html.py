@@ -611,6 +611,8 @@ TEMPLATE = """
 
         renderer.setSize(window.innerWidth, height);
 
+        timestepSlider.setAttribute("style", `width: ${width}px;`);
+
         render();
     }
 
