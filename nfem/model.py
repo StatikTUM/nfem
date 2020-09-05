@@ -1047,7 +1047,7 @@ class Model:
             for element in model.elements:
                 element.draw(canvas)
 
-        return canvas.html()
+        canvas.show(height=height)
 
 
 class KeyCollection:

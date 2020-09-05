@@ -1,4 +1,20 @@
 TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas</title>
+</head>
+<body>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+}
+</style>
+
 <div id="container"></div>
 <div id="slider">
     <input type="range" min="0" max="10" value="0" step="1" class="slider" id="timestep">
@@ -19,7 +35,7 @@ TEMPLATE = """
     let container = document.getElementById('container');
     let timestepSlider = document.getElementById('timestep');
 
-    let width = container.clientWidth * 0.8;
+    let width = window.innerWidth;
     let height = data.height;
 
     let nbScenes = data.frames.length;
@@ -585,5 +601,22 @@ TEMPLATE = """
     d3.select("#stop").on("click", function () {
         clearInterval(animationTimer);
     });
+
+
+    window.addEventListener( 'resize', onWindowResize, false );
+
+    function onWindowResize(){
+        camera.aspect = window.innerWidth / height;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, height);
+
+        render();
+    }
+
+    onWindowResize();
 </script>
+
+</body>
+</html>
 """
