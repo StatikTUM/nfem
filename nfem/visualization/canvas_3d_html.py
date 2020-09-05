@@ -389,8 +389,21 @@ TEMPLATE = """
     render();
 
 
-
     controls.addEventListener('change', () => render());
+
+
+    function openFullscreen() {
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.mozRequestFullScreen) { /* Firefox */
+            container.mozRequestFullScreen();
+        } else if (container.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) { /* IE/Edge */
+            container.msRequestFullscreen();
+        }
+    }
+
 
     // gui
 
@@ -460,13 +473,21 @@ TEMPLATE = """
             render();
         }
     });
-  
+
     gui.Register({
         type: 'button',
         label: 'Zoom all',
         action: () => {
             fitCameraToSelection(camera, controls, selection);
             render();
+        }
+    });
+
+    gui.Register({
+        type: 'button',
+        label: 'Fullscreen',
+        action: () => {
+            openFullscreen();
         }
     });
 
@@ -605,6 +626,10 @@ TEMPLATE = """
     window.addEventListener('resize', onWindowResize, false);
 
     function onWindowResize(){
+        const fullscreen = document.fullscreenEnabled || document.mozFullscreenEnabled || document.webkitFullscreenEnabled ? true : false;
+
+        const height = fullscreen ? window.innerHeight : height;
+
         camera.aspect = window.innerWidth / height;
         camera.updateProjectionMatrix();
 
