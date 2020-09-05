@@ -1,7 +1,8 @@
 import json
 import numpy as np
 import os
-from IPython.display import HTML
+import html
+from IPython.display import display, IFrame, HTML
 from nfem.visualization.canvas_3d_html import TEMPLATE
 
 
@@ -103,5 +104,7 @@ class Canvas3D:
             "layer": layer,
         })
 
-    def html(self):
-        return HTML(TEMPLATE.replace("{{data}}", json.dumps(self.data)))
+    def show(self, height):
+        content = TEMPLATE.replace("{{data}}", json.dumps(self.data))
+        element = HTML(f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height+100}" srcdoc="{html.escape(content)}"</iframe>')
+        display(element)
