@@ -613,13 +613,20 @@ TEMPLATE = """
         update(t);
     }
 
-    d3.select("#start").on("click", function () {
-        clearInterval(animationTimer);
-        animationTimer = setInterval(animate, 1000 / settings.timestep_per_sec);
-    });
+    let animationRunning = false;
 
-    d3.select("#stop").on("click", function () {
-        clearInterval(animationTimer);
+    function startStopAnimation() {
+        if (animationRunning) {
+            clearInterval(animationTimer);
+            animationRunning = false;
+        } else {
+            animationTimer = setInterval(animate, 1000 / settings.timestep_per_sec);
+            animationRunning = true;
+        }
+    }
+
+    d3.select("#start").on("click", function () {
+        startStopAnimation();
     });
 
 
