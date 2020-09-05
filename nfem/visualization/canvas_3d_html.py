@@ -1,4 +1,20 @@
 TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas</title>
+</head>
+<body>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+}
+</style>
+
 <div id="container"></div>
 <div id="slider">
     <input type="range" min="0" max="10" value="0" step="1" class="slider" id="timestep">
@@ -586,4 +602,7 @@ TEMPLATE = """
         clearInterval(animationTimer);
     });
 </script>
+
+</body>
+</html>
 """
