@@ -17,7 +17,7 @@ TEMPLATE = """
 
 <div id="container"></div>
 <div id="slider">
-    <input type="range" min="0" max="10" value="0" step="1" class="slider" id="timestep">
+    <input type="range" min="0" max="10" value="0" step="1" class="slider" id="timestep" style="width:100%;">
     <button type="button" id="start">start</button>
     <button type="button" id="stop">stop</button>
 </div>
@@ -40,7 +40,6 @@ TEMPLATE = """
 
     let nbScenes = data.frames.length;
 
-    timestepSlider.setAttribute("style", `width: ${width}px;`);
     timestepSlider.setAttribute("max", nbScenes - 1);
 
     // camera
@@ -610,8 +609,6 @@ TEMPLATE = """
         camera.updateProjectionMatrix();
 
         renderer.setSize(window.innerWidth, height);
-
-        timestepSlider.setAttribute("style", `width: ${width}px;`);
 
         render();
     }
