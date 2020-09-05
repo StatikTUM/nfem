@@ -603,13 +603,15 @@ TEMPLATE = """
     });
 
 
-    window.addEventListener( 'resize', onWindowResize, false );
+    window.addEventListener('resize', onWindowResize, false);
 
     function onWindowResize(){
         camera.aspect = window.innerWidth / height;
         camera.updateProjectionMatrix();
 
         renderer.setSize(window.innerWidth, height);
+
+        timestepSlider.setAttribute("style", `width: ${width}px;`);
 
         render();
     }
