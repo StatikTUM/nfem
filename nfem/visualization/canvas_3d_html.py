@@ -603,7 +603,7 @@ TEMPLATE = """
     });
 
 
-    window.addEventListener( 'resize', onWindowResize, false );
+    window.addEventListener('resize', onWindowResize, false);
 
     function onWindowResize(){
         camera.aspect = window.innerWidth / height;
