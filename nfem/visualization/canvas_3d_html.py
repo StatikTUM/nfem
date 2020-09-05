@@ -35,7 +35,7 @@ TEMPLATE = """
     let container = document.getElementById('container');
     let timestepSlider = document.getElementById('timestep');
 
-    let width = container.clientWidth * 0.8;
+    let width = window.innerWidth;
     let height = data.height;
 
     let nbScenes = data.frames.length;
@@ -601,6 +601,20 @@ TEMPLATE = """
     d3.select("#stop").on("click", function () {
         clearInterval(animationTimer);
     });
+
+
+    window.addEventListener( 'resize', onWindowResize, false );
+
+    function onWindowResize(){
+        camera.aspect = window.innerWidth / height;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, height);
+
+        render();
+    }
+
+    onWindowResize();
 </script>
 
 </body>
