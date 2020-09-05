@@ -1,8 +1,7 @@
 import json
 import numpy as np
-import os
 import html
-from IPython.display import display, IFrame, HTML
+from IPython.display import display, HTML
 from nfem.visualization.canvas_3d_html import TEMPLATE
 
 
