@@ -616,9 +616,8 @@ TEMPLATE = """
     let animationTimer;
 
     function animate() {
-        let b = d3.select("#timestep");
-        let t = mod(+b.property("value") + (settings.reverse ? -1 : 1), +b.property("max") + 1);
-        b.property("value", t);
+        let currentTimestep = d3.select("#timestep").property("value");
+        let t = mod(+currentTimestep + (settings.reverse ? -1 : 1), +(nbScenes - 1) + 1);
         update(t);
     }
 
