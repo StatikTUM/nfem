@@ -632,11 +632,6 @@ TEMPLATE = """
         }
     }
 
-    d3.select("#start").on("click", function () {
-        startStopAnimation();
-    });
-
-
     window.addEventListener('resize', onWindowResize, false);
 
     function onWindowResize(){
