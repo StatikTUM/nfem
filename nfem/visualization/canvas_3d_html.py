@@ -38,7 +38,11 @@ TEMPLATE = """
 
     let nbScenes = data.frames.length;
 
-    timestepSlider.setAttribute("max", nbScenes - 1);
+    if (nbScenes > 1) {
+        d3.select("#timestep").attr("max", nbScenes - 1);
+    } else {
+        d3.select("#timestep").style("display", "none");
+    }
 
     // camera
     let fov = 45;
@@ -577,38 +581,41 @@ TEMPLATE = """
 
     // gui: animation
 
-    gui.Register({
-        type: 'title',
-        label: 'Animation'
-    });
+    if (nbScenes > 1) {
+        gui.Register({
+            type: 'title',
+            label: 'Animation'
+        });
 
-    gui.Register({
-        type: 'range',
-        label: 'timesteps/sec',
-        min: 0.5, max: 30, step: 0.1,
-        object: settings, property: "timestep_per_sec",
-        onChange: (data) => {
-            clearInterval(animationTimer);
-            animationTimer = setInterval(animate, 1000 / data);
-        }
-    });
+        gui.Register({
+            type: 'range',
+            label: 'timesteps/sec',
+            min: 0.5, max: 30, step: 0.1,
+            object: settings,
+            property: "timestep_per_sec",
+            onChange: (data) => {
+                clearInterval(animationTimer);
+                animationTimer = setInterval(animate, 1000 / data);
+            }
+        });
 
-    gui.Register({
-        type: 'checkbox',
-        label: 'reverse',
-        object: settings,
-        property: 'reverse',
-        onChange: (data) => {
-        }
-    });
+        gui.Register({
+            type: 'checkbox',
+            label: 'reverse',
+            object: settings,
+            property: 'reverse',
+            onChange: (data) => {
+            }
+        });
 
-    gui.Register({
-        type: 'button',
-        label: 'Start/Stop',
-        action: () => {
-            startStopAnimation();
-        }
-    });
+        gui.Register({
+            type: 'button',
+            label: 'Start/Stop',
+            action: () => {
+                startStopAnimation();
+            }
+        });
+    }
 
 
     // animation
