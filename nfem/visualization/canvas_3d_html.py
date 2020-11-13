@@ -386,7 +386,7 @@ TEMPLATE = """
         update(this.value);
     });
 
-    render();
+    update(currentScene);
 
 
     controls.addEventListener('change', () => render());
