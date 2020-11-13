@@ -15,11 +15,10 @@ TEMPLATE = """
 }
 </style>
 
+<div id="caption" style="position: absolute; width: 100%; text-align: center;">Title</div>
+<input id="timestep" type="range" min="0" max="10" value="0" step="1" class="slider" style="position: absolute; bottom: 0px; width: 100%;">
+
 <div id="container"></div>
-<div id="slider">
-    <input type="range" min="0" max="10" value="0" step="1" class="slider" id="timestep" style="width:100%;">
-    <button type="button" id="start">Start/Stop</button>
-</div>
 
 <script src="https://unpkg.com/three@0.119.1/build/three.min.js"></script>
 <script src="https://unpkg.com/three@0.119.1/examples/js/controls/OrbitControls.js"></script>
@@ -39,7 +38,11 @@ TEMPLATE = """
 
     let nbScenes = data.frames.length;
 
-    timestepSlider.setAttribute("max", nbScenes - 1);
+    if (nbScenes > 1) {
+        d3.select("#timestep").attr("max", nbScenes - 1);
+    } else {
+        d3.select("#timestep").style("display", "none");
+    }
 
     // camera
     let fov = 45;
@@ -345,6 +348,8 @@ TEMPLATE = """
 
     function update(index) {
         currentScene = index;
+        d3.select("#caption").html(`Timestep ${index}`);
+        d3.select("#timestep").property("value", index);
         render();
     }
 
@@ -385,7 +390,7 @@ TEMPLATE = """
         update(this.value);
     });
 
-    render();
+    update(currentScene);
 
 
     controls.addEventListener('change', () => render());
@@ -576,38 +581,41 @@ TEMPLATE = """
 
     // gui: animation
 
-    gui.Register({
-        type: 'title',
-        label: 'Animation'
-    });
+    if (nbScenes > 1) {
+        gui.Register({
+            type: 'title',
+            label: 'Animation'
+        });
 
-    gui.Register({
-        type: 'range',
-        label: 'timesteps/sec',
-        min: 0.5, max: 30, step: 0.1,
-        object: settings, property: "timestep_per_sec",
-        onChange: (data) => {
-            clearInterval(animationTimer);
-            animationTimer = setInterval(animate, 1000 / data);
-        }
-    });
+        gui.Register({
+            type: 'range',
+            label: 'timesteps/sec',
+            min: 0.5, max: 30, step: 0.1,
+            object: settings,
+            property: "timestep_per_sec",
+            onChange: (data) => {
+                clearInterval(animationTimer);
+                animationTimer = setInterval(animate, 1000 / data);
+            }
+        });
 
-    gui.Register({
-        type: 'checkbox',
-        label: 'reverse',
-        object: settings,
-        property: 'reverse',
-        onChange: (data) => {
-        }
-    });
+        gui.Register({
+            type: 'checkbox',
+            label: 'reverse',
+            object: settings,
+            property: 'reverse',
+            onChange: (data) => {
+            }
+        });
 
-    gui.Register({
-        type: 'button',
-        label: 'Start/Stop',
-        action: () => {
-            startStopAnimation();
-        }
-    });
+        gui.Register({
+            type: 'button',
+            label: 'Start/Stop',
+            action: () => {
+                startStopAnimation();
+            }
+        });
+    }
 
 
     // animation
@@ -615,9 +623,8 @@ TEMPLATE = """
     let animationTimer;
 
     function animate() {
-        let b = d3.select("#timestep");
-        let t = mod(+b.property("value") + (settings.reverse ? -1 : 1), +b.property("max") + 1);
-        b.property("value", t);
+        let currentTimestep = d3.select("#timestep").property("value");
+        let t = mod(+currentTimestep + (settings.reverse ? -1 : 1), +(nbScenes - 1) + 1);
         update(t);
     }
 
@@ -632,11 +639,6 @@ TEMPLATE = """
             animationRunning = true;
         }
     }
-
-    d3.select("#start").on("click", function () {
-        startStopAnimation();
-    });
-
 
     window.addEventListener('resize', onWindowResize, false);
 
