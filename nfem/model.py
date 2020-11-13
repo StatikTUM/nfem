@@ -61,7 +61,7 @@ class Model:
 
     # === modeling
 
-    def add_node(self, id, x, y, z=None, support='', fx=0.0, fy=0.0, fz=0.0):
+    def add_node(self, id: str, x: float, y: float, z: Optional[float] = None, support: str = '', fx: float = 0.0, fy: float = 0.0, fz: float = 0.0):
         """Add a three dimensional node to the model.
 
         Parameters
@@ -115,7 +115,7 @@ class Model:
         node.dof('v').external_force = fy
         node.dof('w').external_force = fz
 
-    def add_truss(self, id, node_a, node_b, youngs_modulus, area, prestress=0):
+    def add_truss(self, id: str, node_a: str, node_b: str, youngs_modulus: float, area: float, prestress: float = 0.0):
         """Add a three dimensional truss element to the model.
 
         Parameters
@@ -164,7 +164,7 @@ class Model:
 
         self.elements._add(element)
 
-    def add_spring(self, id, node, kx=0, ky=0, kz=0):
+    def add_spring(self, id: str, node: str, kx: float = 0.0, ky: float = 0.0, kz: float = 0.0):
         if not isinstance(id, str):
             raise TypeError('The element id is not a text string')
 
@@ -181,7 +181,7 @@ class Model:
 
         self.elements._add(element)
 
-    def add_element(self, element_type, id, nodes, **properties):
+    def add_element(self, element_type: Type, id: str, nodes: List[Node], **properties):
         if not isinstance(id, str):
             raise TypeError('The element id is not a text string')
 
