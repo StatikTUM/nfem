@@ -344,6 +344,8 @@ TEMPLATE = """
 
     function update(index) {
         currentScene = index;
+        d3.select("#caption").html(`Timestep ${index}`);
+        d3.select("#timestep").property("value", index);
         render();
     }
 
