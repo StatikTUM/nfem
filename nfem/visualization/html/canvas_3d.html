@@ -59,7 +59,7 @@ body, #content {
     let timestepSlider = document.getElementById('timestep');
 
     let width = window.innerWidth;
-    let height = data.height;
+    let height = window.innerHeight;
 
     let nbScenes = data.frames.length;
 
@@ -673,7 +673,7 @@ body, #content {
         camera.aspect = window.innerWidth / height;
         camera.updateProjectionMatrix();
 
-        renderer.setSize(window.innerWidth, height);
+        renderer.setSize(window.innerWidth, window.innerHeight);
 
         render();
     }
