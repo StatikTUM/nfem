@@ -14,13 +14,33 @@
     margin: 0;
     padding: 0;
 }
+
+body, #content {
+    overflow: hidden;
+    background-color: red;
+}
+
+#caption {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    position: absolute;
+    text-align: center;
+    top: 8px;
+    width: 100%;
+}
+
+#timestep {
+    bottom: 8px;
+    position: absolute;
+    width: 100%;
+}
 </style>
 
 <div id="content">
-    <div id="caption" style="position: absolute; width: 100%; text-align: center;">Title</div>
-    <input id="timestep" type="range" min="0" max="10" value="0" step="1" class="slider" style="position: absolute; bottom: 0px; width: 100%;">
-
-    <div id="container"></div>
+    <div id="caption">Title</div>
+    <input id="timestep" type="range" min="0" max="10" value="0" step="1" class="slider" list="timesteps">
+    <datalist id="timesteps">
+    </datalist>
 </div>
 
 <script type="text/javascript" src="js/three.min.js"></script>
