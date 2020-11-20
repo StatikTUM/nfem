@@ -15,10 +15,12 @@ TEMPLATE = """
 }
 </style>
 
-<div id="caption" style="position: absolute; width: 100%; text-align: center;">Title</div>
-<input id="timestep" type="range" min="0" max="10" value="0" step="1" class="slider" style="position: absolute; bottom: 0px; width: 100%;">
+<div id="content">
+    <div id="caption" style="position: absolute; width: 100%; text-align: center;">Title</div>
+    <input id="timestep" type="range" min="0" max="10" value="0" step="1" class="slider" style="position: absolute; bottom: 0px; width: 100%;">
 
-<div id="container"></div>
+    <div id="container"></div>
+</div>
 
 <script src="https://unpkg.com/three@0.119.1/build/three.min.js"></script>
 <script src="https://unpkg.com/three@0.119.1/examples/js/controls/OrbitControls.js"></script>
@@ -27,9 +29,12 @@ TEMPLATE = """
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/screenfull.js/5.0.2/screenfull.min.js"></script>
+
 <script type="text/javascript">
     let data = {{data}};
 
+    let content = document.getElementById('content');
     let container = document.getElementById('container');
     let timestepSlider = document.getElementById('timestep');
 
@@ -397,14 +402,8 @@ TEMPLATE = """
 
 
     function openFullscreen() {
-        if (container.requestFullscreen) {
-            container.requestFullscreen();
-        } else if (container.mozRequestFullScreen) { /* Firefox */
-            container.mozRequestFullScreen();
-        } else if (container.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-            container.webkitRequestFullscreen();
-        } else if (container.msRequestFullscreen) { /* IE/Edge */
-            container.msRequestFullscreen();
+        if (screenfull.isEnabled) {
+            screenfull.toggle(content);
         }
     }
 
