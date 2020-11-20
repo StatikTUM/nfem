@@ -668,11 +668,7 @@ body, #content {
     window.addEventListener('resize', onWindowResize, false);
 
     function onWindowResize(){
-        const fullscreen = document.fullscreenEnabled || document.mozFullscreenEnabled || document.webkitFullscreenEnabled ? true : false;
-
-        const height = fullscreen ? window.innerHeight : height;
-
-        camera.aspect = window.innerWidth / height;
+        camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
 
         renderer.setSize(window.innerWidth, window.innerHeight);
