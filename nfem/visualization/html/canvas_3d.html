@@ -428,6 +428,8 @@ body, #content {
     function openFullscreen() {
         if (screenfull.isEnabled) {
             screenfull.toggle(content);
+        } else {
+            alert('Fullscreen mode not supported by the editor');
         }
     }
 
