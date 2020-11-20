@@ -65,6 +65,10 @@ body, #content {
 
     if (nbScenes > 1) {
         d3.select("#timestep").attr("max", nbScenes - 1);
+
+        for (let i = 0; i < nbScenes; i++) {
+            d3.select("#timesteps").append('option').attr('value', i);
+        }
     } else {
         d3.select("#timestep").style("display", "none");
     }
