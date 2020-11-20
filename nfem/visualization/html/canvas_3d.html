@@ -14,13 +14,33 @@
     margin: 0;
     padding: 0;
 }
+
+body, #content {
+    overflow: hidden;
+    background-color: red;
+}
+
+#caption {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    position: absolute;
+    text-align: center;
+    top: 8px;
+    width: 100%;
+}
+
+#timestep {
+    bottom: 8px;
+    position: absolute;
+    width: 100%;
+}
 </style>
 
 <div id="content">
-    <div id="caption" style="position: absolute; width: 100%; text-align: center;">Title</div>
-    <input id="timestep" type="range" min="0" max="10" value="0" step="1" class="slider" style="position: absolute; bottom: 0px; width: 100%;">
-
-    <div id="container"></div>
+    <div id="caption">Title</div>
+    <input id="timestep" type="range" min="0" max="10" value="0" step="1" class="slider" list="timesteps">
+    <datalist id="timesteps">
+    </datalist>
 </div>
 
 <script type="text/javascript" src="js/three.min.js"></script>
@@ -36,22 +56,25 @@
     let data = {} /* [data] */;
 
     let content = document.getElementById('content');
-    let container = document.getElementById('container');
     let timestepSlider = document.getElementById('timestep');
 
     let width = window.innerWidth;
-    let height = data.height;
+    let height = window.innerHeight;
 
     let nbScenes = data.frames.length;
 
     if (nbScenes > 1) {
         d3.select("#timestep").attr("max", nbScenes - 1);
+
+        for (let i = 0; i < nbScenes; i++) {
+            d3.select("#timesteps").append('option').attr('value', i);
+        }
     } else {
         d3.select("#timestep").style("display", "none");
     }
 
     // camera
-    let fov = 45;
+    let fov = 15;
     let aspect = width / height;
     let near = 0.1;
     let far = 1000;
@@ -76,7 +99,7 @@
     renderer.setSize(width, height);
     renderer.outputEncoding = THREE.sRGBEncoding;
 
-    container.appendChild(renderer.domElement);
+    content.appendChild(renderer.domElement);
 
 
     let scenes = [];
@@ -419,7 +442,7 @@
         barMode: 'none',
         panelMode: 'inner',
         opacity: 0.95,
-        root: container,
+        root: content,
         open: false,
     });
 
@@ -650,7 +673,7 @@
         camera.aspect = window.innerWidth / height;
         camera.updateProjectionMatrix();
 
-        renderer.setSize(window.innerWidth, height);
+        renderer.setSize(window.innerWidth, window.innerHeight);
 
         render();
     }
