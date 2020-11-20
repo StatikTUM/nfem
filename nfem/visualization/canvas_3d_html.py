@@ -34,6 +34,7 @@ TEMPLATE = """
 <script type="text/javascript">
     let data = {{data}};
 
+    let content = document.getElementById('content');
     let container = document.getElementById('container');
     let timestepSlider = document.getElementById('timestep');
 
@@ -401,14 +402,8 @@ TEMPLATE = """
 
 
     function openFullscreen() {
-        if (container.requestFullscreen) {
-            container.requestFullscreen();
-        } else if (container.mozRequestFullScreen) { /* Firefox */
-            container.mozRequestFullScreen();
-        } else if (container.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-            container.webkitRequestFullscreen();
-        } else if (container.msRequestFullscreen) { /* IE/Edge */
-            container.msRequestFullscreen();
+        if (screenfull.isEnabled) {
+            screenfull.toggle(content);
         }
     }
 
