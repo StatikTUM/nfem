@@ -648,6 +648,7 @@ body, #content {
     let animationTimer;
 
     function animate() {
+        animationRunning = true;
         let currentTimestep = d3.select("#timestep").property("value");
         let t = mod(+currentTimestep + (settings.reverse ? -1 : 1), +(nbScenes - 1) + 1);
         update(t);
