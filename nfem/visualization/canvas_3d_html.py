@@ -29,6 +29,8 @@ TEMPLATE = """
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/screenfull.js/5.0.2/screenfull.min.js"></script>
+
 <script type="text/javascript">
     let data = {{data}};
 
