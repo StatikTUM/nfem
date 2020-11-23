@@ -3,8 +3,8 @@
 Authors: Thomas Oberbichler, Armin Geiser
 """
 
-from collections import OrderedDict
 from copy import deepcopy
+from typing import List, Optional, Type
 
 import numpy as np
 import numpy.linalg as la
@@ -12,6 +12,7 @@ import numpy.linalg as la
 from scipy.linalg import eig
 
 from nfem.dof import Dof
+from nfem.key_collection import KeyCollection
 from nfem.model_status import ModelStatus
 from nfem.node import Node
 from nfem.truss import Truss
@@ -39,6 +40,7 @@ class Model:
     previous_model : Model
         Previous state of this model
     """
+    nodes: KeyCollection[str, Node]
 
     def __init__(self, name=None):
         """Create a new model.
@@ -1048,31 +1050,3 @@ class Model:
                 element.draw(canvas)
 
         canvas.show(height=height)
-
-
-class KeyCollection:
-    def __init__(self):
-        self._dictionary = OrderedDict()
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list(self._dictionary.values())[key]
-        return self._dictionary[key]
-
-    def _add(self, value):
-        self._dictionary[value.id] = value
-
-    def __contains__(self, key):
-        return self._dictionary.__contains__(key)
-
-    def __len__(self):
-        return self._dictionary.values().__len__()
-
-    def __iter__(self):
-        return self._dictionary.values().__iter__()
-
-    def __next__(self):
-        return self._dictionary.values().__next__()
-
-    def _ipython_key_completions_(self):
-        return list(self._dictionary.keys())
