@@ -1,8 +1,8 @@
 import json
 import numpy as np
 import html
+import os
 from IPython.display import display, HTML
-from nfem.visualization.canvas_3d_html import TEMPLATE
 
 
 class Canvas3D:
@@ -103,7 +103,24 @@ class Canvas3D:
             "layer": layer,
         })
 
+    def _embed_js(self, template, filename):
+        path = os.path.join(os.path.dirname(__file__), 'html', 'js', filename)
+        with open(path, 'r', encoding='UTF-8') as file:
+            content = file.read()
+            template = template.replace(f'<script type="text/javascript" src="js/{filename}"></script>', f'<script type="text/javascript">{content}</script>')
+        return template
+
     def show(self, height):
-        content = TEMPLATE.replace("{{data}}", json.dumps(self.data))
-        element = HTML(f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height+100}" srcdoc="{html.escape(content)}"</iframe>')
+        template_path = os.path.join(os.path.dirname(__file__), 'html', 'canvas_3d.html')
+        with open(template_path, 'r', encoding='UTF-8') as file:
+            template = file.read()
+
+        template = self._embed_js(template, 'three.min.js')
+        template = self._embed_js(template, 'OrbitControls.js')
+        template = self._embed_js(template, 'd3.min.js')
+        template = self._embed_js(template, 'guify.min.js')
+        template = self._embed_js(template, 'screenfull.min.js')
+
+        content = template.replace("{} /* [data] */", json.dumps(self.data))
+        element = HTML(f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{html.escape(content)}"></iframe>')
         display(element)
