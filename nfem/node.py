@@ -171,7 +171,7 @@ class Node:
         [self.fx, self.fy, self.fz] = value
 
     @property
-    def ref_location(self) -> List[float]
+    def ref_location(self) -> List[float]:
         """Gets or sets the z coordinate of the node in the undeformed reference configuration."""
         return np.array([self.ref_x, self.ref_y, self.ref_z])
 
