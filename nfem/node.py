@@ -34,7 +34,7 @@ class Node:
         Displacement in z direction.
     """
 
-    def __init__(self, id, x, y, z):
+    def __init__(self, id: str, x: float, y: float, z: float):
         """Create a new node.
 
         Parameters
@@ -63,27 +63,27 @@ class Node:
         raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
 
     @property
-    def reference_x(self):
+    def reference_x(self) -> float:
         return self._dof_x.reference_value
 
     @reference_x.setter
-    def reference_x(self, value):
+    def reference_x(self, value: float):
         self._dof_x.reference_value = value
 
     @property
-    def reference_y(self):
+    def reference_y(self) -> float:
         return self._dof_y.reference_value
 
     @reference_y.setter
-    def reference_y(self, value):
+    def reference_y(self, value: float):
         self._dof_y.reference_value = value
 
     @property
-    def reference_z(self):
+    def reference_z(self) -> float:
         return self._dof_z.reference_value
 
     @reference_z.setter
-    def reference_z(self, value):
+    def reference_z(self, value: float):
         self._dof_z.reference_value = value
 
     @property
