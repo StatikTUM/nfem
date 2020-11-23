@@ -63,38 +63,27 @@ class Model:
 
     # === modeling
 
-    def add_node(self, id: str, x: float, y: float, z: Optional[float] = None, support: str = '', fx: float = 0.0, fy: float = 0.0, fz: float = 0.0):
+    def add_node(self, id: str, x: float, y: float, z: float, support: str = '', fx: float = 0.0, fy: float = 0.0, fz: float = 0.0):
         """Add a three dimensional node to the model.
 
         Parameters
         ----------
-        id : str
+        id: str
             Unique ID of the node.
-        x : float
+        x: float
             X coordinate.
-        y : float
+        y: float
             Y coordinate.
-        z : float
+        z: float
             Z coordinate.
-        support : str
+        support: str, optional
             Directions in which the displacements are fixed.
-        fx : float
+        fx: float, optional
             External force in x direction.
-        fy : float
+        fy: float, optional
             External force in y direction.
-        fz : float
+        fz: float, optional
             External force in z direction.
-
-        Returns
-        ----------
-        Node
-            The new Node
-
-        Examples
-        --------
-        Add a node with ID `B`:
-
-        >>> model.add_node(id='B', x=5, y=2, z=0)
         """
         if not isinstance(id, str):
             raise TypeError('The node id is not a text string')
@@ -110,7 +99,7 @@ class Model:
             node.dof('u').is_active = False
         if 'y' in support:
             node.dof('v').is_active = False
-        if z is None or 'z' in support:
+        if 'z' in support:
             node.dof('w').is_active = False
 
         node.dof('u').external_force = fx
