@@ -120,12 +120,12 @@ def plot_scaled_model(ax, model, color, **options):
             node_a = element.node_a
             node_b = element.node_b
 
-            b = [node_b.reference_x+scaling_factor*node_b.u,
-                 node_b.reference_y+scaling_factor*node_b.v,
-                 node_b.reference_z+scaling_factor*node_b.w]
-            a = [node_a.reference_x+scaling_factor*node_a.u,
-                 node_a.reference_y+scaling_factor*node_a.v,
-                 node_a.reference_z+scaling_factor*node_a.w]
+            b = [node_b.ref_x+scaling_factor*node_b.u,
+                 node_b.ref_y+scaling_factor*node_b.v,
+                 node_b.ref_z+scaling_factor*node_b.w]
+            a = [node_a.ref_x+scaling_factor*node_a.u,
+                 node_a.ref_y+scaling_factor*node_a.v,
+                 node_a.ref_z+scaling_factor*node_a.w]
 
             lines.append([a, b])
 
@@ -183,8 +183,8 @@ def plot_model(ax, model, color, initial, **options):
             node_a = element.node_a
             node_b = element.node_b
 
-            a = [node_a.reference_x, node_a.reference_y, node_a.reference_z] if initial else [node_a.x, node_a.y, node_a.z]
-            b = [node_b.reference_x, node_b.reference_y, node_b.reference_z] if initial else [node_b.x, node_b.y, node_b.z]
+            a = [node_a.ref_x, node_a.ref_y, node_a.ref_z] if initial else [node_a.x, node_a.y, node_a.z]
+            b = [node_b.ref_x, node_b.ref_y, node_b.ref_z] if initial else [node_b.x, node_b.y, node_b.z]
 
             lines.append([a, b])
         elif type(element) == Spring:
@@ -240,9 +240,9 @@ def plot_dof_higlight(ax, model, initial, **options):
 
     color = 'lightgray' if initial else 'tab:blue'
     if initial:
-        x = node.reference_x
-        y = node.reference_y
-        z = node.reference_z
+        x = node.ref_x
+        y = node.ref_y
+        z = node.ref_z
     else:
         x = node.x
         y = node.y
@@ -260,7 +260,7 @@ def plot_forces(ax, model, initial, **options):
     for node in model.nodes:
         color = 'lightgray' if initial else 'lightcoral'
         if initial:
-            x, y, z = node.reference_location
+            x, y, z = node.ref_location
         else:
             x, y, z = node.location
         a = get_force_arrow(x, y, z, node.fx, node.fy, node.fz, size, color=color)
@@ -279,7 +279,7 @@ def plot_boundary_conditions(ax, model, initial, **options):
             if node.dof(dof_type).is_active:
                 continue
             if initial:
-                polygons.extend(get_tet4_polygons(node.reference_x, node.reference_y, node.reference_z, size, dof_type))
+                polygons.extend(get_tet4_polygons(node.ref_x, node.ref_y, node.ref_z, size, dof_type))
             else:
                 polygons.extend(get_tet4_polygons(node.x, node.y, node.z, size, dof_type))
 

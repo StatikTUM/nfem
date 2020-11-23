@@ -3,6 +3,7 @@
 Author: Thomas Oberbichler
 """
 
+from typing import List
 import numpy as np
 from nfem.dof import Dof
 
@@ -14,12 +15,12 @@ class Node:
     ----------
     id : str
         Unique ID.
-    reference_x : float
-        Reference X coordinate.
-    reference_y : float
-        Reference Y coordinate.
-    reference_z : float
-        Reference Z coordinate.
+    ref_x : float
+        ref X coordinate.
+    ref_y : float
+        ref Y coordinate.
+    ref_z : float
+        ref Z coordinate.
     x : float
         Actual X coordinate.
     y : float
@@ -63,28 +64,31 @@ class Node:
         raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
 
     @property
-    def reference_x(self) -> float:
-        return self._dof_x.reference_value
+    def ref_x(self) -> float:
+        """Gets or sets the x coordinate of the node in the undeformed reference configuration."""
+        return self._dof_x.ref_value
 
-    @reference_x.setter
-    def reference_x(self, value: float):
-        self._dof_x.reference_value = value
-
-    @property
-    def reference_y(self) -> float:
-        return self._dof_y.reference_value
-
-    @reference_y.setter
-    def reference_y(self, value: float):
-        self._dof_y.reference_value = value
+    @ref_x.setter
+    def ref_x(self, value: float):
+        self._dof_x.ref_value = value
 
     @property
-    def reference_z(self) -> float:
-        return self._dof_z.reference_value
+    def ref_y(self) -> float:
+        """Gets or sets the y coordinate of the node in the undeformed reference configuration."""
+        return self._dof_y.ref_value
 
-    @reference_z.setter
-    def reference_z(self, value: float):
-        self._dof_z.reference_value = value
+    @ref_y.setter
+    def ref_y(self, value: float):
+        self._dof_y.ref_value = value
+
+    @property
+    def ref_z(self) -> float:
+        """Gets or sets the z coordinate of the node in the undeformed reference configuration."""
+        return self._dof_z.ref_value
+
+    @ref_z.setter
+    def ref_z(self, value: float):
+        self._dof_z.ref_value = value
 
     @property
     def x(self):
@@ -167,12 +171,13 @@ class Node:
         [self.fx, self.fy, self.fz] = value
 
     @property
-    def reference_location(self):
-        return np.array([self.reference_x, self.reference_y, self.reference_z])
+    def ref_location(self) -> List[float]
+        """Gets or sets the z coordinate of the node in the undeformed reference configuration."""
+        return np.array([self.ref_x, self.ref_y, self.ref_z])
 
-    @reference_location.setter
-    def reference_location(self, value):
-        self.reference_x, self.reference_y, self.reference_z = value
+    @ref_location.setter
+    def ref_location(self, value):
+        self.ref_x, self.ref_y, self.ref_z = value
 
     @property
     def location(self):
@@ -233,7 +238,7 @@ class Node:
 
     def draw(self, canvas):
         canvas.support(
-            location=self.reference_location,
+            location=self.ref_location,
             direction=self.support,
             layer=10,
             color='gray',
@@ -245,7 +250,7 @@ class Node:
             color='red',
         )
         canvas.point(
-            location=self.reference_location,
+            location=self.ref_location,
             layer=10,
             color='gray',
         )

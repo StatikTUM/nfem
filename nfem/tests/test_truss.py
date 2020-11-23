@@ -33,11 +33,11 @@ def truss_xls():
 
 
 def test_truss_ref_length(truss):
-    assert_equal(truss.get_reference_length(), 5)
+    assert_equal(truss.get_ref_length(), 5)
 
 
 def test_truss_act_length(truss):
-    assert_equal(truss.get_actual_length(), 10)
+    assert_equal(truss.get_act_length(), 10)
 
 
 def test_truss_linear_strain_is_zero(undeformed_truss):

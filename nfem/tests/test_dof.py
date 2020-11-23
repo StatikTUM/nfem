@@ -10,7 +10,7 @@ def dof():
 
 
 def test_dof_init(dof):
-    assert_equal(dof.reference_value, 5)
+    assert_equal(dof.ref_value, 5)
     assert_equal(dof.value, 5)
     assert_equal(dof.delta, 0)
 
@@ -25,10 +25,10 @@ def test_dof_equality(dof):
     assert(dof != 'test2')
 
 
-def test_dof_reference_value(dof):
-    dof.reference_value = 3
+def test_dof_ref_value(dof):
+    dof.ref_value = 3
 
-    assert_equal(dof.reference_value, 3)
+    assert_equal(dof.ref_value, 3)
     assert_equal(dof.value, 5)
     assert_equal(dof.delta, 2)
 
@@ -36,7 +36,7 @@ def test_dof_reference_value(dof):
 def test_dof_value(dof):
     dof.value = 3
 
-    assert_equal(dof.reference_value, 5)
+    assert_equal(dof.ref_value, 5)
     assert_equal(dof.value, 3)
     assert_equal(dof.delta, -2)
 
@@ -44,7 +44,7 @@ def test_dof_value(dof):
 def test_dof_delta(dof):
     dof.delta = 3
 
-    assert_equal(dof.reference_value, 5)
+    assert_equal(dof.ref_value, 5)
     assert_equal(dof.value, 8)
     assert_equal(dof.delta, 3)
 
