@@ -3,7 +3,7 @@ ipykernel==5.3
 ipython==7.16
 mako==1.1
 numpy==1.19
-notebook==6.1
+notebook==6.1.5
 plotly==4.12
 pytest==6.1
 pytest-cov==2.8
