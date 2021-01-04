@@ -205,21 +205,29 @@ class Truss:
 
         return global_internal_forces
 
-    def draw(self, canvas):
-        canvas.line(
-            a=self.node_a.ref_location.tolist(),
-            b=self.node_b.ref_location.tolist(),
+    def draw(self, item):
+        item.set_label_location(
+            ref=0.5 * (self.node_a.ref_location + self.node_b.ref_location),
+            act=0.5 * (self.node_a.location + self.node_b.location),
+        )
+
+        item.add_line(
+            points=[
+                self.node_a.ref_location,
+                self.node_b.ref_location,
+            ],
             layer=10,
             color='gray',
         )
-        canvas.line(
-            a=self.node_a.location.tolist(),
-            b=self.node_b.location.tolist(),
+
+        item.add_line(
+            points=[
+                self.node_a.location,
+                self.node_b.location,
+            ],
             layer=20,
-            color='red',
+            color='black',
         )
-        canvas.text(
-            location=((self.node_a.location + self.node_b.location) / 2).tolist(),
-            text=self.id,
-            layer=22,
-        )
+
+        item.add_result('Length undeformed', self.get_ref_length())
+        item.add_result('Length', self.get_act_length())
