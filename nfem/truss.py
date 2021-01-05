@@ -3,6 +3,8 @@
 Authors: Thomas Oberbichler, Klaus Sautter
 """
 
+from nfem.node import Node
+
 import numpy as np
 import numpy.linalg as la
 
@@ -10,7 +12,13 @@ import numpy.linalg as la
 class Truss:
     """FIXME"""
 
-    def __init__(self, id, node_a, node_b, youngs_modulus, area, prestress=0):
+    node_a: Node
+    node_b: Node
+    youngs_modulus: float
+    area: float
+    prestress: float
+
+    def __init__(self, id: str, node_a: Node, node_b: Node, youngs_modulus: float, area: float, prestress: float=0):
         """FIXME"""
 
         self.id = id
@@ -44,7 +52,7 @@ class Truss:
 
         return act_b - act_a
 
-    def get_ref_length(self):
+    def get_ref_length(self) -> float:
         """FIXME"""
 
         ref_a = self.node_a.ref_location
@@ -52,7 +60,7 @@ class Truss:
 
         return la.norm(ref_b - ref_a)
 
-    def get_act_length(self):
+    def get_act_length(self) -> float:
         """FIXME"""
 
         act_a = self.node_a.location
@@ -127,7 +135,7 @@ class Truss:
 
         return k_m - k_e
 
-    def calculate_geometric_stiffness_matrix(self, linear=False):
+    def calculate_geometric_stiffness_matrix(self, linear: bool=False):
         e = self.youngs_modulus
         a = self.area
         prestress = self.prestress
@@ -182,44 +190,54 @@ class Truss:
         return e_lin
 
     def calculate_internal_forces(self):
-        """FIXME"""
+        # reference base vector
+        A1 = self.node_b.ref_location - self.node_a.ref_location
 
-        e_gl = self.calculate_green_lagrange_strain()
+        # actual base vector
+        a1 = self.node_b.location - self.node_a.location
 
+        # green-lagrange strain
+        eps = (a1 @ a1 - A1 @ A1) / (2 * A1 @ A1)
+        
         E = self.youngs_modulus
         A = self.area
-        prestress = self.prestress
+        L = np.sqrt(A1 @ A1)
 
-        ref_length = self.get_ref_length()
-        act_length = self.get_act_length()
+        D_pi = (eps * E + self.prestress) * A * L
 
-        deformation_gradient = act_length / ref_length
+        D_eps = a1 / (A1 @ A1)
 
-        normal_force = (E * e_gl + prestress) * A * deformation_gradient
+        D_a1 = np.array([[-1,  0,  0,  1,  0,  0],
+                         [ 0, -1,  0,  0,  1,  0],
+                         [ 0,  0, -1,  0,  0,  1]])
 
-        local_internal_forces = [-normal_force, normal_force]
+        F = D_pi * D_eps @ D_a1
 
-        act_transform = self.get_act_transform_matrix()
+        return F
 
-        global_internal_forces = act_transform.T @ local_internal_forces
+    def draw(self, item):
+        item.set_label_location(
+            ref=0.5 * (self.node_a.ref_location + self.node_b.ref_location),
+            act=0.5 * (self.node_a.location + self.node_b.location),
+        )
 
-        return global_internal_forces
-
-    def draw(self, canvas):
-        canvas.line(
-            a=self.node_a.ref_location.tolist(),
-            b=self.node_b.ref_location.tolist(),
+        item.add_line(
+            points=[
+                self.node_a.ref_location,
+                self.node_b.ref_location,
+            ],
             layer=10,
             color='gray',
         )
-        canvas.line(
-            a=self.node_a.location.tolist(),
-            b=self.node_b.location.tolist(),
+
+        item.add_line(
+            points=[
+                self.node_a.location,
+                self.node_b.location,
+            ],
             layer=20,
-            color='red',
+            color='black',
         )
-        canvas.text(
-            location=((self.node_a.location + self.node_b.location) / 2).tolist(),
-            text=self.id,
-            layer=22,
-        )
+
+        item.add_result('Length undeformed', self.get_ref_length())
+        item.add_result('Length', self.get_act_length())

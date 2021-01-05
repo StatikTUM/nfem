@@ -236,42 +236,55 @@ class Node:
     def support_z(self, value):
         self._dof_z.is_active = not value
 
-    def draw(self, canvas):
-        canvas.support(
+    def draw(self, item):
+        item.set_label_location(self.ref_location, self.location)
+
+        item.add_support(
             location=self.ref_location,
             direction=self.support,
             layer=10,
             color='gray',
         )
-        canvas.support(
+
+        item.add_support(
             location=self.location,
             direction=self.support,
             layer=20,
-            color='red',
+            color='black',
         )
-        canvas.point(
+
+        item.add_point(
             location=self.ref_location,
             layer=10,
             color='gray',
         )
-        canvas.text(
-            location=self.location,
-            text=self.id,
-            layer=21,
-            color='gray',
-        )
-        canvas.point(
+
+        item.add_point(
             location=self.location,
             layer=20,
-            color='red',
+            color='black',
         )
+
+        item.add_result('Location undeformed', self.ref_location.tolist())
+        item.add_result('Location', self.location.tolist())
+        item.add_result('Displacement', (self.location - self.ref_location).tolist())
+        item.add_result('Displacement X', float(self.location[0] - self.ref_location[0]))
+        item.add_result('Displacement Y', float(self.location[1] - self.ref_location[1]))
+        item.add_result('Displacement Z', float(self.location[2] - self.ref_location[2]))
 
         if np.linalg.norm(self.external_force) > 1e-8:
             direction = self.external_force
             direction /= np.linalg.norm(direction)
 
-            canvas.arrow(
-                location=(self.location - direction),
+            item.add_arrow(
+                location=self.ref_location - direction,
+                direction=direction,
+                layer=13,
+                color='gray',
+            )
+
+            item.add_arrow(
+                location=self.location - direction,
                 direction=direction,
                 layer=23,
                 color='blue',

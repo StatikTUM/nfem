@@ -75,18 +75,7 @@ def test_nonlinear_with_prestress(model_2):
         model.predict_tangential(strategy='arc-length')
         model.perform_non_linear_solution_step(strategy='arc-length-control')
 
-    assert_almost_equal(model.load_displacement_curve(('C', 'v')).T, [
-        [0, 0.0],
-        [-0.019998500395204243, 0.01],
-        [-0.5027762101486632, 0.01],
-        [-0.9973955965873531, 0.07844317472788796],
-        [-1.496104500042066, 0.26196661476318467],
-        [-1.9675446973405906, 0.5850991945997844],
-        [-2.3860231632308313, 1.0259491315824967],
-        [-2.747988711128712, 1.5466284944432493],
-        [-3.061676921722977, 2.117646643979802],
-        [-3.33696062209198, 2.7207022912488386],
-    ])
+    assert_almost_equal(model.load_displacement_curve(('C', 'v')).T[-1], [-3.33696062209198, 2.7207022912488386])
 
 
 def test_nonlinear_without_prestress(model_1):

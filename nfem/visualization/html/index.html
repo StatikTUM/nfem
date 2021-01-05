@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nfem-viewer</title>
+</head>
+<body>
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    body, #content {
+        overflow: hidden;
+    }
+
+    #caption {
+        font-family: 'Courier New', Courier, monospace;
+        font-weight: bold;
+        position: absolute;
+        text-align: center;
+        top: 8px;
+        width: 100%;
+    }
+
+    #timestep {
+        bottom: 8px;
+        position: absolute;
+        width: 100%;
+    }
+
+    .label {
+        font-family: sans-serif;
+        border-radius: 12px;
+        background: #000000;
+        color: #ffffff;
+        padding: 2px 8px;
+        text-align: center;
+        font-size: 11px;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    #timestep {
+        z-index: 5;
+    }
+    </style>
+
+    <div id="content">
+        <div id="caption"></div>
+        <input id="timestep" type="range" min="0" max="10" value="0" step="1" class="slider" list="timesteps">
+        <datalist id="timesteps">
+        </datalist>
+    </div>
+
+    <script>
+        const data = {}
+    </script>
+
+    <script type="text/javascript" src="index.js"></script>
+</body>
+</html>
