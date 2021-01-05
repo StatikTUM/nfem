@@ -3,6 +3,9 @@
 Authors: Thomas Oberbichler, Klaus Sautter
 """
 
+from nfem.node import Node
+from nfem.visualization.canvas_3d import Item
+
 import numpy as np
 import numpy.linalg as la
 
@@ -10,7 +13,13 @@ import numpy.linalg as la
 class Truss:
     """FIXME"""
 
-    def __init__(self, id, node_a, node_b, youngs_modulus, area, prestress=0):
+    node_a: Node
+    node_b: Node
+    youngs_modulus: float
+    area: float
+    prestress: float
+
+    def __init__(self, id: str, node_a: str, node_b: str, youngs_modulus: float, area: float, prestress: float=0):
         """FIXME"""
 
         self.id = id
@@ -44,7 +53,7 @@ class Truss:
 
         return act_b - act_a
 
-    def get_ref_length(self):
+    def get_ref_length(self) -> float:
         """FIXME"""
 
         ref_a = self.node_a.ref_location
@@ -52,7 +61,7 @@ class Truss:
 
         return la.norm(ref_b - ref_a)
 
-    def get_act_length(self):
+    def get_act_length(self) -> float:
         """FIXME"""
 
         act_a = self.node_a.location
@@ -127,7 +136,7 @@ class Truss:
 
         return k_m - k_e
 
-    def calculate_geometric_stiffness_matrix(self, linear=False):
+    def calculate_geometric_stiffness_matrix(self, linear: bool=False):
         e = self.youngs_modulus
         a = self.area
         prestress = self.prestress
@@ -207,7 +216,7 @@ class Truss:
 
         return F
 
-    def draw(self, item):
+    def draw(self, item: Item):
         item.set_label_location(
             ref=0.5 * (self.node_a.ref_location + self.node_b.ref_location),
             act=0.5 * (self.node_a.location + self.node_b.location),
