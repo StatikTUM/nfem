@@ -182,28 +182,30 @@ class Truss:
         return e_lin
 
     def calculate_internal_forces(self):
-        """FIXME"""
+        # reference base vector
+        A1 = self.node_b.ref_location - self.node_a.ref_location
 
-        e_gl = self.calculate_green_lagrange_strain()
+        # actual base vector
+        a1 = self.node_b.location - self.node_a.location
 
+        # green-lagrange strain
+        eps = (a1 @ a1 - A1 @ A1) / (2 * A1 @ A1)
+        
         E = self.youngs_modulus
         A = self.area
-        prestress = self.prestress
+        L = np.sqrt(A1 @ A1)
 
-        ref_length = self.get_ref_length()
-        act_length = self.get_act_length()
+        D_pi = eps * E * A * L
 
-        deformation_gradient = act_length / ref_length
+        D_eps = a1 / (A1 @ A1)
 
-        normal_force = (E * e_gl + prestress) * A * deformation_gradient
+        D_a1 = np.array([[-1,  0,  0,  1,  0,  0],
+                         [ 0, -1,  0,  0,  1,  0],
+                         [ 0,  0, -1,  0,  0,  1]])
 
-        local_internal_forces = [-normal_force, normal_force]
+        F = D_pi @ D_eps @ D_a1
 
-        act_transform = self.get_act_transform_matrix()
-
-        global_internal_forces = act_transform.T @ local_internal_forces
-
-        return global_internal_forces
+        return F
 
     def draw(self, item):
         item.set_label_location(
