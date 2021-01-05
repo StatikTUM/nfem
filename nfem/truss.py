@@ -211,7 +211,7 @@ class Truss:
                          [ 0, -1,  0,  0,  1,  0],
                          [ 0,  0, -1,  0,  0,  1]])
 
-        F = D_pi @ D_eps @ D_a1
+        F = D_pi * D_eps @ D_a1
 
         return F
 
