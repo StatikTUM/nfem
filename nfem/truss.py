@@ -203,7 +203,7 @@ class Truss:
         A = self.area
         L = np.sqrt(A1 @ A1)
 
-        D_pi = eps * E * A * L
+        D_pi = (eps * E + self.prestress) * A * L
 
         D_eps = a1 / (A1 @ A1)
 
