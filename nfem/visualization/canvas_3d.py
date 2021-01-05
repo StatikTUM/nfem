@@ -1,5 +1,4 @@
 import json
-import numpy as np
 import html
 import os
 from IPython.display import display, HTML
