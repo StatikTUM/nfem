@@ -4,7 +4,6 @@ Authors: Thomas Oberbichler, Klaus Sautter
 """
 
 from nfem.node import Node
-from nfem.visualization.canvas_3d import Item
 
 import numpy as np
 import numpy.linalg as la
@@ -19,7 +18,7 @@ class Truss:
     area: float
     prestress: float
 
-    def __init__(self, id: str, node_a: str, node_b: str, youngs_modulus: float, area: float, prestress: float=0):
+    def __init__(self, id: str, node_a: Node, node_b: Node, youngs_modulus: float, area: float, prestress: float=0):
         """FIXME"""
 
         self.id = id
@@ -216,7 +215,7 @@ class Truss:
 
         return F
 
-    def draw(self, item: Item):
+    def draw(self, item):
         item.set_label_location(
             ref=0.5 * (self.node_a.ref_location + self.node_b.ref_location),
             act=0.5 * (self.node_a.location + self.node_b.location),
