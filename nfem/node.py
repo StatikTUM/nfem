@@ -34,6 +34,10 @@ class Node:
     w : float
         Displacement in z direction.
     """
+    id: str
+    _dof_x: Dof
+    _dof_y: Dof
+    _dof_z: Dof
 
     def __init__(self, id: str, x: float, y: float, z: float):
         """Create a new node.
@@ -54,7 +58,7 @@ class Node:
         self._dof_y = Dof(id=(id, 'v'), value=y)
         self._dof_z = Dof(id=(id, 'w'), value=z)
 
-    def dof(self, dof_type):
+    def dof(self, dof_type: str) -> Dof:
         if dof_type == 'u':
             return self._dof_x
         if dof_type == 'v':
@@ -91,75 +95,75 @@ class Node:
         self._dof_z.ref_value = value
 
     @property
-    def x(self):
+    def x(self) -> float:
         return self._dof_x.value
 
     @x.setter
-    def x(self, value):
+    def x(self, value: float):
         self._dof_x.value = value
 
     @property
-    def y(self):
+    def y(self) -> float:
         return self._dof_y.value
 
     @y.setter
-    def y(self, value):
+    def y(self, value: float):
         self._dof_y.value = value
 
     @property
-    def z(self):
+    def z(self) -> float:
         return self._dof_z.value
 
     @z.setter
-    def z(self, value):
+    def z(self, value: float):
         self._dof_z.value = value
 
     @property
-    def u(self):
+    def u(self) -> float:
         return self._dof_x.delta
 
     @u.setter
-    def u(self, value):
+    def u(self, value: float):
         self._dof_x.delta = value
 
     @property
-    def v(self):
+    def v(self) -> float:
         return self._dof_y.delta
 
     @v.setter
-    def v(self, value):
+    def v(self, value: float):
         self._dof_y.delta = value
 
     @property
-    def w(self):
+    def w(self) -> float:
         return self._dof_z.delta
 
     @w.setter
-    def w(self, value):
+    def w(self, value: float):
         self._dof_z.delta = value
 
     @property
-    def fx(self):
+    def fx(self) -> float:
         return self._dof_x.external_force
 
     @fx.setter
-    def fx(self, value):
+    def fx(self, value: float):
         self._dof_x.external_force = value
 
     @property
-    def fy(self):
+    def fy(self) -> float:
         return self._dof_y.external_force
 
     @fy.setter
-    def fy(self, value):
+    def fy(self, value: float):
         self._dof_y.external_force = value
 
     @property
-    def fz(self):
+    def fz(self) -> float:
         return self._dof_z.external_force
 
     @fz.setter
-    def fz(self, value):
+    def fz(self, value: float):
         self._dof_z.external_force = value
 
     @property
@@ -196,7 +200,7 @@ class Node:
         self.u, self.v, self.w = value
 
     @property
-    def support(self):
+    def support(self) -> str:
         result = ''
         if self.support_x:
             result += 'x'
@@ -207,33 +211,33 @@ class Node:
         return result
 
     @support.setter
-    def support(self, value):
+    def support(self, value: str):
         self.support_x = 'x' in value
         self.support_y = 'y' in value
         self.support_z = 'z' in value
 
     @property
-    def support_x(self):
+    def support_x(self) -> bool:
         return not self._dof_x.is_active
 
     @support_x.setter
-    def support_x(self, value):
+    def support_x(self, value: bool):
         self._dof_x.is_active = not value
 
     @property
-    def support_y(self):
+    def support_y(self) -> bool:
         return not self._dof_y.is_active
 
     @support_y.setter
-    def support_y(self, value):
+    def support_y(self, value: bool):
         self._dof_y.is_active = not value
 
     @property
-    def support_z(self):
+    def support_z(self) -> bool:
         return not self._dof_z.is_active
 
     @support_z.setter
-    def support_z(self, value):
+    def support_z(self, value: bool):
         self._dof_z.is_active = not value
 
     def draw(self, item):
