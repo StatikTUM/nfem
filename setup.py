@@ -14,10 +14,16 @@ def get_version(path):
     return version_match.group(1)
 
 
+with open('README.md', 'r') as f:
+    long_description = f.read()
+
+
 setup(
     name='nfem',
     version=get_version(os.path.join('nfem', '__init__.py')),
     description='NFEM Teaching Tools',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/StatikTUM/nfem',
     author='Thomas Oberbichler, Armin Geiser, Klaus Sautter, Aditya Ghantasala, Mahmoud Zidan',
     author_email='',
