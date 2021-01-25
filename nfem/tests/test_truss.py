@@ -48,6 +48,18 @@ def test_truss_green_lagrange_strain_is_zero(undeformed_truss):
     assert_equal(undeformed_truss.calculate_green_lagrange_strain(), 0)
 
 
+def test_truss_engineering_strain(truss_xls):
+    assert_equal(truss_xls.calculate_linear_strain(), 0.0071428571428572)
+
+
+def test_truss_green_lagrange_strain(truss_xls):
+    assert_equal(truss_xls.calculate_green_lagrange_strain(), 0.00750000000000003)
+
+
+def test_truss_normal_force(truss_xls):
+    assert_equal(truss_xls.normal_force, 0.007556040629853737)
+
+
 def test_truss_stiffness(truss_xls):
     k_actual = truss_xls.calculate_stiffness_matrix()
 
