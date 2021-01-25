@@ -22,7 +22,7 @@ class Truss:
     tensile_strength: Optional[float]
     compressive_strength: Optional[float]
 
-    def __init__(self, id: str, node_a: Node, node_b: Node, youngs_modulus: float, area: float, prestress: float, tensile_strength: Optional[float]=None, compressive_strength: Optional[float]=None):
+    def __init__(self, id: str, node_a: Node, node_b: Node, youngs_modulus: float, area: float, prestress: float = 0.0, tensile_strength: Optional[float] = None, compressive_strength: Optional[float] = None):
         """FIXME"""
 
         self.id = id
