@@ -8,6 +8,8 @@ from nfem.node import Node
 import numpy as np
 import numpy.linalg as la
 
+from typing import Optional
+
 
 class Truss:
     """FIXME"""
@@ -17,8 +19,10 @@ class Truss:
     youngs_modulus: float
     area: float
     prestress: float
+    tensile_strength: Optional[float]
+    compressive_strength: Optional[float]
 
-    def __init__(self, id: str, node_a: Node, node_b: Node, youngs_modulus: float, area: float, prestress: float=0):
+    def __init__(self, id: str, node_a: Node, node_b: Node, youngs_modulus: float, area: float, prestress: float = 0.0, tensile_strength: Optional[float] = None, compressive_strength: Optional[float] = None):
         """FIXME"""
 
         self.id = id
@@ -27,6 +31,8 @@ class Truss:
         self.youngs_modulus = youngs_modulus
         self.area = area
         self.prestress = prestress
+        self.tensile_strength = tensile_strength
+        self.compressive_strength = compressive_strength
 
     @property
     def dofs(self):
@@ -165,12 +171,14 @@ class Truss:
         return element_k_m + element_k_g
 
     def calculate_green_lagrange_strain(self):
-        """FIXME"""
+        # reference base vector
+        A1 = self.node_b.ref_location - self.node_a.ref_location
 
-        ref_length = self.get_ref_length()
-        act_length = self.get_act_length()
+        # actual base vector
+        a1 = self.node_b.location - self.node_a.location
 
-        e_gl = (act_length**2 - ref_length**2) / (2 * ref_length**2)
+        # green-lagrange strain
+        e_gl = (a1 @ a1 - A1 @ A1) / (2 * A1 @ A1)
 
         return e_gl
 
@@ -197,8 +205,8 @@ class Truss:
         a1 = self.node_b.location - self.node_a.location
 
         # green-lagrange strain
-        eps = (a1 @ a1 - A1 @ A1) / (2 * A1 @ A1)
-        
+        eps = self.calculate_green_lagrange_strain()
+
         E = self.youngs_modulus
         A = self.area
         L = np.sqrt(A1 @ A1)
@@ -215,7 +223,41 @@ class Truss:
 
         return F
 
+    def calculate_stress(self):
+        eps = self.calculate_green_lagrange_strain()
+        E = self.youngs_modulus
+
+        # stress:
+        sigma = eps * E + self.prestress
+
+        return sigma
+
+    @property
+    def normal_force(self) -> float:
+        biot_stress = self.calculate_stress() * self.get_act_length() / self.get_ref_length()
+        A = self.area
+        F = biot_stress * A
+
+        return F
+
     def draw(self, item):
+        sigma = self.calculate_stress()
+        color = 'black'
+        eta = None
+
+        if self.calculate_stress() > 1e-3:
+            color = 'blue'
+            if self.tensile_strength is not None:
+                sigma_max = self.tensile_strength
+                eta = sigma / sigma_max
+        elif self.calculate_stress() < -1e-3:
+            color = 'red'
+            if self.compressive_strength is not None:
+                sigma_max = -self.compressive_strength
+                eta = sigma / sigma_max
+        elif self.tensile_strength is not None and self.compressive_strength is not None:
+            eta = 0.0
+
         item.set_label_location(
             ref=0.5 * (self.node_a.ref_location + self.node_b.ref_location),
             act=0.5 * (self.node_a.location + self.node_b.location),
@@ -236,8 +278,15 @@ class Truss:
                 self.node_b.location,
             ],
             layer=20,
-            color='black',
+            color=color,
         )
 
         item.add_result('Length undeformed', self.get_ref_length())
         item.add_result('Length', self.get_act_length())
+        item.add_result('Engineering Strain', self.calculate_linear_strain())
+        item.add_result('Green-Lagrange Strain', self.calculate_green_lagrange_strain())
+        item.add_result('PK2 Stress', sigma)
+        item.add_result('Normal Force', self.normal_force)
+
+        if eta is not None:
+            item.add_result('Degree of Utilization', eta)
