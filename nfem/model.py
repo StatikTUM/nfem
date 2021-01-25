@@ -106,7 +106,7 @@ class Model:
         node.dof('v').external_force = fy
         node.dof('w').external_force = fz
 
-    def add_truss(self, id: str, node_a: str, node_b: str, youngs_modulus: float, area: float, prestress: float = 0.0):
+    def add_truss(self, id: str, node_a: str, node_b: str, youngs_modulus: float, area: float, prestress: float = 0.0, tensile_strength: Optional[float] = None, compressive_strength: Optional[float] = None):
         """Add a three dimensional truss element to the model.
 
         Parameters
@@ -121,6 +121,10 @@ class Model:
             Youngs modulus of the material for the truss.
         area : float
             Area of the cross section for the truss.
+        tensile_strength : Optional[float]
+            Tensile strength of the truss.
+        compressive_strength : Optional[float]
+            Compressive strength of the truss.
 
         Returns
         ----------
@@ -151,7 +155,7 @@ class Model:
         if node_b not in self.nodes:
             raise KeyError('The model does not contain a node with id {}'.format(node_b))
 
-        element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, prestress)
+        element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, prestress, tensile_strength, compressive_strength)
 
         self.elements._add(element)
 
@@ -1019,8 +1023,11 @@ class Model:
         return data
 
     def _repr_html_(self):
-        from nfem.visualization.notebook_animation import show_animation
-        return show_animation(self).data
+        from nfem.visualization.canvas_3d import Canvas3D
+
+        canvas = Canvas3D(height=600)
+
+        return canvas.html(600, self).data
 
     def show(self, height=600, timestep=0):
         from nfem.visualization.canvas_3d import Canvas3D

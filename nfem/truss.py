@@ -8,6 +8,8 @@ from nfem.node import Node
 import numpy as np
 import numpy.linalg as la
 
+from typing import Optional
+
 
 class Truss:
     """FIXME"""
@@ -17,8 +19,10 @@ class Truss:
     youngs_modulus: float
     area: float
     prestress: float
+    tensile_strength: Optional[float]
+    compressive_strength: Optional[float]
 
-    def __init__(self, id: str, node_a: Node, node_b: Node, youngs_modulus: float, area: float, prestress: float=0):
+    def __init__(self, id: str, node_a: Node, node_b: Node, youngs_modulus: float, area: float, prestress: float, tensile_strength: Optional[float], compressive_strength: Optional[float]):
         """FIXME"""
 
         self.id = id
@@ -27,6 +31,8 @@ class Truss:
         self.youngs_modulus = youngs_modulus
         self.area = area
         self.prestress = prestress
+        self.tensile_strength = tensile_strength
+        self.compressive_strength = compressive_strength
 
     @property
     def dofs(self):
