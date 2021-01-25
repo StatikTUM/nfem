@@ -42,110 +42,58 @@ class Truss:
 
         return [node_a._dof_x, node_a._dof_y, node_a._dof_z, node_b._dof_x, node_b._dof_y, node_b._dof_z]
 
-    def get_ref_vector(self):
-        """FIXME"""
+    @property
+    def ref_length(self) -> float:
+        """Gets the length of the undeformed truss"""
+        a = self.node_a.ref_location
+        b = self.node_b.ref_location
 
-        ref_a = self.node_a.ref_location
-        ref_b = self.node_b.ref_location
+        return la.norm(b - a)
 
-        return ref_b - ref_a
+    @property
+    def length(self) -> float:
+        """Gets the length of the deformed truss"""
+        a = self.node_a.location
+        b = self.node_b.location
 
-    def get_act_vector(self):
-        """FIXME"""
-
-        act_a = self.node_a.location
-        act_b = self.node_b.location
-
-        return act_b - act_a
-
-    def get_ref_length(self) -> float:
-        """FIXME"""
-
-        ref_a = self.node_a.ref_location
-        ref_b = self.node_b.ref_location
-
-        return la.norm(ref_b - ref_a)
-
-    def get_act_length(self) -> float:
-        """FIXME"""
-
-        act_a = self.node_a.location
-        act_b = self.node_b.location
-
-        return la.norm(act_b - act_a)
-
-    def get_ref_transformMatrix(self):
-        """ Transformation matrix for the reference configuration.
-
-        Returns
-        -------
-        ref_transform : ndarray
-            Transformation matrix.
-        """
-        direction = self.get_ref_vector()
-        direction = direction / la.norm(direction)
-
-        ref_transform = np.zeros((2, 6))
-        ref_transform[0, :3] = direction
-        ref_transform[1, 3:] = direction
-
-        return ref_transform
-
-    def get_act_transform_matrix(self):
-        """ Transformation matrix for the actual configuration.
-
-        Returns
-        -------
-        act_transform : ndarray
-            Transformation matrix.
-        """
-        direction = self.get_act_vector()
-        direction = direction / la.norm(direction)
-
-        act_transform = np.zeros((2, 6))
-        act_transform[0, :3] = direction
-        act_transform[1, 3:] = direction
-
-        return act_transform
+        return la.norm(b - a)
 
     def calculate_elastic_stiffness_matrix(self):
         """FIXME"""
+        E = self.youngs_modulus
+        A = self.area
+        L = self.ref_length
 
-        e = self.youngs_modulus
-        a = self.area
-        ref_length = self.get_ref_length()
-        ref_transform = self.get_ref_transformMatrix()
+        Dx, Dy, Dz = self.node_b.ref_location - self.node_a.ref_location
 
-        k_e = e * a / ref_length
+        D = np.array([-Dx, -Dy, -Dz, Dx, Dy, Dz])
 
-        return ref_transform.T @ [[k_e, -k_e], [-k_e, k_e]] @ ref_transform
+        return np.outer(E * A / L**3 * D, D)
 
     def calculate_material_stiffness_matrix(self):
         """FIXME"""
+        E = self.youngs_modulus
+        A = self.area
+        L = self.ref_length
 
-        e = self.youngs_modulus
-        a = self.area
-        act_length = self.get_act_length()
-        ref_length = self.get_ref_length()
-        act_transform = self.get_act_transform_matrix()
+        dx, dy, dz = self.node_b.location - self.node_a.location
 
-        k_m = e * a / ref_length * (act_length / ref_length)**2
+        d = np.array([-dx, -dy, -dz, dx, dy, dz])
 
-        return act_transform.T @ [[k_m, -k_m], [-k_m, k_m]] @ act_transform
+        return np.outer(E * A / L**3 * d, d)
 
     def calculate_initial_displacement_stiffness_matrix(self):
         """FIXME"""
+        K_m = self.calculate_material_stiffness_matrix()
+        K_e = self.calculate_elastic_stiffness_matrix()
 
-        k_m = self.calculate_material_stiffness_matrix()
-        k_e = self.calculate_elastic_stiffness_matrix()
+        return K_m - K_e
 
-        return k_m - k_e
-
-    def calculate_geometric_stiffness_matrix(self, linear: bool=False):
-        e = self.youngs_modulus
-        a = self.area
+    def calculate_geometric_stiffness_matrix(self, linear: bool = False):
+        E = self.youngs_modulus
+        A = self.area
+        L = self.ref_length
         prestress = self.prestress
-        ref_length = self.get_ref_length()
 
         if linear:
             # FIXME this is not a clean solution to solve the LPB issue
@@ -153,22 +101,24 @@ class Truss:
         else:
             epsilon = self.calculate_green_lagrange_strain()
 
-        k_g = e * a / ref_length * epsilon + prestress * a / ref_length
+        sigma = E * epsilon + prestress
 
-        return np.array([[k_g, 0, 0, -k_g, 0, 0],
-                         [0,  k_g, 0, 0, -k_g, 0],
-                         [0, 0,  k_g, 0, 0, -k_g],
-                         [-k_g, 0, 0,  k_g, 0, 0],
-                         [0, -k_g, 0, 0,  k_g, 0],
-                         [0, 0, -k_g, 0, 0, k_g]])
+        q = sigma * A / L
+
+        return np.array([[ q,  0,  0, -q,  0,  0],
+                         [ 0,  q,  0,  0, -q,  0],
+                         [ 0,  0,  q,  0,  0, -q],
+                         [-q,  0,  0,  q,  0,  0],
+                         [ 0, -q,  0,  0,  q,  0],
+                         [ 0,  0, -q,  0,  0,  q]])
 
     def calculate_stiffness_matrix(self):
         """FIXME"""
 
-        element_k_m = self.calculate_material_stiffness_matrix()
-        element_k_g = self.calculate_geometric_stiffness_matrix()
+        K_m = self.calculate_material_stiffness_matrix()
+        K_g = self.calculate_geometric_stiffness_matrix()
 
-        return element_k_m + element_k_g
+        return K_m + K_g
 
     def calculate_green_lagrange_strain(self):
         # reference base vector
@@ -178,22 +128,25 @@ class Truss:
         a1 = self.node_b.location - self.node_a.location
 
         # green-lagrange strain
-        e_gl = (a1 @ a1 - A1 @ A1) / (2 * A1 @ A1)
+        epsilon_GL = (a1 @ a1 - A1 @ A1) / (2 * A1 @ A1)
 
-        return e_gl
+        return epsilon_GL
 
     def calculate_linear_strain(self):
         """FIXME"""
 
-        ref_vec = self.get_ref_vector()
-        act_vec = self.get_act_vector()
+        # reference base vector
+        A1 = self.node_b.ref_location - self.node_a.ref_location
 
-        ref_length = self.get_ref_length()
+        # actual base vector
+        a1 = self.node_b.location - self.node_a.location
+
+        L = self.ref_length
 
         # project actual on reference
-        projected_l = ref_vec @ act_vec / ref_length
+        projected_l = a1 @ A1 / np.sqrt(A1 @ A1)
 
-        e_lin = (projected_l - ref_length) / ref_length
+        e_lin = (projected_l - L) / L
 
         return e_lin
 
@@ -234,7 +187,7 @@ class Truss:
 
     @property
     def normal_force(self) -> float:
-        biot_stress = self.calculate_stress() * self.get_act_length() / self.get_ref_length()
+        biot_stress = self.calculate_stress() * self.length / self.ref_length
         A = self.area
         F = biot_stress * A
 
@@ -281,8 +234,8 @@ class Truss:
             color=color,
         )
 
-        item.add_result('Length undeformed', self.get_ref_length())
-        item.add_result('Length', self.get_act_length())
+        item.add_result('Length undeformed', self.ref_length)
+        item.add_result('Length', self.length)
         item.add_result('Engineering Strain', self.calculate_linear_strain())
         item.add_result('Green-Lagrange Strain', self.calculate_green_lagrange_strain())
         item.add_result('PK2 Stress', sigma)

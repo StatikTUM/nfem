@@ -33,11 +33,11 @@ def truss_xls():
 
 
 def test_truss_ref_length(truss):
-    assert_equal(truss.get_ref_length(), 5)
+    assert_equal(truss.ref_length, 5)
 
 
 def test_truss_act_length(truss):
-    assert_equal(truss.get_act_length(), 10)
+    assert_equal(truss.length, 10)
 
 
 def test_truss_linear_strain_is_zero(undeformed_truss):
@@ -46,6 +46,18 @@ def test_truss_linear_strain_is_zero(undeformed_truss):
 
 def test_truss_green_lagrange_strain_is_zero(undeformed_truss):
     assert_equal(undeformed_truss.calculate_green_lagrange_strain(), 0)
+
+
+def test_truss_engineering_strain(truss_xls):
+    assert_equal(truss_xls.calculate_linear_strain(), 0.0071428571428572)
+
+
+def test_truss_green_lagrange_strain(truss_xls):
+    assert_equal(truss_xls.calculate_green_lagrange_strain(), 0.00750000000000003)
+
+
+def test_truss_normal_force(truss_xls):
+    assert_equal(truss_xls.normal_force, 0.007556040629853737)
 
 
 def test_truss_stiffness(truss_xls):
@@ -59,6 +71,25 @@ def test_truss_stiffness(truss_xls):
         [-0.025103466943026, -0.041998194741606, -0.062997292612409,  0.025103466943026,  0.041998194741606,  0.062997292612409],
         [-0.041998194741606, -0.07836481431434 , -0.114540532      ,  0.041998194741606,  0.07836481431434 ,  0.114540532      ],
         [-0.062997292612409, -0.114540532      , -0.17381525731434 ,  0.062997292612409,  0.114540532      ,  0.17381525731434 ],
+    ]
+
+    assert_almost_equal(k_actual, k_expected)
+
+
+def test_truss_material_stiffness(truss_xls):
+    k_actual = truss_xls.calculate_material_stiffness_matrix()
+
+    import numpy
+    numpy.set_printoptions(15)
+    print(k_actual)
+
+    k_expected = [
+        [ 0.023099007336717,  0.041998195157667,  0.0629972927365  , -0.023099007336717, -0.041998195157667, -0.0629972927365  ],
+        [ 0.041998195157667,  0.076360354832121,  0.114540532248182, -0.041998195157667, -0.076360354832121, -0.114540532248182],
+        [ 0.0629972927365  ,  0.114540532248182,  0.171810798372273, -0.0629972927365  , -0.114540532248182, -0.171810798372273],
+        [-0.023099007336717, -0.041998195157667, -0.0629972927365  ,  0.023099007336717,  0.041998195157667,  0.0629972927365  ],
+        [-0.041998195157667, -0.076360354832121, -0.114540532248182,  0.041998195157667,  0.076360354832121,  0.114540532248182],
+        [-0.0629972927365  , -0.114540532248182, -0.171810798372273,  0.0629972927365  ,  0.114540532248182,  0.171810798372273],
     ]
 
     assert_almost_equal(k_actual, k_expected)
