@@ -56,6 +56,9 @@ class Item:
             'layer': layer,
             'color': color,
         })
+        
+    def spring(self, *args, **kwargs):
+        pass
 
 
 class Canvas3D:
