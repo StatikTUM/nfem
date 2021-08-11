@@ -91,6 +91,8 @@ class Canvas3D:
             elements_data = []
 
             for element in model.elements:
+                if element.__class__.__name__ == 'Spring':  # FIXME:
+                    continue
                 element_data = {}
                 item = Item(element_data, element.id)
                 element.draw(item)
