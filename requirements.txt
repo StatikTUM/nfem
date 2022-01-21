@@ -1,6 +1,6 @@
 coveralls
 ipykernel==5.3
-ipython==7.16
+ipython==7.16.3
 mako==1.1
 numpy==1.18.1
 notebook==6.4.1
