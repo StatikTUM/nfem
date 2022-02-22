@@ -15,7 +15,10 @@ repository = "https://github.com/StatikTUM/nfem"
 python = "^3.7"
 Mako = "^1.1.6"
 matplotlib = "^3.5.1"
-notebook = "^6.4"
+notebook = [
+    { version = "^5.3", python = "<3.8" },
+    { version = "^6.4", python = ">=3.8" },
+]
 numpy = "^1.20"
 plotly = "^5.5.0"
 scipy = "^1.4"
