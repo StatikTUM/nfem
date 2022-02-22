@@ -495,13 +495,13 @@ class Model:
         k = np.zeros((assembler.dof_count, assembler.dof_count))
 
         if mode == 'comp':
-            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+            assembler.assemble_matrix(k, lambda element: element.compute_k())
         elif mode == 'elas':
-            assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
+            assembler.assemble_matrix(k, lambda element: element.compute_ke())
         elif mode == 'disp':
-            assembler.assemble_matrix(k, lambda element: element.calculate_initial_displacement_stiffness_matrix())
+            assembler.assemble_matrix(k, lambda element: element.compute_kd())
         elif mode == 'geom':
-            assembler.assemble_matrix(k, lambda element: element.calculate_geometric_stiffness_matrix())
+            assembler.assemble_matrix(k, lambda element: element.compute_kg())
         else:
             raise ValueError('mode')
 
@@ -540,8 +540,8 @@ class Model:
         k_g = np.zeros((dof_count, dof_count))
         print("=================================")
         print('Linearized prebuckling (LPB) analysis ...')
-        assembler.assemble_matrix(k_e, lambda element: element.calculate_elastic_stiffness_matrix())
-        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix(linear=True))
+        assembler.assemble_matrix(k_e, lambda element: element.compute_linear_k())
+        assembler.assemble_matrix(k_g, lambda element: element.compute_linear_kg())
 
         # solve eigenvalue problem
         eigvals, eigvecs = eig(k_e, -k_g)
@@ -609,8 +609,8 @@ class Model:
         k_g = np.zeros((dof_count, dof_count))
         print("=================================")
         print('Attendant eigenvalue analysis ...')
-        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
-        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
+        assembler.assemble_matrix(k_m, lambda element: element.compute_km())
+        assembler.assemble_matrix(k_g, lambda element: element.compute_kg())
 
         # solve eigenvalue problem
         eigvals, eigvecs = eig(k_m, -k_g)
@@ -669,7 +669,7 @@ class Model:
         external_f = np.zeros(dof_count)
 
         # assemble stiffness
-        assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+        assembler.assemble_matrix(k, lambda element: element.compute_k())
 
         # assemble force
 

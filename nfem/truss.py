@@ -55,69 +55,9 @@ class Truss:
 
         return la.norm(b - a)
 
-    def calculate_elastic_stiffness_matrix(self):
-        """FIXME"""
-        E = self.youngs_modulus
-        A = self.area
-        L = self.ref_length
+    # strain and stress
 
-        Dx, Dy, Dz = self.node_b.ref_location - self.node_a.ref_location
-
-        D = np.array([-Dx, -Dy, -Dz, Dx, Dy, Dz])
-
-        return np.outer(E * A / L**3 * D, D)
-
-    def calculate_material_stiffness_matrix(self):
-        """FIXME"""
-        E = self.youngs_modulus
-        A = self.area
-        L = self.ref_length
-
-        dx, dy, dz = self.node_b.location - self.node_a.location
-
-        d = np.array([-dx, -dy, -dz, dx, dy, dz])
-
-        return np.outer(E * A / L**3 * d, d)
-
-    def calculate_initial_displacement_stiffness_matrix(self):
-        """FIXME"""
-        K_m = self.calculate_material_stiffness_matrix()
-        K_e = self.calculate_elastic_stiffness_matrix()
-
-        return K_m - K_e
-
-    def calculate_geometric_stiffness_matrix(self, linear: bool = False):
-        E = self.youngs_modulus
-        A = self.area
-        L = self.ref_length
-        prestress = self.prestress
-
-        if linear:
-            # FIXME this is not a clean solution to solve the LPB issue
-            epsilon = self.calculate_linear_strain()
-        else:
-            epsilon = self.calculate_green_lagrange_strain()
-
-        sigma = E * epsilon + prestress
-
-        q = sigma * A / L
-
-        return np.array([[ q,  0,  0, -q,  0,  0],
-                         [ 0,  q,  0,  0, -q,  0],
-                         [ 0,  0,  q,  0,  0, -q],
-                         [-q,  0,  0,  q,  0,  0],
-                         [ 0, -q,  0,  0,  q,  0],
-                         [ 0,  0, -q,  0,  0,  q]])
-
-    def calculate_stiffness_matrix(self):
-        """FIXME"""
-
-        K_m = self.calculate_material_stiffness_matrix()
-        K_g = self.calculate_geometric_stiffness_matrix()
-
-        return K_m + K_g
-
-    def calculate_green_lagrange_strain(self):
+    def compute_epsilon_gl(self):
         # reference base vector
         A1 = self.node_b.ref_location - self.node_a.ref_location
 
@@ -129,7 +69,7 @@ class Truss:
 
         return epsilon_GL
 
-    def calculate_linear_strain(self):
+    def compute_epsilon_lin(self):
         """FIXME"""
 
         # reference base vector
@@ -147,34 +87,8 @@ class Truss:
 
         return e_lin
 
-    def calculate_internal_forces(self):
-        # reference base vector
-        A1 = self.node_b.ref_location - self.node_a.ref_location
-
-        # actual base vector
-        a1 = self.node_b.location - self.node_a.location
-
-        # green-lagrange strain
-        eps = self.calculate_green_lagrange_strain()
-
-        E = self.youngs_modulus
-        A = self.area
-        L = np.sqrt(A1 @ A1)
-
-        D_pi = (eps * E + self.prestress) * A * L
-
-        D_eps = a1 / (A1 @ A1)
-
-        D_a1 = np.array([[-1,  0,  0,  1,  0,  0],
-                         [ 0, -1,  0,  0,  1,  0],
-                         [ 0,  0, -1,  0,  0,  1]])
-
-        F = D_pi * D_eps @ D_a1
-
-        return F
-
-    def calculate_stress(self):
-        eps = self.calculate_green_lagrange_strain()
+    def compute_sigma_pk2(self):
+        eps = self.compute_epsilon_gl()
         E = self.youngs_modulus
 
         # stress:
@@ -184,23 +98,163 @@ class Truss:
 
     @property
     def normal_force(self) -> float:
-        biot_stress = self.calculate_stress() * self.length / self.ref_length
+        biot_stress = self.compute_sigma_pk2() * self.length / self.ref_length
         A = self.area
         F = biot_stress * A
 
         return F
 
+    # linear analysis
+
+    def compute_linear_r(self):
+        a1 = self.node_b.location - self.node_a.location
+        A1 = self.node_b.ref_location - self.node_a.ref_location
+
+        A11 = A1 @ A1
+        L = np.sqrt(A11)
+
+        eps = a1 @ A1 / A11 - 1
+        sig = eps * self.youngs_modulus + self.prestress
+
+        dp = sig * self.area * L / A11 * A1
+
+        return dp @ [[-1, 0, 0, 1, 0, 0],
+                     [0, -1, 0, 0, 1, 0],
+                     [0, 0, -1, 0, 0, 1]]
+
+    def compute_linear_k(self):
+        A1 = self.node_b.ref_location - self.node_a.ref_location
+
+        A11 = A1 @ A1
+        L = np.sqrt(A11)
+
+        ddp = self.youngs_modulus * self.area / A11**2 * L * np.outer(A1, A1)
+
+        dg = np.array([
+            [-1, 0, 0, 1, 0, 0],
+            [0, -1, 0, 0, 1, 0],
+            [0, 0, -1, 0, 0, 1],
+        ])
+
+        return dg.T @ ddp @ dg
+
+    def compute_linear_kg(self):
+        a1 = self.node_b.location - self.node_a.location
+        A1 = self.node_b.ref_location - self.node_a.ref_location
+
+        A11 = A1 @ A1
+        L = np.sqrt(A11)
+
+        eps = a1 @ A1 / A11 - 1
+        sig = eps * self.youngs_modulus + self.prestress
+
+        ddp = sig * self.area / A11 * L * np.eye(3)
+
+        dg = np.array([
+            [-1, 0, 0, 1, 0, 0],
+            [0, -1, 0, 0, 1, 0],
+            [0, 0, -1, 0, 0, 1],
+        ])
+
+        return dg.T @ ddp @ dg
+
+    # nonlinear analysis
+
+    def compute_r(self):
+        a1 = self.node_b.location - self.node_a.location
+        A1 = self.node_b.ref_location - self.node_a.ref_location
+
+        A11 = A1 @ A1
+        L = np.sqrt(A11)
+
+        eps = 0.5 * (a1 @ a1 / A11 - 1)
+        sig = eps * self.youngs_modulus + self.prestress
+
+        dp = sig * self.area * L / A11 * a1
+
+        return dp @ [[-1, 0, 0, 1, 0, 0],
+                     [0, -1, 0, 0, 1, 0],
+                     [0, 0, -1, 0, 0, 1]]
+
+    def compute_k(self):
+        a1 = self.node_b.location - self.node_a.location
+        A1 = self.node_b.ref_location - self.node_a.ref_location
+
+        A11 = A1 @ A1
+        L = np.sqrt(A11)
+
+        eps = 0.5 * (a1 @ a1 / A11 - 1)
+        sig = eps * self.youngs_modulus + self.prestress
+
+        ddp = self.youngs_modulus * self.area / A11**2 * L * np.outer(a1, a1) + sig * self.area / A11 * L * np.eye(3)
+
+        dg = np.array([
+            [-1, 0, 0, 1, 0, 0],
+            [0, -1, 0, 0, 1, 0],
+            [0, 0, -1, 0, 0, 1],
+        ])
+
+        return dg.T @ ddp @ dg
+
+    def compute_ke(self):
+        return self.compute_linear_k()
+
+    def compute_km(self):
+        a1 = self.node_b.location - self.node_a.location
+        A1 = self.node_b.ref_location - self.node_a.ref_location
+
+        A11 = A1 @ A1
+        L = np.sqrt(A11)
+
+        ddp = self.youngs_modulus * self.area / A11**2 * L * np.outer(a1, a1)
+
+        dg = np.array([
+            [-1, 0, 0, 1, 0, 0],
+            [0, -1, 0, 0, 1, 0],
+            [0, 0, -1, 0, 0, 1],
+        ])
+
+        return dg.T @ ddp @ dg
+
+    def compute_kg(self):
+        a1 = self.node_b.location - self.node_a.location
+        A1 = self.node_b.ref_location - self.node_a.ref_location
+
+        A11 = A1 @ A1
+        L = np.sqrt(A11)
+
+        eps = 0.5 * (a1 @ a1 / A11 - 1)
+        sig = eps * self.youngs_modulus + self.prestress
+
+        ddp = sig * self.area / A11 * L * np.eye(3)
+
+        dg = np.array([
+            [-1, 0, 0, 1, 0, 0],
+            [0, -1, 0, 0, 1, 0],
+            [0, 0, -1, 0, 0, 1],
+        ])
+
+        return dg.T @ ddp @ dg
+
+    def compute_kd(self):
+        km = self.compute_km()
+        ke = self.compute_linear_k()
+
+        return km - ke
+
+    # visualization
+
     def draw(self, item):
-        sigma = self.calculate_stress()
+        sigma = self.compute_sigma_pk2()
         color = 'black'
         eta = None
 
-        if self.calculate_stress() > 1e-3:
+        if self.compute_sigma_pk2() > 1e-3:
             color = 'blue'
             if self.tensile_strength is not None:
                 sigma_max = self.tensile_strength
                 eta = sigma / sigma_max
-        elif self.calculate_stress() < -1e-3:
+        elif self.compute_sigma_pk2() < -1e-3:
             color = 'red'
             if self.compressive_strength is not None:
                 sigma_max = -self.compressive_strength
@@ -233,8 +287,8 @@ class Truss:
 
         item.add_result('Length undeformed', self.ref_length)
         item.add_result('Length', self.length)
-        item.add_result('Engineering Strain', self.calculate_linear_strain())
-        item.add_result('Green-Lagrange Strain', self.calculate_green_lagrange_strain())
+        item.add_result('Engineering Strain', self.compute_epsilon_lin())
+        item.add_result('Green-Lagrange Strain', self.compute_epsilon_gl())
         item.add_result('PK2 Stress', sigma)
         item.add_result('Normal Force', self.normal_force)
 

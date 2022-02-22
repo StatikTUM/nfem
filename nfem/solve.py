@@ -49,7 +49,7 @@ def linear_step(model):
     for i, dof in enumerate(assembler.dofs):
         f[i] += model[dof].external_force
 
-    assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
+    assembler.assemble_matrix(k, lambda element: element.compute_linear_k())
 
     f *= model.load_factor
 
@@ -141,14 +141,14 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
         internal_f = np.zeros(dof_count)
 
         # assemble stiffness
-        assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+        assembler.assemble_matrix(k, lambda element: element.compute_k())
 
         # assemble force
 
         for i, dof in enumerate(assembler.dofs):
             external_f[i] += model[dof].external_force
 
-        assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
+        assembler.assemble_vector(internal_f, lambda element: element.compute_n())
 
         # assemble left and right hand side for newton raphson
         lhs = np.zeros((dof_count + 1, dof_count + 1))
@@ -200,5 +200,5 @@ def solve_det_k(model, k=None, assembler=None):
             assembler = Assembler(model)
         dof_count = assembler.dof_count
         k = np.zeros((dof_count, dof_count))
-        assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+        assembler.assemble_matrix(k, lambda element: element.compute_k())
     model.det_k = det(k)

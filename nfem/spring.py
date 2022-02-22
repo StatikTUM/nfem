@@ -42,22 +42,22 @@ class Spring:
         node = self.node
         return [node._dof_x, node._dof_y, node._dof_z]
 
-    def calculate_elastic_stiffness_matrix(self):
+    def compute_linear_k(self):
         return np.array([[self.kx, 0, 0], [0, self.ky, 0], [0, 0, self.kz]])
 
-    def calculate_material_stiffness_matrix(self):
+    def compute_km(self):
         return None
 
-    def calculate_initial_displacement_stiffness_matrix(self):
+    def compute_kd(self):
         return None
 
-    def calculate_geometric_stiffness_matrix(self, linear=False):
+    def compute_kg(self):
         return None
 
-    def calculate_stiffness_matrix(self):
-        return self.calculate_elastic_stiffness_matrix()
+    def compute_k(self):
+        return self.compute_linear_k()
 
-    def calculate_internal_forces(self):
+    def compute_n(self):
         return np.array([
             self.kx * self.node.u,
             self.ky * self.node.v,
