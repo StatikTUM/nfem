@@ -13,13 +13,14 @@ repository = "https://github.com/StatikTUM/nfem"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-numpy = "^1.21"
-notebook = "^5.3"
-scipy = "^1.4"
-sympy = "^1.7"
-plotly = "^5.5.0"
 Mako = "^1.1.6"
 matplotlib = "^3.5.1"
+notebook = "^5.3"
+numpy = "^1.21"
+plotly = "^5.5.0"
+scipy = "^1.4"
+sympy = "^1.7"
+importlib-metadata = {version = "^1.0", python = "<3.8"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0.1"
