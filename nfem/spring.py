@@ -57,7 +57,7 @@ class Spring:
     def compute_k(self):
         return self.compute_linear_k()
 
-    def compute_n(self):
+    def compute_r(self):
         return np.array([
             self.kx * self.node.u,
             self.ky * self.node.v,

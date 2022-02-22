@@ -148,7 +148,7 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
         for i, dof in enumerate(assembler.dofs):
             external_f[i] += model[dof].external_force
 
-        assembler.assemble_vector(internal_f, lambda element: element.compute_n())
+        assembler.assemble_vector(internal_f, lambda element: element.compute_r())
 
         # assemble left and right hand side for newton raphson
         lhs = np.zeros((dof_count + 1, dof_count + 1))
