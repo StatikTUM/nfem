@@ -1,7 +1,4 @@
-"""This module only contains the Assembler class.
-
-Author: Thomas Oberbichler
-"""
+from __future__ import annotations
 
 
 class Assembler:
