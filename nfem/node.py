@@ -5,7 +5,7 @@ from nfem.dof import Dof
 import numpy as np
 import numpy.typing as npt
 
-from typing import List, Sequence
+from typing import Sequence
 
 
 class Node:
@@ -67,6 +67,8 @@ class Node:
             return self._dof_z
         raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
 
+    # reference location
+
     @property
     def ref_x(self) -> float:
         """Gets or sets the x coordinate of the node in the undeformed reference configuration."""
@@ -95,6 +97,17 @@ class Node:
         self._dof_z.ref_value = value
 
     @property
+    def ref_location(self) -> npt.NDArray[float]:
+        """Gets or sets the z coordinate of the node in the undeformed reference configuration."""
+        return np.array([self.ref_x, self.ref_y, self.ref_z])
+
+    @ref_location.setter
+    def ref_location(self, value: Sequence[float]):
+        self.ref_x, self.ref_y, self.ref_z = value
+
+    # actual location
+
+    @property
     def x(self) -> float:
         return self._dof_x.value
 
@@ -119,6 +132,16 @@ class Node:
         self._dof_z.value = value
 
     @property
+    def location(self) -> npt.NDArray[float]:
+        return np.array([self.x, self.y, self.z])
+
+    @location.setter
+    def location(self, value: Sequence[float]):
+        self.x, self.y, self.z = value
+
+    # displacements
+
+    @property
     def u(self) -> float:
         return self._dof_x.delta
 
@@ -141,6 +164,16 @@ class Node:
     @w.setter
     def w(self, value: float) -> None:
         self._dof_z.delta = value
+
+    @property
+    def displacement(self) -> npt.NDArray[float]:
+        return np.array([self.u, self.v, self.w])
+
+    @displacement.setter
+    def displacement(self, value: Sequence[float]):
+        self.u, self.v, self.w = value
+
+    # external forces
 
     @property
     def fx(self) -> float:
@@ -174,47 +207,7 @@ class Node:
     def external_force(self, value: Sequence[float]):
         [self.fx, self.fy, self.fz] = value
 
-    @property
-    def ref_location(self) -> npt.NDArray[float]:
-        """Gets or sets the z coordinate of the node in the undeformed reference configuration."""
-        return np.array([self.ref_x, self.ref_y, self.ref_z])
-
-    @ref_location.setter
-    def ref_location(self, value: Sequence[float]):
-        self.ref_x, self.ref_y, self.ref_z = value
-
-    @property
-    def location(self) -> npt.NDArray[float]:
-        return np.array([self.x, self.y, self.z])
-
-    @location.setter
-    def location(self, value: Sequence[float]):
-        self.x, self.y, self.z = value
-
-    @property
-    def displacement(self) -> npt.NDArray[float]:
-        return np.array([self.u, self.v, self.w])
-
-    @displacement.setter
-    def displacement(self, value: Sequence[float]):
-        self.u, self.v, self.w = value
-
-    @property
-    def support(self) -> str:
-        result = ''
-        if self.support_x:
-            result += 'x'
-        if self.support_y:
-            result += 'y'
-        if self.support_z:
-            result += 'z'
-        return result
-
-    @support.setter
-    def support(self, value: str):
-        self.support_x = 'x' in value
-        self.support_y = 'y' in value
-        self.support_z = 'z' in value
+    # supports
 
     @property
     def support_x(self) -> bool:
@@ -239,6 +232,25 @@ class Node:
     @support_z.setter
     def support_z(self, value: bool) -> None:
         self._dof_z.is_active = not value
+
+    @property
+    def support(self) -> str:
+        result = ''
+        if self.support_x:
+            result += 'x'
+        if self.support_y:
+            result += 'y'
+        if self.support_z:
+            result += 'z'
+        return result
+
+    @support.setter
+    def support(self, value: str) -> None:
+        self.support_x = 'x' in value
+        self.support_y = 'y' in value
+        self.support_z = 'z' in value
+
+    # visualization
 
     def draw(self, item):
         item.set_label_location(self.ref_location, self.location)
