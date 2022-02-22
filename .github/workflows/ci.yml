@@ -80,6 +80,7 @@ jobs:
     - name: Patch version number
       run: |
         VERSION=$(echo "${{ github.ref }}" | sed -nre 's/^[^0-9]*(([0-9]+\.)*[0-9]+).*/\1/p')
+        echo $VERSION
         PLACEHOLDER='version = "4.0.0-dev"'
         VERSION_FILE='pyproject.toml'
         grep "$PLACEHOLDER" "$VERSION_FILE"
