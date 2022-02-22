@@ -20,7 +20,7 @@ numpy = "^1.21"
 plotly = "^5.5.0"
 scipy = "^1.4"
 sympy = "^1.7"
-importlib-metadata = {version = "^1.0", python = "<3.8"}
+importlib-metadata = { version = "^1.0", python = "<3.8" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0.1"
