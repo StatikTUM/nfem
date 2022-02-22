@@ -256,7 +256,7 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.dof_count
+        dof_count = assembler.n
 
         increment = np.zeros(dof_count + 1)
 
@@ -492,7 +492,7 @@ class Model:
 
     def get_stiffness(self, mode='comp'):
         assembler = Assembler(self)
-        k = np.zeros((assembler.dof_count, assembler.dof_count))
+        k = np.zeros((assembler.n, assembler.n))
 
         if mode == 'comp':
             assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
@@ -533,7 +533,7 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.dof_count
+        dof_count = assembler.n
 
         # assemble matrices
         k_e = np.zeros((dof_count, dof_count))
@@ -602,7 +602,7 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.dof_count
+        dof_count = assembler.n
 
         # assemble matrices
         k_m = np.zeros((dof_count, dof_count))
@@ -659,7 +659,7 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.dof_count
+        dof_count = assembler.n
 
         tangent = np.zeros(dof_count + 1)
 
@@ -822,7 +822,7 @@ class Model:
 
             delta_prescribed = value_prescribed - value
 
-            dof_index = assembler.index_of_dof(dof)
+            dof_index = assembler.dof_indices[dof]
             delta_current = tangent[dof_index]
 
             factor = delta_prescribed / delta_current
@@ -831,7 +831,7 @@ class Model:
             dof = options['dof']
             delta_dof_prescribed = options['value']
 
-            dof_index = assembler.index_of_dof(dof)
+            dof_index = assembler.dof_indices[dof]
             delta_dof_current = tangent[dof_index]
 
             factor = delta_dof_prescribed / delta_dof_current
@@ -1001,7 +1001,7 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        delta = np.zeros(assembler.dof_count)
+        delta = np.zeros(assembler.n)
 
         for index, dof in enumerate(assembler.dofs):
             delta[index] = self[dof].delta - model_b[dof].delta

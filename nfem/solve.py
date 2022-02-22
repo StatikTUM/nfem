@@ -114,7 +114,7 @@ def arc_length_control_step(model, tolerance=1e-5, max_iterations=100, **options
 def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **options):
     # initialize working matrices and functions for newton raphson
     assembler = Assembler(model)
-    dof_count = assembler.dof_count
+    dof_count = assembler.n
 
     data = []
 
@@ -198,7 +198,7 @@ def solve_det_k(model, k=None, assembler=None):
     if k is None:
         if assembler is None:
             assembler = Assembler(model)
-        dof_count = assembler.dof_count
+        dof_count = assembler.n
         k = np.zeros((dof_count, dof_count))
         assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
     model.det_k = det(k)
