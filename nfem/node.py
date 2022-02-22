@@ -3,8 +3,9 @@ from __future__ import annotations
 from nfem.dof import Dof
 
 import numpy as np
+import numpy.typing as npt
 
-from typing import List
+from typing import List, Sequence
 
 
 class Node:
@@ -72,7 +73,7 @@ class Node:
         return self._dof_x.ref_value
 
     @ref_x.setter
-    def ref_x(self, value: float):
+    def ref_x(self, value: float) -> None:
         self._dof_x.ref_value = value
 
     @property
@@ -81,7 +82,7 @@ class Node:
         return self._dof_y.ref_value
 
     @ref_y.setter
-    def ref_y(self, value: float):
+    def ref_y(self, value: float) -> None:
         self._dof_y.ref_value = value
 
     @property
@@ -90,7 +91,7 @@ class Node:
         return self._dof_z.ref_value
 
     @ref_z.setter
-    def ref_z(self, value: float):
+    def ref_z(self, value: float) -> None:
         self._dof_z.ref_value = value
 
     @property
@@ -98,7 +99,7 @@ class Node:
         return self._dof_x.value
 
     @x.setter
-    def x(self, value: float):
+    def x(self, value: float) -> None:
         self._dof_x.value = value
 
     @property
@@ -106,7 +107,7 @@ class Node:
         return self._dof_y.value
 
     @y.setter
-    def y(self, value: float):
+    def y(self, value: float) -> None:
         self._dof_y.value = value
 
     @property
@@ -114,7 +115,7 @@ class Node:
         return self._dof_z.value
 
     @z.setter
-    def z(self, value: float):
+    def z(self, value: float) -> None:
         self._dof_z.value = value
 
     @property
@@ -122,7 +123,7 @@ class Node:
         return self._dof_x.delta
 
     @u.setter
-    def u(self, value: float):
+    def u(self, value: float) -> None:
         self._dof_x.delta = value
 
     @property
@@ -130,7 +131,7 @@ class Node:
         return self._dof_y.delta
 
     @v.setter
-    def v(self, value: float):
+    def v(self, value: float) -> None:
         self._dof_y.delta = value
 
     @property
@@ -138,7 +139,7 @@ class Node:
         return self._dof_z.delta
 
     @w.setter
-    def w(self, value: float):
+    def w(self, value: float) -> None:
         self._dof_z.delta = value
 
     @property
@@ -146,7 +147,7 @@ class Node:
         return self._dof_x.external_force
 
     @fx.setter
-    def fx(self, value: float):
+    def fx(self, value: float) -> None:
         self._dof_x.external_force = value
 
     @property
@@ -154,7 +155,7 @@ class Node:
         return self._dof_y.external_force
 
     @fy.setter
-    def fy(self, value: float):
+    def fy(self, value: float) -> None:
         self._dof_y.external_force = value
 
     @property
@@ -162,40 +163,40 @@ class Node:
         return self._dof_z.external_force
 
     @fz.setter
-    def fz(self, value: float):
+    def fz(self, value: float) -> None:
         self._dof_z.external_force = value
 
     @property
-    def external_force(self):
+    def external_force(self) -> npt.NDArray[float]:
         return np.array([self.fx, self.fy, self.fz])
 
     @external_force.setter
-    def external_force(self, value):
+    def external_force(self, value: Sequence[float]):
         [self.fx, self.fy, self.fz] = value
 
     @property
-    def ref_location(self) -> List[float]:
+    def ref_location(self) -> npt.NDArray[float]:
         """Gets or sets the z coordinate of the node in the undeformed reference configuration."""
         return np.array([self.ref_x, self.ref_y, self.ref_z])
 
     @ref_location.setter
-    def ref_location(self, value):
+    def ref_location(self, value: Sequence[float]):
         self.ref_x, self.ref_y, self.ref_z = value
 
     @property
-    def location(self):
+    def location(self) -> npt.NDArray[float]:
         return np.array([self.x, self.y, self.z])
 
     @location.setter
-    def location(self, value):
+    def location(self, value: Sequence[float]):
         self.x, self.y, self.z = value
 
     @property
-    def displacement(self):
+    def displacement(self) -> npt.NDArray[float]:
         return np.array([self.u, self.v, self.w])
 
     @displacement.setter
-    def displacement(self, value):
+    def displacement(self, value: Sequence[float]):
         self.u, self.v, self.w = value
 
     @property
@@ -220,7 +221,7 @@ class Node:
         return not self._dof_x.is_active
 
     @support_x.setter
-    def support_x(self, value: bool):
+    def support_x(self, value: bool) -> None:
         self._dof_x.is_active = not value
 
     @property
@@ -228,7 +229,7 @@ class Node:
         return not self._dof_y.is_active
 
     @support_y.setter
-    def support_y(self, value: bool):
+    def support_y(self, value: bool) -> None:
         self._dof_y.is_active = not value
 
     @property
@@ -236,7 +237,7 @@ class Node:
         return not self._dof_z.is_active
 
     @support_z.setter
-    def support_z(self, value: bool):
+    def support_z(self, value: bool) -> None:
         self._dof_z.is_active = not value
 
     def draw(self, item):
