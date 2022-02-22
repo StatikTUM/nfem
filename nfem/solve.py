@@ -35,31 +35,36 @@ class SolutionInfo:
 def linear_step(model):
     assembler = Assembler(model)
 
-    dof_count = assembler.dof_count
+    n = assembler.n
+    m = len(assembler.dofs)
 
-    u = np.zeros(dof_count)
+    u = np.zeros(m)
 
     for dof in assembler.dofs:
-        index = assembler.index_of_dof(dof)
-        u[index] = model[dof].delta
+        i = assembler.dof_indices[dof]
+        u[i] = model[dof].delta
 
-    k = np.zeros((dof_count, dof_count))
-    f = np.zeros(dof_count)
+    f = np.zeros(m)
+    k = np.zeros((m, m))
 
     for i, dof in enumerate(assembler.dofs):
         f[i] += model[dof].external_force
 
-    assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
+    # FIXME: Add residual force
+    assembler.assemble_matrix(lambda element: element.calculate_elastic_stiffness_matrix(), out=k)
 
     f *= model.load_factor
 
+    lhs = k[:n, :n]
+    rhs = f[:n]
+
     try:
-        u = linear_solve(k, f)
+        u[:n] = linear_solve(lhs, rhs)
     except np.linalg.LinAlgError:
         raise RuntimeError('Stiffness matrix is singular')
 
-    for index, dof in enumerate(assembler.dofs):
-        model[dof].delta = u[index]
+    for dof, value in zip(assembler.dofs, u):
+        model[dof].delta = value
 
     model.status = ModelStatus.equilibrium
 
