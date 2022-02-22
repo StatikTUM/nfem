@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-Author: Thomas Oberbichler
-"""
+from nfem.dof import Dof
+
+import numpy as np
 
 from typing import List
-import numpy as np
-from nfem.dof import Dof
 
 
 class Node:
