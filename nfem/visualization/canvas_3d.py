@@ -1,7 +1,7 @@
 import json
 import html
 import os
-from IPython.display import display, HTML
+from IPython.display import display_html
 
 
 class Item:
@@ -56,7 +56,7 @@ class Item:
             'layer': layer,
             'color': color,
         })
-        
+
     def spring(self, *args, **kwargs):
         pass
 
@@ -116,10 +116,7 @@ class Canvas3D:
         template = self._embed_js(template, 'index.js')
 
         content = template.replace("const data = {}", "const data = " + json.dumps(data))
-        element = HTML(f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{html.escape(content)}"></iframe>')
-
-        return element
+        return f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{html.escape(content)}"></iframe>'
 
     def show(self, height, model):
-        element = self.html(height, model)
-        display(element)
+        display_html(self.html(height, model), raw=True)
