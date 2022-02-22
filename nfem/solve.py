@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 from nfem.assembler import Assembler
 from nfem.nonlinear_solution_data import NonlinearSolutionInfo

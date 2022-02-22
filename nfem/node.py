@@ -1,4 +1,4 @@
-"""This module only contains the Node class.
+from __future__ import annotations
 
 Author: Thomas Oberbichler
 """
