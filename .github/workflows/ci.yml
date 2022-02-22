@@ -86,6 +86,7 @@ jobs:
         grep "$PLACEHOLDER" "$VERSION_FILE"
         sed -i "s/$PLACEHOLDER/version = \"${VERSION}\"/g" "$VERSION_FILE"
       shell: bash
+      if: github.event_name == 'release' && github.event.action == 'published'
 
     - name: Build
       run: poetry build
