@@ -95,6 +95,7 @@ jobs:
         data = data.replace('version = "4.0.0-dev"', f'version = "{version}"')
         with open(path, 'w') as file:
             file.write(data)
+      shell: python
 
     - name: Build
       run: poetry build
