@@ -24,7 +24,6 @@ numpy = [
 ]
 plotly = "^5.5.0"
 scipy = "^1.4"
-sympy = "^1.7"
 importlib-metadata = { version = "^4.11", python = "<3.8" }
 
 [tool.poetry.dev-dependencies]
@@ -32,7 +31,7 @@ pytest = "^7.0.1"
 mypy = "^0.931"
 toml = "^0.10.2"
 autopep8 = "^1.6.0"
-pylint = "^2.12.2"
+pycodestyle = "^2.8.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
