@@ -8,6 +8,7 @@ on:
 
 jobs:
   test:
+    name: Test
 
     runs-on: ubuntu-latest
 
@@ -46,3 +47,40 @@ jobs:
     
     - name: Test
       run: poetry run pytest
+
+  build:
+    name: Build wheels
+    
+    needs: [test]
+
+    steps:
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Build
+      run: poetry build
+  
+  publish:
+    name: Upload if release
+
+    needs: [build]
+
+    runs-on: ubuntu-latest
+    
+    if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - uses: actions/download-artifact@v2
+      with:
+        name: artifact
+        path: dist
+
+    - name: Build
+      run: poetry publish -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }}
