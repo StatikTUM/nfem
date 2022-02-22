@@ -22,9 +22,9 @@ class SolutionInfo:
     def __repr__(self):
         output = io.StringIO()
         if self.converged:
-            print(f'System converged!', file=output)
+            print('System converged!', file=output)
         else:
-            print(f'System not converged!', file=output)
+            print('System not converged!', file=output)
         print(f'# Iterations  = {self.iterations}', file=output)
         print(f'Residual Norm = {self.residual_norm}', file=output)
         contents = output.getvalue()
