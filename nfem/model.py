@@ -1024,7 +1024,7 @@ class Model:
 
         canvas = Canvas3D(height=600)
 
-        return canvas.html(600, self).data
+        return canvas.html(600, self)
 
     def show(self, height=600, timestep=0):
         from nfem.visualization.canvas_3d import Canvas3D
