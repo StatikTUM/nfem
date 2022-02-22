@@ -659,29 +659,29 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.n
+        n = assembler.n
+        m = len(assembler.dofs)
 
-        tangent = np.zeros(dof_count + 1)
+        tangent = np.zeros(n + 1)
 
-        v = tangent[:-1]
-
-        k = np.zeros((dof_count, dof_count))
-        external_f = np.zeros(dof_count)
+        k = np.zeros((m, m))
+        external_f = np.zeros(n)
 
         # assemble stiffness
-        assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+        assembler.assemble_matrix(lambda element: element.calculate_stiffness_matrix(), out=k)
 
         # assemble force
 
-        for i, dof in enumerate(assembler.dofs):
-            external_f[i] += self[dof].external_force
+        for i in range(n):
+            external_f[i] += assembler.dofs[i].external_force
 
         try:
-            v[:dof_count] = la.solve(k, external_f)
-        except np.linalg.LinAlgError:
+            tangent[:-1] = la.solve(k[:n, :n], external_f)
+        except la.LinAlgError:
             raise RuntimeError('Stiffness matrix is singular')
 
-        # lambda = 1
+        # load-factor = 1
+
         tangent[-1] = 1
 
         return tangent
@@ -799,6 +799,8 @@ class Model:
         self.status = ModelStatus.prediction
         assembler = Assembler(self)
 
+        n = assembler.n
+
         # get tangent vector
         tangent = self.get_tangent_vector(assembler=assembler)
 
@@ -869,8 +871,8 @@ class Model:
         tangent *= factor
 
         # update dofs at model
-        for index, dof in enumerate(assembler.dofs):
-            self[dof].delta += tangent[index]
+        for i, dof in enumerate(assembler.dofs[:n]):
+            self[dof].delta += tangent[i]
 
         # update lambda at model
         self.load_factor += tangent[-1]

@@ -53,6 +53,8 @@ class Assembler:
         self.n: int = index + 1
         """Number of degrees of freesom which are not locked."""
 
+        self.size = (index + 1, len(dofs))
+
     def assemble_vector(self, fn: Callable[[Element], npt.ArrayLike], out=None) -> npt.NDArray:
         if out is None:
             m = len(self.dofs)

@@ -35,8 +35,7 @@ class SolutionInfo:
 def linear_step(model):
     assembler = Assembler(model)
 
-    n = assembler.n
-    m = len(assembler.dofs)
+    n, m = assembler.size
 
     u = np.zeros(m)
 
@@ -119,7 +118,8 @@ def arc_length_control_step(model, tolerance=1e-5, max_iterations=100, **options
 def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **options):
     # initialize working matrices and functions for newton raphson
     assembler = Assembler(model)
-    dof_count = assembler.n
+    
+    n, m = assembler.size
 
     data = []
 
@@ -134,35 +134,35 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
         model.status = ModelStatus.iteration
 
         # update actual coordinates
-        for index, dof in enumerate(assembler.dofs):
+        for index, dof in enumerate(assembler.dofs[:n]):
             model[dof].delta = x[index]
 
         # update lambda
         model.load_factor = x[-1]
 
         # initialize with zeros
-        k = np.zeros((dof_count, dof_count))
-        external_f = np.zeros(dof_count)
-        internal_f = np.zeros(dof_count)
+        k = np.zeros((m, m))
+        external_f = np.zeros(m)
+        internal_f = np.zeros(m)
 
         # assemble stiffness
-        assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+        assembler.assemble_matrix(lambda element: element.calculate_stiffness_matrix(), out=k)
 
         # assemble force
 
-        for i, dof in enumerate(assembler.dofs):
+        for i, dof in enumerate(assembler.dofs[:n]):
             external_f[i] += model[dof].external_force
 
-        assembler.assemble_vector(internal_f, lambda element: element.calculate_internal_forces())
+        assembler.assemble_vector(lambda element: element.calculate_internal_forces(), out=internal_f)
 
         # assemble left and right hand side for newton raphson
-        lhs = np.zeros((dof_count + 1, dof_count + 1))
-        rhs = np.zeros(dof_count + 1)
+        lhs = np.zeros((n + 1, n + 1))
+        rhs = np.zeros(n + 1)
 
         # mechanical system
-        lhs[:dof_count, :dof_count] = k
-        lhs[:dof_count, -1] = -external_f
-        rhs[:dof_count] = internal_f - model.load_factor * external_f
+        lhs[:n, :n] = k[:n, :n]
+        lhs[:n, -1] = -external_f[:n]
+        rhs[:n] = internal_f[:n] - model.load_factor * external_f[:n]
 
         # assemble contribution from constraint
         constraint.calculate_derivatives(model, lhs[-1, :])
@@ -177,8 +177,8 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
         data.append([load_factor_str, rnorm_str, xnorm_str])
 
     # prediction as vector for newton raphson
-    x = np.zeros(dof_count + 1)
-    for index, dof in enumerate(assembler.dofs):
+    x = np.zeros(n + 1)
+    for index, dof in enumerate(assembler.dofs[:n]):
         x[index] = model[dof].delta
 
     x[-1] = model.load_factor
@@ -203,7 +203,8 @@ def solve_det_k(model, k=None, assembler=None):
     if k is None:
         if assembler is None:
             assembler = Assembler(model)
-        dof_count = assembler.n
-        k = np.zeros((dof_count, dof_count))
-        assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
-    model.det_k = det(k)
+        n, m = assembler.size
+
+        k = np.zeros((m, m))
+        assembler.assemble_matrix(lambda element: element.calculate_stiffness_matrix(), out=k)
+    model.det_k = det(k[:n, :n])
