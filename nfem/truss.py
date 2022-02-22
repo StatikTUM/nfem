@@ -1,7 +1,4 @@
-"""This module only contains the truss element.
-
-Authors: Thomas Oberbichler, Klaus Sautter
-"""
+from __future__ import annotations
 
 from nfem.node import Node
 

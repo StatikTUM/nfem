@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Dof:
     def __init__(self, id, value, is_active=True, external_force=0.0):
         self.id = id

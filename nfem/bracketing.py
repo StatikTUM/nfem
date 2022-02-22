@@ -1,4 +1,4 @@
-"""This file contains the bracketing function to find the next critical point"""
+from __future__ import annotations
 
 import numpy as np
 

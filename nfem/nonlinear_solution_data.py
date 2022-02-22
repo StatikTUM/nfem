@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from mako.template import Template
 import uuid
 import sys

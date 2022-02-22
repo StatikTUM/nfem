@@ -1,7 +1,4 @@
-"""This module contains the Newton-Raphson algorithm.
-
-Author: Armin Geiser
-"""
+from __future__ import annotations
 
 import numpy as np
 import numpy.linalg as la

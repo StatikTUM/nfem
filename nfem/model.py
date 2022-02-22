@@ -1,7 +1,4 @@
-"""This module contains the Model class.
-
-Authors: Thomas Oberbichler, Armin Geiser
-"""
+from __future__ import annotations
 
 from copy import deepcopy
 from typing import List, Optional, Type

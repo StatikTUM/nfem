@@ -28,26 +28,6 @@ import sys
 
 IS_NOTEBOOK = 'ipykernel' in sys.modules
 
-
-def info():
-    print(f'--------------------------------------------------------------------------------')
-    print(f'                                                                                ')
-    print(f'                      _   ________________  ___                                 ')
-    print(f'                     / | / / ____/ ____/  |/  /                                 ')
-    print(f'                    /  |/ / /_  / __/ / /|_/ /                                  ')
-    print(f'                   / /|  / __/ / /___/ /  / /                                   ')
-    print(f'                  /_/ |_/_/   /_____/_/  /_/  Teaching Tool                     ')
-    print(f'                                                                                ')
-    print(f'  Authors:   Armin Geiser, Aditya Ghantasala, Thomas Oberbichler, Klaus Sautter ')
-    print(f'             Mahmoud Zidan                                                      ')
-    print(f'  Copyright: © 2018-2020 TUM Statik                                             ')
-    print(f'  Version:   {__version__}                                                      ')
-    print(f'                                                                                ')
-    print(f'  This is a teaching tool! All results without warranty.                        ')
-    print(f'                                                                                ')
-    print(f'--------------------------------------------------------------------------------')
-
-
 __all__ = [
     'IS_NOTEBOOK',
     'Model',

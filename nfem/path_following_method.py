@@ -1,7 +1,4 @@
-"""This module contains path-following strategies for solving nonlinear systems.
-
-Author: Armin Geiser
-"""
+from __future__ import annotations
 
 from nfem.assembler import Assembler
 
