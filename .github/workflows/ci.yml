@@ -53,6 +53,8 @@ jobs:
     
     needs: [test]
 
+    runs-on: ubuntu-latest
+
     steps:
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
