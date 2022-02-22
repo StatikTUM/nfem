@@ -22,14 +22,9 @@ from nfem.newton_raphson import newton_raphson_solve
 
 from nfem.bracketing import bracketing
 
-from nfem.visualization import *
-
-import sys
-
-IS_NOTEBOOK = 'ipykernel' in sys.modules
+from nfem.visualization import Plot2D
 
 __all__ = [
-    'IS_NOTEBOOK',
     'Model',
     'Node',
     'Truss',
@@ -37,9 +32,5 @@ __all__ = [
     'Assembler',
     'newton_raphson_solve',
     'bracketing',
-    'info',
-    'show_load_displacement_curve',
-    'show_animation',
-    'show_deformation_plot',
     'Plot2D',
 ]

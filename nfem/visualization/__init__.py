@@ -1,2 +1,1 @@
-from nfem.visualization.notebook_animation import show_animation, show_deformation_plot
 from nfem.visualization.notebook_plot import show_load_displacement_curve, Plot2D
