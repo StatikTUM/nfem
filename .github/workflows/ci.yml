@@ -79,23 +79,12 @@ jobs:
 
     - name: Patch version number
       run: |
-        import regex as re
-        # settings
-        tag = '${{ github.ref }}'[10:]
-        path = './pyproject.toml'
-        # get version string from tag
-        pattern = 'v(\d+)(?:\.(\d+)(?:\.(\d+)(?:\.(\d+))?)?)?$'
-        match = re.match(pattern, tag)
-        if match is None:
-            raise RuntimeError('Invalid version tag')
-        version = '.'.join(filter(lambda x: x is not None, match.groups()))
-        # patch
-        with open(path, 'r') as file:
-            data = file.read()
-        data = data.replace('version = "4.0.0-dev"', f'version = "{version}"')
-        with open(path, 'w') as file:
-            file.write(data)
-      shell: python
+        VERSION=$(echo $GITHUB_REF | sed 's#.*/v##')
+        PLACEHOLDER='version = "4.0.0-dev"'
+        VERSION_FILE='pyproject.toml'
+        grep "$PLACEHOLDER" "$VERSION_FILE"
+        sed -i "s/$PLACEHOLDER/version = \"${VERSION}\"/g" "$VERSION_FILE"
+      shell: bash
 
     - name: Build
       run: poetry build
