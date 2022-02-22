@@ -34,7 +34,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        key: ${{ runner.os }}-python-${{ matrix.python-version }}-poetry-${{ hashFiles('**/poetry.lock') }}
         restore-keys: ${{ runner.os }}-poetry-
     
     - name: Install Poetry
@@ -65,7 +65,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        key: ${{ runner.os }}-python-${{ matrix.python-version }}-poetry-${{ hashFiles('**/poetry.lock') }}
         restore-keys: ${{ runner.os }}-poetry-
     
     - name: Install Poetry
@@ -75,11 +75,6 @@ jobs:
 
     - name: Build
       run: poetry build
-
-    - name: Upload wheels
-      uses: actions/upload-artifact@v2
-      with:
-        path: dist/*.*
 
   publish:
     name: Upload if release
@@ -91,6 +86,9 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -100,7 +98,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        key: ${{ runner.os }}-python-${{ matrix.python-version }}-poetry-${{ hashFiles('**/poetry.lock') }}
         restore-keys: ${{ runner.os }}-poetry-
     
     - name: Install Poetry
@@ -108,11 +106,5 @@ jobs:
         curl -sSL https://install.python-poetry.org | python3 -
         echo "$HOME/.poetry/bin" >> $GITHUB_PATH
 
-    - name: Download wheels
-      uses: actions/download-artifact@v2
-      with:
-        name: artifact
-        path: dist
-
     - name: Build
-      run: poetry publish -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }}
+      run: poetry publish --build -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }}
