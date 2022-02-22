@@ -4,8 +4,6 @@ from mako.template import Template
 import uuid
 import sys
 
-IS_NOTEBOOK = 'ipykernel' in sys.modules
-
 
 class NonlinearSolutionInfo:
     def __init__(self, constraint, residual_norm, header, data):
@@ -19,11 +17,11 @@ class NonlinearSolutionInfo:
         return len(self.data)
 
     def show(self):
-        if IS_NOTEBOOK:
+        if 'ipykernel' in sys.modules:
             from IPython.display import display
             display(self)
         else:
-            return f'Nonlinear solution converged after {len(data)} iterations'
+            return f'Nonlinear solution converged after {len(self.data)} iterations'
 
     def _repr_html_(self):
         template = Template(TEMPLATE)
@@ -55,7 +53,7 @@ TEMPLATE = '''
         overflow: hidden;
         width: 100%;
     }
-    
+
     tr, td {
         padding: 0 1em;
     }
