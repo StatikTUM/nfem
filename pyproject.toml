@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nfem"
-version = "4.0.0"
+version = "4.0.0-dev"
 description = "NFEM Teaching Tool"
 authors = [
     "Thomas Oberbichler <thomas.oberbichler@tum.de>",
