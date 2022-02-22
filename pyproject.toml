@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "nfem"
+version = "4.0.0"
+description = "NFEM Teaching Tool"
+authors = [
+    "Thomas Oberbichler <thomas.oberbichler@tum.de>",
+    "Armin Geiser <armin.geiser@tum.de>",
+    "Klaus Sautter <kb.sautter@tum.de>",
+]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/StatikTUM/nfem"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+numpy = "^1.21"
+notebook = "^5.3"
+scipy = "^1.4"
+sympy = "^1.7"
+plotly = "^5.5.0"
+Mako = "^1.1.6"
+matplotlib = "^3.5.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0.1"
+flake8 = "^4.0.1"
+mypy = "^0.931"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
