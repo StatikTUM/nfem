@@ -23,7 +23,10 @@ numpy = [
     { version = "^1.22", python = ">=3.10" },
 ]
 plotly = "^5.5.0"
-scipy = "^1.4"
+scipy = [
+    { version = "^1.4", python = "<3.10" },
+    { version = "^1.7.2", python = ">=3.10" },
+]
 importlib-metadata = { version = "^4.11", python = "<3.8" }
 
 [tool.poetry.dev-dependencies]
