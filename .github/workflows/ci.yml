@@ -77,6 +77,26 @@ jobs:
         curl -sSL https://install.python-poetry.org | python3 -
         echo "$HOME/.poetry/bin" >> $GITHUB_PATH
 
+    - name: Patch version number
+      run: |
+        import regex as re
+        # settings
+        tag = '${{ github.ref }}'[10:]
+        path = './pyproject.toml'
+        # get version string from tag
+        pattern = 'v(\d+)(?:\.(\d+)(?:\.(\d+)(?:\.(\d+))?)?)?$'
+        match = re.match(pattern, tag)
+        if match is None:
+            raise RuntimeError('Invalid version tag')
+        version = '.'.join(filter(lambda x: x is not None, match.groups()))
+        # patch
+        with open(path, 'r') as file:
+            data = file.read()
+        data = data.replace('version = "4.0.0-dev"', f'version = "{version}"')
+        with open(path, 'w') as file:
+            file.write(data)
+      shell: python
+
     - name: Build
       run: poetry build
 
@@ -95,9 +115,6 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
