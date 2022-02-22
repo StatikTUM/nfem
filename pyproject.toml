@@ -18,7 +18,10 @@ notebook = [
     { version = "^5.3", python = "<3.8" },
     { version = "^6.4", python = ">=3.8" },
 ]
-numpy = "^1.20"
+numpy = [
+    { version = "^1.20", python = "<3.10 },
+    { version = "^1.22", python = ">=3.10 },
+]
 plotly = "^5.5.0"
 scipy = "^1.4"
 sympy = "^1.7"
