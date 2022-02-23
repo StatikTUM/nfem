@@ -447,7 +447,7 @@ class Model:
 
     def perform_arc_length_control_step(self, tolerance=1e-5, max_iterations=500, info=False, **options):
         """Perform a solution step using arc-length control."""
-        solution_info = solve.arc_length_control_step(self, **options)
+        solution_info = solve.solve_arc_length_control(self, tolerance, max_iterations, **options)
         if info:
             print(f'Arc-Length-Control with length = {solution_info.constraint.squared_l_hat**0.5}')
             solution_info.show()
@@ -489,7 +489,7 @@ class Model:
             dof = options.pop('dof')
             info = solve.solve_displacement_control(self, dof, tolerance, max_iterations, **options)
         elif strategy == 'arc-length-control':
-            info = solve.arc_length_control_step(self, tolerance, max_iterations, **options)
+            info = solve.solve_arc_length_control(self, tolerance, max_iterations, **options)
         else:
             raise ValueError('Invalid path following strategy:' + strategy)
 
