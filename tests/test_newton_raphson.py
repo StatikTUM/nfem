@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from nfem import newton_raphson_solve
+from nfem.solve import newton_raphson_solve
 
 
 @pytest.fixture

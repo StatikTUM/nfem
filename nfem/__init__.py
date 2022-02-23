@@ -17,8 +17,6 @@ from nfem.truss import Truss
 from nfem.spring import Spring
 from nfem.assembler import Assembler
 
-from nfem.newton_raphson import newton_raphson_solve
-
 from nfem.bracketing import bracketing
 
 from nfem.visualization import Plot2D
@@ -29,7 +27,6 @@ __all__ = [
     'Truss',
     'Spring',
     'Assembler',
-    'newton_raphson_solve',
     'bracketing',
     'Plot2D',
 ]
