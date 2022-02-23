@@ -529,7 +529,16 @@ class Model:
         assembler : Object (optional)
             assembler can be passed to speed up if k is not given
         """
-        solve.compute_det_k(self)
+        assembler = Assembler(self)
+
+        n, m = assembler.size
+
+        k = np.zeros((m, m))
+
+        assembler.assemble_matrix(lambda element: element.compute_k(), out=k)
+
+        self.det_k = la.det(k[:n, :n])
+
         print(f'Det(K): {self.det_k}')
 
     def solve_linear_eigenvalues(self, assembler=None):

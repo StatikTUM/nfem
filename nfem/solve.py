@@ -469,14 +469,3 @@ class SolutionInfo:
         contents = output.getvalue()
         output.close()
         return contents
-
-
-def compute_det_k(model, k=None, assembler=None):
-    if k is None:
-        if assembler is None:
-            assembler = Assembler(model)
-        n, m = assembler.size
-
-        k = np.zeros((m, m))
-        assembler.assemble_matrix(lambda element: element.compute_k(), out=k)
-    model.det_k = la.det(k[:n, :n])
