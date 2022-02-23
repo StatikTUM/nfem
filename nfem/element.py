@@ -1,9 +1,16 @@
+"""Base type of a finite element."""
+
 from nfem.dof import Dof
 from nfem.node import Node
 
 import numpy.typing as npt
 
-from typing import Protocol, Sequence
+from typing import Sequence
+
+try:
+    from typing import Protocol
+except ModuleNotFoundError:
+    from typing_extensions import Protocol  # type: ignore
 
 
 class Element(Protocol):
