@@ -12,30 +12,7 @@ from typing import Sequence
 
 
 class Spring:
-    """Linear spring element.
-
-    Attributes
-    ----------
-    id : str
-        Unique id of the spring element.
-    node : Node
-        Node.
-    kx : float
-        Stiffness in x direction.
-    ky : float
-        Stiffness in y direction.
-    kz : float
-        Stiffness in z direction.
-    dofs
-
-    Methods
-    -------
-    colorspace(c='rgb')
-        Represent the photo in the given colorspace.
-    gamma(n=1.0)
-        Change the photo's gamma exposure.
-
-    """
+    """Linear spring element."""
 
     def __init__(self, id: str, node: Node, kx: float = 0.0, ky: float = 0.0,
                  kz: float = 0.0):
