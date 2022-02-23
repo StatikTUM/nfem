@@ -1,3 +1,5 @@
+"""Auxiliary for assembling system vectors and system matrices."""
+
 from __future__ import annotations
 
 from nfem.dof import Dof
@@ -7,11 +9,20 @@ import nfem
 import numpy as np
 import numpy.typing as npt
 
-from typing import Sequence, Dict, Callable
+from typing import Callable, Dict, Sequence, Tuple
+
+
+EvalElement = Callable[[Element], npt.ArrayLike]
 
 
 class Assembler:
+    """Auxiliary for assembling system vectors and system matrices."""
+
     def __init__(self, model: nfem.Model):
+        """Create a new Assembler.
+
+        :model: Model of the system to be assembled.
+        """
         dof_indices: Dict[Dof, int] = {}
         element_indices: Dict[Element, npt.NDArray[int]] = {}
 
@@ -42,20 +53,24 @@ class Assembler:
             dofs[i] = dof
 
         self.dofs: npt.NDArray[Dof] = dofs
-        """List of all degrees of freesom including the locked ones."""
+        """List of all degrees of freedom including the locked ones."""
 
         self.dof_indices: Dict[Dof, int] = dof_indices
         """Provides the index for a given degree of freedom."""
 
         self.element_indices: Dict[Element, npt.NDArray] = element_indices
-        """Provides the indices of the degrees of freedom for a given element."""
+        """Indices of the degrees of freedom for a given element."""
 
-        self.n: int = index + 1
-        """Number of degrees of freesom which are not locked."""
+        self.size: Tuple[int, int] = (index + 1, len(dofs))
+        """Number of degrees of freedom (active and total)."""
 
-        self.size = (index + 1, len(dofs))
+    def assemble_vector(self, fn: EvalElement, out=None) -> npt.NDArray:
+        """Assemble a system vector.
 
-    def assemble_vector(self, fn: Callable[[Element], npt.ArrayLike], out=None) -> npt.NDArray:
+        :fn: Function to compute the local vector of each element.
+        :out: Vector to save the result. (optional)
+        :return: The assembled system vector.
+        """
         if out is None:
             m = len(self.dofs)
             out = np.zeros(m, float)
@@ -66,7 +81,13 @@ class Assembler:
 
         return out
 
-    def assemble_matrix(self, fn: Callable[[Element], npt.ArrayLike], out=None) -> npt.NDArray:
+    def assemble_matrix(self, fn: EvalElement, out=None) -> npt.NDArray:
+        """Assemble a system matrix.
+
+        :fn: Function to compute the local matrix of each element.
+        :out: matrix to save the result. (optional)
+        :return: The assembled system matrix.
+        """
         if out is None:
             m = len(self.dofs)
             out = np.zeros((m, m), float)
@@ -76,7 +97,3 @@ class Assembler:
             out[np.ix_(indices, indices)] += local_matrix
 
         return out
-
-    def add_x(self, values: Sequence[float]) -> None:
-        for dof, value in zip(self.dofs, values):
-            dof.value += value
