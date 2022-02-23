@@ -118,7 +118,7 @@ def arc_length_control_step(model, tolerance=1e-5, max_iterations=100, **options
 def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **options):
     # initialize working matrices and functions for newton raphson
     assembler = Assembler(model)
-    
+
     n, m = assembler.size
 
     data = []
