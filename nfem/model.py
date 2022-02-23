@@ -519,7 +519,7 @@ class Model:
 
         return k[:n, :n]
 
-    def solve_det_k(self, k=None, assembler=None):
+    def solve_det_k(self):
         """Compute the determinant of k.
 
         Parameters
