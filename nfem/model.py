@@ -152,7 +152,9 @@ class Model:
         if node_b not in self.nodes:
             raise KeyError('The model does not contain a node with id {}'.format(node_b))
 
-        element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, prestress, tensile_strength, compressive_strength)
+        element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, prestress)
+        element.tensile_strength = tensile_strength
+        element.compressive_strength = compressive_strength
 
         self.elements._add(element)
 
