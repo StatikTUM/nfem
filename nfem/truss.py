@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from nfem.dof import Dof
 from nfem.node import Node
 
 import numpy as np
 import numpy.linalg as la
+import numpy.typing as npt
 
-from typing import Optional
+from typing import Optional, Sequence
 
 
 class Truss:
@@ -41,7 +43,7 @@ class Truss:
         self.compressive_strength: Optional[float] = None
 
     @property
-    def dofs(self):
+    def dofs(self) -> Sequence[Dof]:
         """Get the degrees of freedom."""
         node_a = self.node_a
         node_b = self.node_b
@@ -69,7 +71,7 @@ class Truss:
 
     # strain and stress
 
-    def compute_epsilon_gl(self):
+    def compute_epsilon_gl(self) -> float:
         """Get the Green-Lagrange strain."""
         # reference base vector
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -77,12 +79,9 @@ class Truss:
         # actual base vector
         a1 = self.node_b.location - self.node_a.location
 
-        # green-lagrange strain
-        epsilon_GL = (a1 @ a1 - A1 @ A1) / (2 * A1 @ A1)
+        return (a1 @ a1 - A1 @ A1) / (2 * A1 @ A1)
 
-        return epsilon_GL
-
-    def compute_epsilon_lin(self):
+    def compute_epsilon_lin(self) -> float:
         """Get the linear strain."""
         # reference base vector
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -90,35 +89,24 @@ class Truss:
         # actual base vector
         a1 = self.node_b.location - self.node_a.location
 
-        L = self.ref_length
+        return a1 @ A1 / A1 @ A1 - 1
 
-        # project actual on reference
-        projected_l = a1 @ A1 / np.sqrt(A1 @ A1)
-
-        e_lin = (projected_l - L) / L
-
-        return e_lin
-
-    def compute_sigma_pk2(self):
+    def compute_sigma_pk2(self) -> float:
         """Get the second Piola-Kirchoff stress."""
         eps = self.compute_epsilon_gl()
 
-        # stress:
-        sigma = eps * self.youngs_modulus + self.prestress
-
-        return sigma
+        return eps * self.youngs_modulus + self.prestress
 
     @property
     def normal_force(self) -> float:
         """Get normal force."""
         sigma_b = self.compute_sigma_pk2() * self.length / self.ref_length
-        F = sigma_b * self.area
 
-        return F
+        return sigma_b * self.area
 
     # linear analysis
 
-    def compute_linear_r(self):
+    def compute_linear_r(self) -> npt.NDArray[float]:
         """Compute the linear residual force vector of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -135,7 +123,7 @@ class Truss:
                      [0, -1, 0, 0, 1, 0],
                      [0, 0, -1, 0, 0, 1]]
 
-    def compute_linear_k(self):
+    def compute_linear_k(self) -> npt.NDArray[float]:
         """Compute the linear stiffness matrix of the element."""
         A1 = self.node_b.ref_location - self.node_a.ref_location
 
@@ -152,7 +140,7 @@ class Truss:
 
         return dg.T @ ddp @ dg
 
-    def compute_linear_kg(self):
+    def compute_linear_kg(self) -> npt.NDArray[float]:
         """Compute the linear geometric stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -175,7 +163,7 @@ class Truss:
 
     # nonlinear analysis
 
-    def compute_r(self):
+    def compute_r(self) -> npt.NDArray[float]:
         """Compute the nonlinear residual force vector of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -192,7 +180,7 @@ class Truss:
                      [0, -1, 0, 0, 1, 0],
                      [0, 0, -1, 0, 0, 1]]
 
-    def compute_k(self):
+    def compute_k(self) -> npt.NDArray[float]:
         """Compute the nonlinear stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -216,11 +204,11 @@ class Truss:
 
         return dg.T @ ddp @ dg
 
-    def compute_ke(self):
+    def compute_ke(self) -> npt.NDArray[float]:
         """Compute the elastic stiffness matrix of the element."""
         return self.compute_linear_k()
 
-    def compute_km(self):
+    def compute_km(self) -> npt.NDArray[float]:
         """Compute the material stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -238,7 +226,7 @@ class Truss:
 
         return dg.T @ ddp @ dg
 
-    def compute_kg(self):
+    def compute_kg(self) -> npt.NDArray[float]:
         """Compute the geometric stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -259,7 +247,7 @@ class Truss:
 
         return dg.T @ ddp @ dg
 
-    def compute_kd(self):
+    def compute_kd(self) -> npt.NDArray[float]:
         """Compute the initial-displacement stiffness matrix of the element."""
         km = self.compute_km()
         ke = self.compute_linear_k()
