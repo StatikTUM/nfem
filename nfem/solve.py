@@ -6,6 +6,7 @@ from nfem.nonlinear_solution_data import NonlinearSolutionInfo
 from nfem.model_status import ModelStatus
 from nfem.path_following_method import ArcLengthControl, DisplacementControl, LoadControl
 from numpy.linalg import det, norm, solve as linear_solve
+import numpy.linalg as la
 import io
 
 
@@ -32,38 +33,76 @@ class SolutionInfo:
         return contents
 
 
+def element_linear_r(element):
+    return element.compute_linear_r()
+
+
+def element_linear_k(element):
+    return element.compute_linear_k()
+
+
+def element_r(element):
+    return element.compute_r()
+
+
+def element_k(element):
+    return element.compute_k()
+
+
 def linear_step(model):
     assembler = Assembler(model)
 
     n, m = assembler.size
 
-    u = np.zeros(m)
-
-    for dof in assembler.dofs:
-        i = assembler.dof_indices[dof]
-        u[i] = model[dof].delta
-
-    f = np.zeros(m)
+    r = np.zeros(m)
     k = np.zeros((m, m))
 
-    for i, dof in enumerate(assembler.dofs):
-        f[i] += model[dof].external_force
+    # compute residual forces of the system
 
-    # FIXME: Add residual force
-    assembler.assemble_matrix(lambda element: element.compute_ke(), out=k)
+    for i in range(m):
+        r[i] = -assembler.dofs[i].external_force
 
-    f *= model.load_factor
+    r *= model.load_factor
+
+    assembler.assemble_vector(element_linear_r, out=r)
+
+    # compute stiffness matrix of the system
+
+    assembler.assemble_matrix(element_linear_k, out=k)
+
+    # build right-hand-side
+
+    rhs = -r[:n]
+
+    # build left-hand-side
 
     lhs = k[:n, :n]
-    rhs = f[:n]
+
+    # Solve linear equation system: lhs * delta = rhs
 
     try:
-        u[:n] = linear_solve(lhs, rhs)
+        delta = la.solve(lhs, rhs)
     except np.linalg.LinAlgError:
         raise RuntimeError('Stiffness matrix is singular')
 
-    for dof, value in zip(assembler.dofs, u):
-        model[dof].delta = value
+    # update model
+
+    for i in range(n):
+        assembler.dofs[i].value += delta[i]
+
+    # compute residuals
+
+    for i in range(m):
+        r[i] = -assembler.dofs[i].external_force
+
+    r *= model.load_factor
+
+    assembler.assemble_vector(element_linear_r, out=r)
+
+    # update residual forces
+
+    for i in range(m):
+        assembler.dofs[i].residual = r[i]
 
     model.status = ModelStatus.equilibrium
 
