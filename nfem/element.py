@@ -9,7 +9,7 @@ from typing import Sequence
 
 try:
     from typing import Protocol
-except ModuleNotFoundError:
+except ImportError:
     from typing_extensions import Protocol  # type: ignore
 
 
