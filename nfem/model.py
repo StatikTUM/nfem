@@ -439,7 +439,7 @@ class Model:
 
     def perform_displacement_control_step(self, dof, tolerance=1e-5, max_iterations=100, info=False, **options):
         """Perform a solution step using displacement control."""
-        solution_info = solve.displacement_control_step(self, dof, **options)
+        solution_info = solve.solve_displacement_control(self, dof, tolerance, max_iterations, **options)
         if info:
             print(f'Displacement-Control with {dof[1]} at node {dof[0]} = {self[dof].delta}')
             solution_info.show()
@@ -487,7 +487,7 @@ class Model:
             info = solve.solve_load_control(self, tolerance, max_iterations, **options)
         elif strategy == 'displacement-control':
             dof = options.pop('dof')
-            info = solve.displacement_control_step(self, dof, tolerance, max_iterations, **options)
+            info = solve.solve_displacement_control(self, dof, tolerance, max_iterations, **options)
         elif strategy == 'arc-length-control':
             info = solve.arc_length_control_step(self, tolerance, max_iterations, **options)
         else:

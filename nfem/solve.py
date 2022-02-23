@@ -8,6 +8,7 @@ from nfem.path_following_method import ArcLengthControl, DisplacementControl, Lo
 from numpy.linalg import det, norm, solve as linear_solve
 import numpy.linalg as la
 import io
+from typing import Tuple
 
 
 def element_linear_r(element):
@@ -91,10 +92,15 @@ def solve_load_control(model, tolerance: float = 1e-5,
                        solve_attendant_eigenvalue: bool = False):
     assembler = Assembler(model)
 
+    load_factor_hat = model.load_factor
+
     n, m = assembler.size
 
-    r = np.zeros(m)
-    k = np.zeros((m, m))
+    r = np.empty(m)
+    k = np.empty((m, m))
+
+    rhs = np.zeros(n + 1)
+    lhs = np.zeros((n + 1, n + 1))
 
     data = []
 
@@ -112,9 +118,8 @@ def solve_load_control(model, tolerance: float = 1e-5,
 
         # build right-hand-side of the equation system
 
-        rhs = np.zeros(n + 1)
         rhs[:n] = -r[:n]
-        rhs[n] = 0
+        rhs[n] = model.load_factor - load_factor_hat
 
         # check residual criterion
 
@@ -144,9 +149,11 @@ def solve_load_control(model, tolerance: float = 1e-5,
 
         # build left-hand-side of the equation system
 
-        lhs = np.zeros((n + 1, n + 1))
+        lhs.fill(0)
         lhs[:n, :n] = k[:n, :n]
         lhs[n, n] = 1
+        for i in range(n):
+            lhs[i, n] = -assembler.dofs[i].external_force
 
         # solve linear equation system: lhs * delta = rhs
 
@@ -159,6 +166,125 @@ def solve_load_control(model, tolerance: float = 1e-5,
 
         for i in range(n):
             assembler.dofs[i].value += delta[i]
+
+        model.load_factor += delta[n]
+
+        data.append([
+            format(model.load_factor),
+            format(rnorm),
+            format(la.norm(delta)),
+        ])
+
+        iteration += 1
+
+    if iteration >= max_iterations:
+        raise RuntimeError(
+            f'Newthon-Raphson did not converge after {max_iterations} steps.' +
+            f' Residual norm: {rnorm}'
+        )
+
+    # update residual forces
+
+    for i in range(m):
+        assembler.dofs[i].residual = r[i]
+
+    model.status = ModelStatus.equilibrium
+
+    if solve_det_k:
+        k.fill(0)
+        assembler.assemble_matrix(element_k, out=k)
+        model.det_k = det(k[:n, :n])
+
+    if solve_attendant_eigenvalue:
+        model.solve_eigenvalues(assembler=assembler)
+
+    return NonlinearSolutionInfo(rnorm, ['λ', '|r|', '|du|'], data)
+
+
+def solve_displacement_control(model, dof: Tuple[str, str],
+                               tolerance: float = 1e-5,
+                               max_iterations: int = 100,
+                               solve_det_k: bool = True,
+                               solve_attendant_eigenvalue: bool = False):
+    assembler = Assembler(model)
+
+    dof_index = assembler.dof_indices[dof]
+    d_hat = assembler.dofs[dof_index].delta
+
+    n, m = assembler.size
+
+    r = np.empty(m)
+    k = np.empty((m, m))
+
+    rhs = np.zeros(n + 1)
+    lhs = np.zeros((n + 1, n + 1))
+
+    data = []
+
+    iteration = 0
+
+    while True:
+        # compute residual forces of the system
+
+        for i in range(m):
+            r[i] = -assembler.dofs[i].external_force
+        r *= model.load_factor
+
+        assembler.assemble_vector(element_r, out=r)
+
+        # build right-hand-side of the equation system
+
+        rhs.fill(0)
+        rhs[:n] = -r[:n]
+        rhs[n] = model[dof].delta - d_hat
+
+        # check residual criterion
+
+        rnorm = la.norm(rhs)
+
+        if rnorm < tolerance:
+            break
+
+        # check iteration criterion
+
+        if iteration >= max_iterations:
+            break
+
+        # create a duplicate of the current state before updating and insert it
+        # in the history
+
+        duplicate = model.get_duplicate()
+        duplicate._previous_model = model._previous_model
+        model._previous_model = duplicate
+        duplicate.status = model.status
+        model.status = ModelStatus.iteration
+
+        # compute stiffness matrix of the system
+
+        k.fill(0)
+        assembler.assemble_matrix(element_k, out=k)
+
+        # build left-hand-side of the equation system
+
+        lhs.fill(0)
+        lhs[:n, :n] = k[:n, :n]
+        lhs[n, dof_index] = 1
+        for i in range(n):
+            lhs[i, n] = -assembler.dofs[i].external_force
+
+        # solve linear equation system: lhs * delta = rhs
+
+        try:
+            delta = la.solve(lhs, rhs)
+        except np.linalg.LinAlgError:
+            raise RuntimeError('Stiffness matrix is singular')
+
+        # update model
+
+        for i in range(n):
+            assembler.dofs[i].value += delta[i]
+
+        model.load_factor += delta[n]
 
         data.append([
             format(model.load_factor),
@@ -243,11 +369,6 @@ def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolera
             callback(iteration, residual_norm, norm(delta_x))
 
     raise RuntimeError(f'Newthon-Raphson did not converge after {max_iterations} steps. Residual norm: {residual_norm}')
-
-
-def displacement_control_step(model, dof, tolerance=1e-5, max_iterations=100, **options):
-    constraint = DisplacementControl(model, dof)
-    return nonlinear_step(constraint, model, tolerance, max_iterations, **options)
 
 
 def arc_length_control_step(model, tolerance=1e-5, max_iterations=100, **options):
