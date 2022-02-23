@@ -254,6 +254,7 @@ class Node:
     # visualization
 
     def draw(self, item):
+        """Draw the node."""
         item.set_label_location(self.ref_location, self.location)
 
         item.add_support(
