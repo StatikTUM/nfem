@@ -135,12 +135,12 @@ def test_add_element():
                 dofs.append(node._dof_z)
             return dofs
 
-        def calculate_stiffness_matrix(self):
-            return numpy.eye(6) * self.k
-
-        def calculate_internal_forces(self):
+        def compute_r(self):
             u = numpy.array([dof.delta for dof in self.dofs])
-            return self.calculate_stiffness_matrix() @ u
+            return self.compute_k() @ u
+
+        def compute_k(self):
+            return numpy.eye(6) * self.k
 
     model = nfem.Model()
 

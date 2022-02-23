@@ -1,10 +1,13 @@
+"""Enueration for the model status."""
+
 from __future__ import annotations
 
 from enum import Enum
 
 
 class ModelStatus(Enum):
-    """Enum for the model status """
+    """Enueration for the model status."""
+
     initial = 0
     duplicate = 1
     prediction = 2

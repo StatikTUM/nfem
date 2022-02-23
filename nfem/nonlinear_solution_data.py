@@ -6,8 +6,7 @@ import sys
 
 
 class NonlinearSolutionInfo:
-    def __init__(self, constraint, residual_norm, header, data):
-        self.constraint = constraint
+    def __init__(self, residual_norm, header, data):
         self.header = header
         self.data = data
         self.residual_norm = residual_norm

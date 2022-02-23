@@ -1,6 +1,6 @@
 import pytest
 import nfem
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_allclose
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def test_linear(model, load_curve):
 
     actual = model.load_displacement_curve(('B', 'v'), skip_iterations=False)
 
-    assert_almost_equal(actual.T, [
+    assert_allclose(actual.T, [
         [0.0, 0.0],
         [-0.0141421356237309, 0.01],
         [-0.028284271247461912, 0.02],
@@ -47,11 +47,33 @@ def test_linear(model, load_curve):
 
 
 def test_nonlinear(model, load_curve):
+    trace_b = []
+
     for load_factor in load_curve:
         model = model.get_duplicate()
         model.predict_tangential(strategy='lambda', value=load_factor)
+
+        assert_allclose(model.nodes['A'].location, [0, 0, 0])
+        assert_allclose(model.nodes['C'].location, [2, 0, 0])
+
+        trace_b.append(model.nodes['B'].location)
+
         model.perform_non_linear_solution_step(strategy='load-control')
+
+    assert_allclose(trace_b, [
+        [1,  0.98585786, 0],
+        [1,  0.97076783, 0],
+        [1,  0.95491884, 0],
+        [1,  0.92188187, 0],
+        [1,  0.82803479, 0],
+        [1,  0.69796572, 0],
+        [1, -0.38180161, 0],
+        [1, -1.30492800, 0],
+        [1, -1.43021041, 0],
+        [1, -1.52735068, 0],
+        [1, -1.66149428, 0],
+    ], atol=1e-6)
 
     actual = model.load_displacement_curve(('B', 'v'), skip_iterations=False)
 
-    assert_almost_equal(actual.T[-1], [-2.6480863731391198, 1.0])
+    assert_allclose(actual.T[-1], [-2.6480863731391198, 1.0])
