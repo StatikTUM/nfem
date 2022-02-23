@@ -110,7 +110,7 @@ class DisplacementControl:
         """
         dc.fill(0.0)
         assembler = Assembler(model)
-        index = assembler.index_of_dof(self.dof)
+        index = assembler.dof_indices[self.dof]
         dc[index] = 1.0
 
 
@@ -167,7 +167,9 @@ class ArcLengthControl:
         assembler = Assembler(model)
         previous_model = model.get_previous_model()
 
-        for index, dof in enumerate(assembler.dofs):
+        n, m = assembler.size
+
+        for index, dof in enumerate(assembler.dofs[:n]):
             current_value = model[dof].delta
             previous_value = previous_model[dof].delta
 

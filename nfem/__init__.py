@@ -1,5 +1,4 @@
-"""
-NFEM teaching tool
+"""NFEM teaching tool.
 
 A module for the non linear static analysis of 3D truss problems.
 A light weight object oriented FEM code and some usefull postprocessing tools.
@@ -8,7 +7,7 @@ A light weight object oriented FEM code and some usefull postprocessing tools.
 try:
     import importlib.metadata as importlib_metadata
 except ModuleNotFoundError:
-    import importlib_metadata
+    import importlib_metadata  # type: ignore
 
 __version__ = importlib_metadata.version(__name__)
 

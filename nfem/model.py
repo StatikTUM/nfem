@@ -256,15 +256,15 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.dof_count
+        n, m = assembler.size
 
-        increment = np.zeros(dof_count + 1)
+        increment = np.zeros(n + 1)
 
         if self.get_previous_model() is None:
             print('WARNING: Increment is zero because no previous model exists!')
             return increment
 
-        for index, dof in enumerate(assembler.dofs):
+        for index, dof in enumerate(assembler.dofs[:n]):
             increment[index] = self.get_dof_increment(dof)
 
         increment[-1] = self.get_lam_increment()
@@ -492,20 +492,23 @@ class Model:
 
     def get_stiffness(self, mode='comp'):
         assembler = Assembler(self)
-        k = np.zeros((assembler.dof_count, assembler.dof_count))
+
+        n, m = assembler.size
+
+        k = np.zeros((m, m))
 
         if mode == 'comp':
-            assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+            assembler.assemble_matrix(lambda element: element.calculate_stiffness_matrix(), out=k)
         elif mode == 'elas':
-            assembler.assemble_matrix(k, lambda element: element.calculate_elastic_stiffness_matrix())
+            assembler.assemble_matrix(lambda element: element.calculate_elastic_stiffness_matrix(), out=k)
         elif mode == 'disp':
-            assembler.assemble_matrix(k, lambda element: element.calculate_initial_displacement_stiffness_matrix())
+            assembler.assemble_matrix(lambda element: element.calculate_initial_displacement_stiffness_matrix(), out=k)
         elif mode == 'geom':
-            assembler.assemble_matrix(k, lambda element: element.calculate_geometric_stiffness_matrix())
+            assembler.assemble_matrix(lambda element: element.calculate_geometric_stiffness_matrix(), out=k)
         else:
             raise ValueError('mode')
 
-        return k
+        return k[:n, :n]
 
     def solve_det_k(self, k=None, assembler=None):
         """Solves the determinant of k
@@ -533,18 +536,18 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.dof_count
+        n, m = assembler.size
 
         # assemble matrices
-        k_e = np.zeros((dof_count, dof_count))
-        k_g = np.zeros((dof_count, dof_count))
+        k_e = np.zeros((m, m))
+        k_g = np.zeros((m, m))
         print("=================================")
         print('Linearized prebuckling (LPB) analysis ...')
-        assembler.assemble_matrix(k_e, lambda element: element.calculate_elastic_stiffness_matrix())
-        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix(linear=True))
+        assembler.assemble_matrix(lambda element: element.calculate_elastic_stiffness_matrix(), out=k_e)
+        assembler.assemble_matrix(lambda element: element.calculate_geometric_stiffness_matrix(linear=True), out=k_g)
 
         # solve eigenvalue problem
-        eigvals, eigvecs = eig(k_e, -k_g)
+        eigvals, eigvecs = eig(k_e[:n, :n], -k_g[:n, :n])
 
         # extract real parts of eigenvalues
         eigvals = np.array([x.real for x in eigvals])
@@ -584,7 +587,7 @@ class Model:
         model.first_eigenvector_model = None
         model.load_factor = None
 
-        for index, dof in enumerate(assembler.dofs):
+        for index, dof in enumerate(assembler.dofs[:n]):
             model[dof].delta = eigvecs[index][0]
 
         self.first_eigenvector_model = model
@@ -602,18 +605,18 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.dof_count
+        n, m = assembler.size
 
         # assemble matrices
-        k_m = np.zeros((dof_count, dof_count))
-        k_g = np.zeros((dof_count, dof_count))
+        k_m = np.zeros((m, m))
+        k_g = np.zeros((m, m))
         print("=================================")
         print('Attendant eigenvalue analysis ...')
-        assembler.assemble_matrix(k_m, lambda element: element.calculate_material_stiffness_matrix())
-        assembler.assemble_matrix(k_g, lambda element: element.calculate_geometric_stiffness_matrix())
+        assembler.assemble_matrix(lambda element: element.calculate_material_stiffness_matrix(), out=k_m)
+        assembler.assemble_matrix(lambda element: element.calculate_geometric_stiffness_matrix(), out=k_g)
 
         # solve eigenvalue problem
-        eigvals, eigvecs = eig(k_m, -k_g)
+        eigvals, eigvecs = eig(k_m[:n, :n], -k_g[:n, :n])
 
         # extract real parts of eigenvalues
         eigvals = np.array([x.real for x in eigvals])
@@ -642,7 +645,7 @@ class Model:
         model.first_eigenvector_model = None
         model.load_factor = None
 
-        for index, dof in enumerate(assembler.dofs):
+        for index, dof in enumerate(assembler.dofs[:n]):
             model[dof].delta = eigvecs[index][idx]
 
         self.first_eigenvector_model = model
@@ -659,29 +662,28 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        dof_count = assembler.dof_count
+        n, m = assembler.size
 
-        tangent = np.zeros(dof_count + 1)
+        tangent = np.zeros(n + 1)
 
-        v = tangent[:-1]
-
-        k = np.zeros((dof_count, dof_count))
-        external_f = np.zeros(dof_count)
+        k = np.zeros((m, m))
+        external_f = np.zeros(n)
 
         # assemble stiffness
-        assembler.assemble_matrix(k, lambda element: element.calculate_stiffness_matrix())
+        assembler.assemble_matrix(lambda element: element.calculate_stiffness_matrix(), out=k)
 
         # assemble force
 
-        for i, dof in enumerate(assembler.dofs):
-            external_f[i] += self[dof].external_force
+        for i in range(n):
+            external_f[i] += assembler.dofs[i].external_force
 
         try:
-            v[:dof_count] = la.solve(k, external_f)
-        except np.linalg.LinAlgError:
+            tangent[:-1] = la.solve(k[:n, :n], external_f)
+        except la.LinAlgError:
             raise RuntimeError('Stiffness matrix is singular')
 
-        # lambda = 1
+        # load-factor = 1
+
         tangent[-1] = 1
 
         return tangent
@@ -799,6 +801,8 @@ class Model:
         self.status = ModelStatus.prediction
         assembler = Assembler(self)
 
+        n, _ = assembler.size
+
         # get tangent vector
         tangent = self.get_tangent_vector(assembler=assembler)
 
@@ -822,7 +826,7 @@ class Model:
 
             delta_prescribed = value_prescribed - value
 
-            dof_index = assembler.index_of_dof(dof)
+            dof_index = assembler.dof_indices[dof]
             delta_current = tangent[dof_index]
 
             factor = delta_prescribed / delta_current
@@ -831,7 +835,7 @@ class Model:
             dof = options['dof']
             delta_dof_prescribed = options['value']
 
-            dof_index = assembler.index_of_dof(dof)
+            dof_index = assembler.dof_indices[dof]
             delta_dof_current = tangent[dof_index]
 
             factor = delta_dof_prescribed / delta_dof_current
@@ -869,8 +873,8 @@ class Model:
         tangent *= factor
 
         # update dofs at model
-        for index, dof in enumerate(assembler.dofs):
-            self[dof].delta += tangent[index]
+        for i, dof in enumerate(assembler.dofs[:n]):
+            self[dof].delta += tangent[i]
 
         # update lambda at model
         self.load_factor += tangent[-1]
@@ -923,7 +927,9 @@ class Model:
         delta_lam = - self.get_lam_increment()
 
         # update dofs at model
-        for index, dof in enumerate(assembler.dofs):
+
+        n, _ = assembler.size
+        for index, dof in enumerate(assembler.dofs[:n]):
             self[dof].delta += delta_prediction[index]
 
         # update lambda at model
@@ -958,6 +964,8 @@ class Model:
 
         assembler = Assembler(self)
 
+        n, _ = assembler.size
+
         delta_dof_vector = self.get_delta_dof_vector(previous_model, assembler=assembler)
 
         delta_lambda = self.load_factor - previous_model.load_factor
@@ -965,7 +973,7 @@ class Model:
         delta_dof_vector *= (factor - 1.0)
         delta_lambda *= (factor - 1.0)
 
-        for i, dof in enumerate(assembler.dofs):
+        for i, dof in enumerate(assembler.dofs[:n]):
             self[dof].delta += delta_dof_vector[i]
 
         self.load_factor += delta_lambda
@@ -1001,9 +1009,11 @@ class Model:
         if assembler is None:
             assembler = Assembler(self)
 
-        delta = np.zeros(assembler.dof_count)
+        n, _ = assembler.size
 
-        for index, dof in enumerate(assembler.dofs):
+        delta = np.zeros(n)
+
+        for index, dof in enumerate(assembler.dofs[:n]):
             delta[index] = self[dof].delta - model_b[dof].delta
 
         return delta
