@@ -10,29 +10,6 @@ import numpy.linalg as la
 import io
 
 
-def format(value, digits=6):
-    return '{:.6e}'.format(value) if value is not None else ''
-
-
-class SolutionInfo:
-    def __init__(self, converged, iterations, residual_norm):
-        self.converged = converged
-        self.iterations = iterations
-        self.residual_norm = residual_norm
-
-    def __repr__(self):
-        output = io.StringIO()
-        if self.converged:
-            print('System converged!', file=output)
-        else:
-            print('System not converged!', file=output)
-        print(f'# Iterations  = {self.iterations}', file=output)
-        print(f'Residual Norm = {self.residual_norm}', file=output)
-        contents = output.getvalue()
-        output.close()
-        return contents
-
-
 def element_linear_r(element):
     return element.compute_linear_r()
 
@@ -49,7 +26,7 @@ def element_k(element):
     return element.compute_k()
 
 
-def linear_step(model):
+def solve_linear(model):
     assembler = Assembler(model)
 
     n, m = assembler.size
@@ -109,6 +86,135 @@ def linear_step(model):
     return SolutionInfo(converged=True, iterations=1, residual_norm=0)
 
 
+def solve_load_control(model, tolerance: float = 1e-5,
+                       max_iterations: int = 100, solve_det_k: bool = True,
+                       solve_attendant_eigenvalue: bool = False):
+    assembler = Assembler(model)
+
+    n, m = assembler.size
+
+    r = np.zeros(m)
+    k = np.zeros((m, m))
+
+    data = []
+
+    iteration = 0
+
+    while True:
+        # compute residual forces of the system
+
+        for i in range(m):
+            r[i] = -assembler.dofs[i].external_force
+
+        r *= model.load_factor
+
+        assembler.assemble_vector(element_r, out=r)
+
+        # build right-hand-side of the equation system
+
+        rhs = np.zeros(n + 1)
+        rhs[:n] = -r[:n]
+        rhs[n] = 0
+
+        # check residual criterion
+
+        rnorm = la.norm(rhs)
+
+        if rnorm < tolerance:
+            break
+
+        # check iteration criterion
+
+        if iteration >= max_iterations:
+            break
+
+        # create a duplicate of the current state before updating and insert it
+        # in the history
+
+        duplicate = model.get_duplicate()
+        duplicate._previous_model = model._previous_model
+        model._previous_model = duplicate
+        duplicate.status = model.status
+        model.status = ModelStatus.iteration
+
+        # compute stiffness matrix of the system
+
+        k.fill(0)
+        assembler.assemble_matrix(element_k, out=k)
+
+        # build left-hand-side of the equation system
+
+        lhs = np.zeros((n + 1, n + 1))
+        lhs[:n, :n] = k[:n, :n]
+        lhs[n, n] = 1
+
+        # solve linear equation system: lhs * delta = rhs
+
+        try:
+            delta = la.solve(lhs, rhs)
+        except np.linalg.LinAlgError:
+            raise RuntimeError('Stiffness matrix is singular')
+
+        # update model
+
+        for i in range(n):
+            assembler.dofs[i].value += delta[i]
+
+        data.append([
+            format(model.load_factor),
+            format(rnorm),
+            format(la.norm(delta)),
+        ])
+
+        iteration += 1
+
+    if iteration >= max_iterations:
+        raise RuntimeError(
+            f'Newthon-Raphson did not converge after {max_iterations} steps.' +
+            f' Residual norm: {rnorm}'
+        )
+
+    # update residual forces
+
+    for i in range(m):
+        assembler.dofs[i].residual = r[i]
+
+    model.status = ModelStatus.equilibrium
+
+    if solve_det_k:
+        k.fill(0)
+        assembler.assemble_matrix(element_k, out=k)
+        model.det_k = det(k[:n, :n])
+
+    if solve_attendant_eigenvalue:
+        model.solve_eigenvalues(assembler=assembler)
+
+    return NonlinearSolutionInfo(rnorm, ['λ', '|r|', '|du|'], data)
+
+
+def format(value, digits=6):
+    return '{:.6e}'.format(value) if value is not None else ''
+
+
+class SolutionInfo:
+    def __init__(self, converged, iterations, residual_norm):
+        self.converged = converged
+        self.iterations = iterations
+        self.residual_norm = residual_norm
+
+    def __repr__(self):
+        output = io.StringIO()
+        if self.converged:
+            print('System converged!', file=output)
+        else:
+            print('System not converged!', file=output)
+        print(f'# Iterations  = {self.iterations}', file=output)
+        print(f'Residual Norm = {self.residual_norm}', file=output)
+        contents = output.getvalue()
+        output.close()
+        return contents
+
+
 def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolerance=1e-7, callback=None):
     x = x_initial
     residual_norm = None
@@ -137,11 +243,6 @@ def newton_raphson_solve(calculate_system, x_initial, max_iterations=100, tolera
             callback(iteration, residual_norm, norm(delta_x))
 
     raise RuntimeError(f'Newthon-Raphson did not converge after {max_iterations} steps. Residual norm: {residual_norm}')
-
-
-def load_control_step(model, tolerance=1e-5, max_iterations=100, **options):
-    constraint = LoadControl(model)
-    return nonlinear_step(constraint, model, tolerance, max_iterations, **options)
 
 
 def displacement_control_step(model, dof, tolerance=1e-5, max_iterations=100, **options):
@@ -230,15 +331,15 @@ def nonlinear_step(constraint, model, tolerance=1e-5, max_iterations=100, **opti
     model.status = ModelStatus.equilibrium
 
     if options.get('solve_det_k', True):
-        solve_det_k(model, assembler=assembler)
+        compute_det_k(model, assembler=assembler)
 
     if options.get('solve_attendant_eigenvalue', False):
         model.solve_eigenvalues(assembler=assembler)
 
-    return NonlinearSolutionInfo(constraint, residual_norm, ['λ', '|r|', '|du|'], data)
+    return NonlinearSolutionInfo(residual_norm, ['λ', '|r|', '|du|'], data)
 
 
-def solve_det_k(model, k=None, assembler=None):
+def compute_det_k(model, k=None, assembler=None):
     if k is None:
         if assembler is None:
             assembler = Assembler(model)

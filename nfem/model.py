@@ -427,11 +427,11 @@ class Model:
             print(f"lambda : {self.load_factor}")
             print()
 
-        solve.linear_step(self)
+        solve.solve_linear(self)
 
     def perform_load_control_step(self, tolerance=1e-5, max_iterations=100, info=False, **options):
         """Perform a solution step using load control."""
-        solution_info = solve.load_control_step(self, tolerance, max_iterations, **options)
+        solution_info = solve.solve_load_control(self, tolerance, max_iterations, **options)
         if info:
             print(f'Load-Control with λ = {self.load_factor}')
             solution_info.show()
@@ -484,7 +484,7 @@ class Model:
             print("Start non linear solution step...")
 
         if strategy == 'load-control':
-            info = solve.load_control_step(self, tolerance, max_iterations, **options)
+            info = solve.solve_load_control(self, tolerance, max_iterations, **options)
         elif strategy == 'displacement-control':
             dof = options.pop('dof')
             info = solve.displacement_control_step(self, dof, tolerance, max_iterations, **options)
@@ -529,7 +529,7 @@ class Model:
         assembler : Object (optional)
             assembler can be passed to speed up if k is not given
         """
-        solve.solve_det_k(self)
+        solve.compute_det_k(self)
         print(f'Det(K): {self.det_k}')
 
     def solve_linear_eigenvalues(self, assembler=None):
@@ -691,13 +691,13 @@ class Model:
             external_f[i] += assembler.dofs[i].external_force
 
         try:
-            tangent[:-1] = la.solve(k[:n, :n], external_f)
+            tangent[:n] = la.solve(k[:n, :n], external_f)
         except la.LinAlgError:
             raise RuntimeError('Stiffness matrix is singular')
 
         # load-factor = 1
 
-        tangent[-1] = 1
+        tangent[n] = 1
 
         return tangent
 
