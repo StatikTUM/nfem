@@ -24,6 +24,7 @@ class Node:
     :v: Displacement in y direction.
     :w: Displacement in z direction.
     """
+
     id: str
     _dof_x: Dof
     _dof_y: Dof
