@@ -19,6 +19,7 @@ class Dof:
         self.value: float = value
         self.is_active: bool = True
         self.external_force: float = 0.0
+        self.residual: float = 0.0
 
     def __eq__(self, other) -> bool:
         """Compare for equality.

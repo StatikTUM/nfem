@@ -204,6 +204,44 @@ class Node:
     def external_force(self, value: Sequence[float]):
         [self.fx, self.fy, self.fz] = value
 
+    # residual forces
+
+    @property
+    def rx(self) -> float:
+        """Get or set the residual force in x direction."""
+        return self._dof_x.residual
+
+    @rx.setter
+    def rx(self, value: float) -> None:
+        self._dof_x.residual = value
+
+    @property
+    def ry(self) -> float:
+        """Get or set the residual force in y direction."""
+        return self._dof_y.residual
+
+    @ry.setter
+    def ry(self, value: float) -> None:
+        self._dof_y.residual = value
+
+    @property
+    def rz(self) -> float:
+        """Get or set the residual force in z direction."""
+        return self._dof_z.residual
+
+    @rz.setter
+    def rz(self, value: float) -> None:
+        self._dof_z.residual = value
+
+    @property
+    def residual(self) -> npt.NDArray[float]:
+        """Get or set the residual force."""
+        return np.array([self.rx, self.ry, self.rz])
+
+    @residual.setter
+    def residual(self, value: Sequence[float]):
+        [self.rx, self.ry, self.rz] = value
+
     # supports
 
     @property
