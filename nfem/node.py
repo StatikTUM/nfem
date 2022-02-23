@@ -1,3 +1,5 @@
+"""Three dimensional Node."""
+
 from __future__ import annotations
 
 from nfem.dof import Dof
@@ -9,30 +11,18 @@ from typing import Sequence
 
 
 class Node:
-    """Three dimensional Node providing Dofs for displacements.
+    """Three dimensional Node.
 
-    Attributes
-    ----------
-    id : str
-        Unique ID.
-    ref_x : float
-        ref X coordinate.
-    ref_y : float
-        ref Y coordinate.
-    ref_z : float
-        ref Z coordinate.
-    x : float
-        Actual X coordinate.
-    y : float
-        Actual Y coordinate.
-    z : float
-        Actual Z coordinate.
-    u : float
-        Displacement in x direction.
-    v : float
-        Displacement in y direction.
-    w : float
-        Displacement in z direction.
+    :id: Unique ID.
+    :ref_x: ref X coordinate.
+    :ref_y: ref Y coordinate.
+    :ref_z: ref Z coordinate.
+    :x: Actual X coordinate.
+    :y: Actual Y coordinate.
+    :z: Actual Z coordinate.
+    :u: Displacement in x direction.
+    :v: Displacement in y direction.
+    :w: Displacement in z direction.
     """
     id: str
     _dof_x: Dof
@@ -42,16 +32,10 @@ class Node:
     def __init__(self, id: str, x: float, y: float, z: float):
         """Create a new node.
 
-        Parameters
-        ----------
-        id : str
-            Unique ID of the node.
-        x : float
-            Initial X coordinate of the node.
-        y : float
-            Initial Y coordinate of the node.
-        z : float
-            Initial Z coordinate of the node.
+        :id: Unique ID of the node.
+        :x: Initial X coordinate of the node.
+        :y: Initial Y coordinate of the node.
+        :z: Initial Z coordinate of the node.
         """
         self.id = id
         self._dof_x = Dof(id=(id, 'u'), value=x)
@@ -59,19 +43,20 @@ class Node:
         self._dof_z = Dof(id=(id, 'w'), value=z)
 
     def dof(self, dof_type: str) -> Dof:
+        """Gets the degree of freedom for a specific direction."""
         if dof_type == 'u':
             return self._dof_x
         if dof_type == 'v':
             return self._dof_y
         if dof_type == 'w':
             return self._dof_z
-        raise AttributeError('Node has no dof of type \'{}\''.format(dof_type))
+        raise AttributeError(f'Node has no dof of type "{dof_type}"')
 
     # reference location
 
     @property
     def ref_x(self) -> float:
-        """Gets or sets the x coordinate of the node in the undeformed reference configuration."""
+        """Get or set the x coordinate in the undeformed configuration."""
         return self._dof_x.ref_value
 
     @ref_x.setter
@@ -80,7 +65,7 @@ class Node:
 
     @property
     def ref_y(self) -> float:
-        """Gets or sets the y coordinate of the node in the undeformed reference configuration."""
+        """Get or set the y coordinate in the undeformed configuration."""
         return self._dof_y.ref_value
 
     @ref_y.setter
@@ -89,7 +74,7 @@ class Node:
 
     @property
     def ref_z(self) -> float:
-        """Gets or sets the z coordinate of the node in the undeformed reference configuration."""
+        """Get or set the z coordinate in the undeformed configuration."""
         return self._dof_z.ref_value
 
     @ref_z.setter
@@ -98,7 +83,7 @@ class Node:
 
     @property
     def ref_location(self) -> npt.NDArray[float]:
-        """Gets or sets the z coordinate of the node in the undeformed reference configuration."""
+        """Get or set the location in the undeformed configuration."""
         return np.array([self.ref_x, self.ref_y, self.ref_z])
 
     @ref_location.setter
@@ -109,6 +94,7 @@ class Node:
 
     @property
     def x(self) -> float:
+        """Get or set the x coordinate in the deformed configuration."""
         return self._dof_x.value
 
     @x.setter
@@ -117,6 +103,7 @@ class Node:
 
     @property
     def y(self) -> float:
+        """Get or set the y coordinate in the deformed configuration."""
         return self._dof_y.value
 
     @y.setter
@@ -125,6 +112,7 @@ class Node:
 
     @property
     def z(self) -> float:
+        """Get or set the z coordinate in the deformed configuration."""
         return self._dof_z.value
 
     @z.setter
@@ -133,6 +121,7 @@ class Node:
 
     @property
     def location(self) -> npt.NDArray[float]:
+        """Get or set the location in the deformed configuration."""
         return np.array([self.x, self.y, self.z])
 
     @location.setter
@@ -143,6 +132,7 @@ class Node:
 
     @property
     def u(self) -> float:
+        """Get or set the displacement in x direction."""
         return self._dof_x.delta
 
     @u.setter
@@ -151,6 +141,7 @@ class Node:
 
     @property
     def v(self) -> float:
+        """Get or set the displacement in y direction."""
         return self._dof_y.delta
 
     @v.setter
@@ -159,6 +150,7 @@ class Node:
 
     @property
     def w(self) -> float:
+        """Get or set the displacement in z direction."""
         return self._dof_z.delta
 
     @w.setter
@@ -167,6 +159,7 @@ class Node:
 
     @property
     def displacement(self) -> npt.NDArray[float]:
+        """Get or set the displacement."""
         return np.array([self.u, self.v, self.w])
 
     @displacement.setter
@@ -177,6 +170,7 @@ class Node:
 
     @property
     def fx(self) -> float:
+        """Get or set the external force in x direction."""
         return self._dof_x.external_force
 
     @fx.setter
@@ -185,6 +179,7 @@ class Node:
 
     @property
     def fy(self) -> float:
+        """Get or set the external force in y direction."""
         return self._dof_y.external_force
 
     @fy.setter
@@ -193,6 +188,7 @@ class Node:
 
     @property
     def fz(self) -> float:
+        """Get or set the external force in z direction."""
         return self._dof_z.external_force
 
     @fz.setter
@@ -201,6 +197,7 @@ class Node:
 
     @property
     def external_force(self) -> npt.NDArray[float]:
+        """Get or set the external force."""
         return np.array([self.fx, self.fy, self.fz])
 
     @external_force.setter
@@ -211,6 +208,7 @@ class Node:
 
     @property
     def support_x(self) -> bool:
+        """Get or set the support in x direction."""
         return not self._dof_x.is_active
 
     @support_x.setter
@@ -219,6 +217,7 @@ class Node:
 
     @property
     def support_y(self) -> bool:
+        """Get or set the support in y direction."""
         return not self._dof_y.is_active
 
     @support_y.setter
@@ -227,6 +226,7 @@ class Node:
 
     @property
     def support_z(self) -> bool:
+        """Get or set the support in z direction."""
         return not self._dof_z.is_active
 
     @support_z.setter
@@ -235,6 +235,7 @@ class Node:
 
     @property
     def support(self) -> str:
+        """Get or set the supports."""
         result = ''
         if self.support_x:
             result += 'x'
@@ -281,12 +282,14 @@ class Node:
             color='black',
         )
 
+        d = self.location - self.ref_location
+
         item.add_result('Location undeformed', self.ref_location.tolist())
         item.add_result('Location', self.location.tolist())
-        item.add_result('Displacement', (self.location - self.ref_location).tolist())
-        item.add_result('Displacement X', float(self.location[0] - self.ref_location[0]))
-        item.add_result('Displacement Y', float(self.location[1] - self.ref_location[1]))
-        item.add_result('Displacement Z', float(self.location[2] - self.ref_location[2]))
+        item.add_result('Displacement', d.tolist())
+        item.add_result('Displacement X', float(d[0]))
+        item.add_result('Displacement Y', float(d[1]))
+        item.add_result('Displacement Z', float(d[2]))
 
         if np.linalg.norm(self.external_force) > 1e-8:
             direction = self.external_force

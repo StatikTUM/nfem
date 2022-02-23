@@ -22,7 +22,7 @@ class Dof:
 
     def __eq__(self, other) -> bool:
         """Compare for equality.
-        
+
         :other: Object for comparison.
         :return: True when both objects are equal.
         """
@@ -32,7 +32,7 @@ class Dof:
 
     def __ne__(self, other) -> bool:
         """Compare for inequality.
-        
+
         :other: Object for comparison.
         :return: True when both objects are not equal.
         """
@@ -44,10 +44,9 @@ class Dof:
 
     @property
     def delta(self) -> float:
-        """Get the difference between actual and reference value."""
+        """Get or set the difference between actual and reference value."""
         return self.value - self.ref_value
 
     @delta.setter
     def delta(self, value: float) -> None:
-        """Set the difference between reference and actual value."""
         self.value = self.ref_value + value
