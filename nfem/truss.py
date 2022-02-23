@@ -79,7 +79,7 @@ class Truss:
         # actual base vector
         a1 = self.node_b.location - self.node_a.location
 
-        return (a1 @ a1 - A1 @ A1) / (2 * A1 @ A1)
+        return (a1 @ a1) / (2 * A1 @ A1) - 0.5
 
     def compute_epsilon_lin(self) -> float:
         """Get the linear strain."""
@@ -89,7 +89,7 @@ class Truss:
         # actual base vector
         a1 = self.node_b.location - self.node_a.location
 
-        return a1 @ A1 / A1 @ A1 - 1
+        return (a1 @ A1) / (A1 @ A1) - 1
 
     def compute_sigma_pk2(self) -> float:
         """Get the second Piola-Kirchoff stress."""
