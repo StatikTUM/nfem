@@ -43,7 +43,7 @@ class Node:
         self._dof_z = Dof(id=(id, 'w'), value=z)
 
     def dof(self, dof_type: str) -> Dof:
-        """Gets the degree of freedom for a specific direction."""
+        """Get the degree of freedom for a specific direction."""
         if dof_type == 'u':
             return self._dof_x
         if dof_type == 'v':
