@@ -41,65 +41,38 @@ def test_truss_act_length(truss):
 
 
 def test_truss_linear_strain_is_zero(undeformed_truss):
-    assert_equal(undeformed_truss.calculate_linear_strain(), 0)
+    assert_equal(undeformed_truss.compute_epsilon_lin(), 0)
 
 
 def test_truss_green_lagrange_strain_is_zero(undeformed_truss):
-    assert_equal(undeformed_truss.calculate_green_lagrange_strain(), 0)
+    assert_equal(undeformed_truss.compute_epsilon_gl(), 0)
 
 
 def test_truss_engineering_strain(truss_xls):
-    assert_equal(truss_xls.calculate_linear_strain(), 0.0071428571428572)
+    assert_equal(truss_xls.compute_epsilon_lin(), 0.0071428571428572)
 
 
 def test_truss_green_lagrange_strain(truss_xls):
-    assert_equal(truss_xls.calculate_green_lagrange_strain(), 0.00750000000000003)
+    assert_equal(truss_xls.compute_epsilon_gl(), 0.00750000000000003)
 
 
 def test_truss_normal_force(truss_xls):
     assert_equal(truss_xls.normal_force, 0.007556040629853737)
 
 
-def test_truss_stiffness(truss_xls):
-    k_actual = truss_xls.calculate_stiffness_matrix()
+def test_truss_compute_linear_r(truss_xls):
+    r_act = truss_xls.compute_linear_r()
 
-    # values from nfem.Truss.xls
-    k_expected = [
-        [ 0.025103466943026,  0.041998194741606,  0.062997292612409, -0.025103466943026, -0.041998194741606, -0.062997292612409],
-        [ 0.041998194741606,  0.07836481431434 ,  0.114540532      , -0.041998194741606, -0.07836481431434 , -0.114540532      ],
-        [ 0.062997292612409,  0.114540532      ,  0.17381525731434 , -0.062997292612409, -0.114540532      , -0.17381525731434 ],
-        [-0.025103466943026, -0.041998194741606, -0.062997292612409,  0.025103466943026,  0.041998194741606,  0.062997292612409],
-        [-0.041998194741606, -0.07836481431434 , -0.114540532      ,  0.041998194741606,  0.07836481431434 ,  0.114540532      ],
-        [-0.062997292612409, -0.114540532      , -0.17381525731434 ,  0.062997292612409,  0.114540532      ,  0.17381525731434 ],
-    ]
+    r_exp = [-0.001909, -0.003818, -0.005727,  0.001909,  0.003818,  0.005727]
 
-    assert_almost_equal(k_actual, k_expected)
+    assert_almost_equal(r_act, r_exp)
 
 
-def test_truss_material_stiffness(truss_xls):
-    k_actual = truss_xls.calculate_material_stiffness_matrix()
+def test_truss_compute_linear_k(truss_xls):
+    k_act = truss_xls.compute_linear_k()
 
-    import numpy
-    numpy.set_printoptions(15)
-    print(k_actual)
-
-    k_expected = [
-        [ 0.023099007336717,  0.041998195157667,  0.0629972927365  , -0.023099007336717, -0.041998195157667, -0.0629972927365  ],
-        [ 0.041998195157667,  0.076360354832121,  0.114540532248182, -0.041998195157667, -0.076360354832121, -0.114540532248182],
-        [ 0.0629972927365  ,  0.114540532248182,  0.171810798372273, -0.0629972927365  , -0.114540532248182, -0.171810798372273],
-        [-0.023099007336717, -0.041998195157667, -0.0629972927365  ,  0.023099007336717,  0.041998195157667,  0.0629972927365  ],
-        [-0.041998195157667, -0.076360354832121, -0.114540532248182,  0.041998195157667,  0.076360354832121,  0.114540532248182],
-        [-0.0629972927365  , -0.114540532248182, -0.171810798372273,  0.0629972927365  ,  0.114540532248182,  0.171810798372273],
-    ]
-
-    assert_almost_equal(k_actual, k_expected)
-
-
-def test_truss_elastic_stiffness(truss_xls):
-    k_e_actual = truss_xls.calculate_elastic_stiffness_matrix()
-
-    # values from nfem.Truss.xls
-    k_e_expected = [
+    # values from Truss.xls
+    k_exp = [
         [ 0.019090089,  0.038180177,  0.057270266, -0.019090089, -0.038180177, -0.057270266],
         [ 0.038180177,  0.076360355,  0.114540532, -0.038180177, -0.076360355, -0.114540532],
         [ 0.057270266,  0.114540532,  0.171810798, -0.057270266, -0.114540532, -0.171810798],
@@ -108,14 +81,53 @@ def test_truss_elastic_stiffness(truss_xls):
         [-0.057270266, -0.114540532, -0.171810798,  0.057270266,  0.114540532,  0.171810798]
     ]
 
-    assert_almost_equal(k_e_actual, k_e_expected)
+    assert_almost_equal(k_act, k_exp)
 
 
-def test_truss_initial_displacement_stiffness(truss_xls):
-    k_u_actual = truss_xls.calculate_initial_displacement_stiffness_matrix()
+def test_truss_compute_r(truss_xls):
+    r_act = truss_xls.compute_r()
 
-    # values from nfem.Truss.xls
-    k_u_expected = [
+    r_exp = [-0.0022049, -0.0040089, -0.0060134,  0.0022049,  0.0040089, 0.0060134]
+
+    assert_almost_equal(r_act, r_exp)
+
+
+def test_truss_compute_k(truss_xls):
+    k_act = truss_xls.compute_k()
+
+    # values from Truss.xls
+    k_exp = [
+        [ 0.025103466943026,  0.041998194741606,  0.062997292612409, -0.025103466943026, -0.041998194741606, -0.062997292612409],
+        [ 0.041998194741606,  0.07836481431434 ,  0.114540532      , -0.041998194741606, -0.07836481431434 , -0.114540532      ],
+        [ 0.062997292612409,  0.114540532      ,  0.17381525731434 , -0.062997292612409, -0.114540532      , -0.17381525731434 ],
+        [-0.025103466943026, -0.041998194741606, -0.062997292612409,  0.025103466943026,  0.041998194741606,  0.062997292612409],
+        [-0.041998194741606, -0.07836481431434 , -0.114540532      ,  0.041998194741606,  0.07836481431434 ,  0.114540532      ],
+        [-0.062997292612409, -0.114540532      , -0.17381525731434 ,  0.062997292612409,  0.114540532      ,  0.17381525731434 ],
+    ]
+
+    assert_almost_equal(k_act, k_exp)
+
+
+def test_truss_compute_km(truss_xls):
+    k_act = truss_xls.compute_km()
+
+    k_exp = [
+        [ 0.023099007336717,  0.041998195157667,  0.0629972927365  , -0.023099007336717, -0.041998195157667, -0.0629972927365  ],
+        [ 0.041998195157667,  0.076360354832121,  0.114540532248182, -0.041998195157667, -0.076360354832121, -0.114540532248182],
+        [ 0.0629972927365  ,  0.114540532248182,  0.171810798372273, -0.0629972927365  , -0.114540532248182, -0.171810798372273],
+        [-0.023099007336717, -0.041998195157667, -0.0629972927365  ,  0.023099007336717,  0.041998195157667,  0.0629972927365  ],
+        [-0.041998195157667, -0.076360354832121, -0.114540532248182,  0.041998195157667,  0.076360354832121,  0.114540532248182],
+        [-0.0629972927365  , -0.114540532248182, -0.171810798372273,  0.0629972927365  ,  0.114540532248182,  0.171810798372273],
+    ]
+
+    assert_almost_equal(k_act, k_exp)
+
+
+def test_truss_compute_kd(truss_xls):
+    k_act = truss_xls.compute_kd()
+
+    # values from Truss.xls
+    k_exp = [
         [ 0.004008918628686,  0.003818017741606,  0.005727026612409, -0.004008918628686, -0.003818017741606, -0.005727026612409],
         [ 0.003818017741606,  0.000000000000000,  0.000000000000000, -0.003818017741606,  0.000000000000000,  0.000000000000000],
         [ 0.005727026612409,  0.000000000000000,  0.000000000000000, -0.005727026612409,  0.000000000000000,  0.000000000000000],
@@ -124,13 +136,13 @@ def test_truss_initial_displacement_stiffness(truss_xls):
         [-0.005727026612409,  0.000000000000000,  0.000000000000000,  0.005727026612409,  0.000000000000000,  0.000000000000000]
     ]
 
-    assert_almost_equal(k_u_actual, k_u_expected)
+    assert_almost_equal(k_act, k_exp)
 
 
-def test_truss_geometric_stiffness(truss_xls):
-    k_g_actual = truss_xls.calculate_geometric_stiffness_matrix()
+def test_truss_compute_kg(truss_xls):
+    k_g_actual = truss_xls.compute_kg()
 
-    # values from nfem.Truss.xls
+    # values from Truss.xls
     k_g_expected = [
         [ 2.00445931434E-03,  0.00000000000E+00,  0.00000000000E+00, -2.00445931434E-03,  0.00000000000E+00,  0.00000000000E+00],
         [ 0.00000000000E+00,  2.00445931434E-03,  0.00000000000E+00,  0.00000000000E+00, -2.00445931434E-03,  0.00000000000E+00],
@@ -141,11 +153,3 @@ def test_truss_geometric_stiffness(truss_xls):
     ]
 
     assert_almost_equal(k_g_actual, k_g_expected)
-
-
-def test_truss_internal_forces(truss_xls):
-    f_actual = truss_xls.calculate_internal_forces()
-
-    f_expected = [-0.0022049, -0.0040089, -0.0060134,  0.0022049,  0.0040089, 0.0060134]
-
-    assert_almost_equal(f_actual, f_expected)
