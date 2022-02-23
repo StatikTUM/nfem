@@ -1,3 +1,5 @@
+"""Model of a nonlinear finite element problem."""
+
 from __future__ import annotations
 
 from copy import deepcopy
@@ -21,8 +23,7 @@ from nfem import solve
 
 
 class Model:
-    """A Model contains all the objects that build the finite element model.
-        Nodes, elements, loads, dirichlet conditions...
+    """Model of a nonlinear finite element problem.
 
     Attributes
     ----------
@@ -37,6 +38,7 @@ class Model:
     previous_model : Model
         Previous state of this model
     """
+
     nodes: KeyCollection[str, Node]
 
     def __init__(self, name=None):
@@ -47,7 +49,6 @@ class Model:
         name : str
             Name of the model.
         """
-
         self.name = name
         self.status = ModelStatus.initial
         self.nodes = KeyCollection()
@@ -86,7 +87,7 @@ class Model:
             raise TypeError('The node id is not a text string')
 
         if id in self.nodes:
-            raise KeyError('The model already contains a node with id {}'.format(id))
+            raise KeyError(f'The model already contains a node with id {id}')
 
         node = Node(id, x, y, 0 if z is None else z)
 
@@ -144,13 +145,13 @@ class Model:
             raise TypeError('The id of node_b is not a text string')
 
         if id in self.elements:
-            raise KeyError('The model already contains an element with id {}'.format(id))
+            raise KeyError(f'The model already contains an element with id "{id}"')
 
         if node_a not in self.nodes:
-            raise KeyError('The model does not contain a node with id {}'.format(node_a))
+            raise KeyError(f'The model does not contain a node with id "{node_a}"')
 
         if node_b not in self.nodes:
-            raise KeyError('The model does not contain a node with id {}'.format(node_b))
+            raise KeyError(f'The model does not contain a node with id "{node_b}"')
 
         element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, prestress)
         element.tensile_strength = tensile_strength
@@ -159,6 +160,7 @@ class Model:
         self.elements._add(element)
 
     def add_spring(self, id: str, node: str, kx: float = 0.0, ky: float = 0.0, kz: float = 0.0):
+        """Add a spring element."""
         if not isinstance(id, str):
             raise TypeError('The element id is not a text string')
 
@@ -166,21 +168,22 @@ class Model:
             raise TypeError('The id of node is not a text string')
 
         if id in self.elements:
-            raise KeyError('The model already contains an element with id {}'.format(id))
+            raise KeyError(f'The model already contains an element with id "{id}"')
 
         if node not in self.nodes:
-            raise KeyError('The model does not contain a node with id {}'.format(node))
+            raise KeyError(f'The model does not contain a node with id "{node}"')
 
         element = Spring(id, self.nodes[node], kx, ky, kz)
 
         self.elements._add(element)
 
     def add_element(self, element_type: Type, id: str, nodes: List[Node], **properties):
+        """Add an element."""
         if not isinstance(id, str):
             raise TypeError('The element id is not a text string')
 
         if id in self.elements:
-            raise KeyError('The model already contains an element with id {}'.format(id))
+            raise KeyError(f'The model already contains an element with id "{id}"')
 
         node_list = []
 
@@ -189,7 +192,7 @@ class Model:
                 raise TypeError(f'The id "{node}" is not a text string')
 
             if node not in self.nodes:
-                raise KeyError('The model does not contain a node with id {}'.format(node))
+                raise KeyError(f'The model does not contain a node with id "{node}"')
 
             node_list.append(self.nodes[node])
 
@@ -200,6 +203,7 @@ class Model:
     # === degree of freedoms
 
     def __getitem__(self, key):
+        """Get a degree of freedom."""
         if isinstance(key, Dof):
             node_key, dof_type = key.id
         else:
@@ -208,12 +212,13 @@ class Model:
 
     @property
     def dofs(self):
+        """Get all degrees of freedom."""
         return Assembler(self).dofs
 
     # === increment
 
     def get_dof_increment(self, dof):
-        """Get the increment of the dof during the last solution step
+        """Get the increment of the dof during the last solution step.
 
         Parameters
         ----------
@@ -236,7 +241,7 @@ class Model:
         return current_value - previous_value
 
     def get_lam_increment(self):
-        """Get the increment of lambda during the last solution step
+        """Get the increment of lambda during the last solution step.
 
         Returns
         -------
@@ -252,9 +257,7 @@ class Model:
         return current_value - previous_value
 
     def get_increment_vector(self, assembler=None):
-        """Get the increment that resulted in the current position
-        """
-
+        """Get the increment that resulted in the current position."""
         if assembler is None:
             assembler = Assembler(self)
 
@@ -274,6 +277,7 @@ class Model:
         return increment
 
     def get_increment_norm(self, assembler=None):
+        """Get the vector norm of the current increment."""
         increment = self.get_increment_vector(assembler)
         return la.norm(increment)
 
@@ -305,7 +309,7 @@ class Model:
         return previous_model
 
     def get_initial_model(self):
-        """Gets the initial model of this model.
+        """Get the initial model of this model.
 
         Returns
         ----------
@@ -320,7 +324,7 @@ class Model:
         return current_model
 
     def get_model_history(self, skip_iterations=True):
-        """Gets a list of all previous models of this model.
+        """Get a list of all previous models of this model.
 
         Parameters
         ----------
@@ -332,7 +336,6 @@ class Model:
         history : list
             List of previous models
         """
-
         history = [self]
 
         current_model = self
@@ -352,11 +355,11 @@ class Model:
         name : str, optional
             Name of the new model.
         branch : bool, optional
-            If `branch` is `False` the duplicate will be a successor of the current model::
+            If `branch` is `False` the duplicate will be a successor of the current model:
 
                 previous ----> current ----> duplicate
 
-            If `branch` is `True` the duplicate will be a successor of the previous model::
+            If `branch` is `True` the duplicate will be a successor of the previous model:
 
                 previous ----> current
                           \
@@ -367,7 +370,6 @@ class Model:
         model : Model
             Duplicate of the current model.
         """
-
         temp_previous_model = self._previous_model
         self._previous_model = None
 
@@ -392,6 +394,7 @@ class Model:
         return duplicate
 
     def new_timestep(self, name=None):
+        """Create a new timestep."""
         temp_previous_model = self._previous_model
         self._previous_model = None
 
@@ -413,20 +416,21 @@ class Model:
     # === solving
 
     def perform_linear_solution_step(self, info=False):
-        """Performs a linear solution step on the model.
-            It uses the current load factor.
-            The results are stored at the dofs and used to update the current
-            coordinates of the nodes.
-        """
+        """Perform a linear solution step on the model.
 
+        It uses the current load factor.
+        The results are stored at the dofs and used to update the current
+        coordinates of the nodes.
+        """
         if info:
             print("Start linear solution step...")
-            print("lambda : {}".format(self.load_factor))
+            print(f"lambda : {self.load_factor}")
             print()
 
         solve.linear_step(self)
 
     def perform_load_control_step(self, tolerance=1e-5, max_iterations=100, info=False, **options):
+        """Perform a solution step using load control."""
         solution_info = solve.load_control_step(self, tolerance, max_iterations, **options)
         if info:
             print(f'Load-Control with λ = {self.load_factor}')
@@ -434,6 +438,7 @@ class Model:
             print()
 
     def perform_displacement_control_step(self, dof, tolerance=1e-5, max_iterations=100, info=False, **options):
+        """Perform a solution step using displacement control."""
         solution_info = solve.displacement_control_step(self, dof, **options)
         if info:
             print(f'Displacement-Control with {dof[1]} at node {dof[0]} = {self[dof].delta}')
@@ -441,6 +446,7 @@ class Model:
             print()
 
     def perform_arc_length_control_step(self, tolerance=1e-5, max_iterations=100, info=False, **options):
+        """Perform a solution step using arc-length control."""
         solution_info = solve.arc_length_control_step(self, **options)
         if info:
             print(f'Arc-Length-Control with length = {solution_info.constraint.squared_l_hat**0.5}')
@@ -448,12 +454,13 @@ class Model:
             print()
 
     def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=100, **options):
-        """Performs a non linear solution step on the model.
-            The path following strategy is chose according to the parameter.
-            A newton raphson algorithm is used to iteratively solve the nonlinear
-            equation system r(u,lam) = 0
-            The results are stored at the dofs and used to update the current
-            coordinates of the nodes.
+        """Perform a non linear solution step on the model.
+
+        The path following strategy is chose according to the parameter.
+        A newton raphson algorithm is used to iteratively solve the nonlinear
+        equation system r(u,lam) = 0
+        The results are stored at the dofs and used to update the current
+        coordinates of the nodes.
 
         Parameters
         ----------
@@ -472,7 +479,6 @@ class Model:
             - solve_det_k=True: for solving the determinant of k at convergence
             - solve_attendant_eigenvalue=True: for solving the attendant eigenvalue problem at convergence
         """
-
         if options.get('info', False):
             print("\n=================================")
             print("Start non linear solution step...")
@@ -493,6 +499,7 @@ class Model:
             print()
 
     def get_stiffness(self, mode='comp'):
+        """Get the stiffness matrix of the system."""
         assembler = Assembler(self)
 
         n, m = assembler.size
@@ -513,7 +520,7 @@ class Model:
         return k[:n, :n]
 
     def solve_det_k(self, k=None, assembler=None):
-        """Solves the determinant of k
+        """Compute the determinant of k.
 
         Parameters
         ----------
@@ -526,9 +533,11 @@ class Model:
         print(f'Det(K): {self.det_k}')
 
     def solve_linear_eigenvalues(self, assembler=None):
-        """Solves the linearized eigenvalue problem
-           [ k_e + eigvals * k_g(linear strain) ] * eigvecs = 0
-           Stores the first positive eigenvalue and vector
+        """Solve the linearized eigenvalue problem.
+
+        [ k_e + eigvals * k_g(linear strain) ] * eigvecs = 0
+
+        Stores the first positive eigenvalue and vector
 
         Parameters
         ----------
@@ -573,10 +582,10 @@ class Model:
         eigvals = eigvals[i:]
         eigvecs = eigvecs[:, i:]
 
-        print('First linear eigenvalue: {}'.format(eigvals[0]))
-        print('First linear eigenvalue * lambda: {}'.format(eigvals[0] * self.load_factor))  # this is printed in TRUSS
+        print(f'First linear eigenvalue: {eigvals[0]}')
+        print(f'First linear eigenvalue * lambda: {eigvals[0] * self.load_factor}')  # this is printed in TRUSS
         if len(eigvecs[0]) < 10:
-            print('First linear eigenvector: {}'.format(eigvecs[0]))
+            print(f'First linear eigenvector: {eigvecs[0]}')
 
         self.first_eigenvalue = eigvals[0]
 
@@ -595,9 +604,11 @@ class Model:
         self.first_eigenvector_model = model
 
     def solve_eigenvalues(self, assembler=None):
-        """Solves the eigenvalue problem
-           [ k_m + eigvals * k_g ] * eigvecs = 0
-           Stores the closest (most critical) eigenvalue and vector
+        """Solve the eigenvalue problem.
+
+        [ k_m + eigvals * k_g ] * eigvecs = 0
+
+        Stores the closest (most critical) eigenvalue and vector
 
         Parameters
         ----------
@@ -631,10 +642,10 @@ class Model:
         # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
         idx = (np.abs(eigvals - 1.0)).argmin()
 
-        print('Closest eigenvalue: {}'.format(eigvals[idx]))
-        print('Closest eigenvalue * lambda: {}'.format(eigvals[idx] * self.load_factor))  # this is printed in TRUSS
+        print(f'Closest eigenvalue: {eigvals[idx]}')
+        print(f'Closest eigenvalue * lambda: {eigvals[idx] * self.load_factor}')  # this is printed in TRUSS
         if len(eigvecs[idx]) < 10:
-            print('Closest eigenvector: {}'.format(eigvecs[idx]))
+            print('Closest eigenvector: {eigvecs[idx]}')
 
         self.first_eigenvalue = eigvals[idx]
 
@@ -653,7 +664,7 @@ class Model:
         self.first_eigenvector_model = model
 
     def get_tangent_vector(self, assembler=None):
-        """ Get the tangent vector
+        """Get the tangent vector.
 
         Returns
         -------
@@ -693,7 +704,7 @@ class Model:
     # === prediction functions
 
     def predict_load_factor(self, value):
-        """Predicts the solution by predictor_method lambda
+        """Predict the solution by predictor_method lambda.
 
         Parameters
         ----------
@@ -704,7 +715,7 @@ class Model:
         self.load_factor = value
 
     def predict_load_increment(self, value):
-        """Predicts the solution by incrementing lambda
+        """Predict the solution by incrementing lambda.
 
         Parameters
         ----------
@@ -715,7 +726,7 @@ class Model:
         self.load_factor += value
 
     def predict_dof_state(self, dof, value):
-        """Predicts the solution by predictor_method the dof
+        """Predict the solution by predictor_method the dof.
 
         Parameters
         ----------
@@ -728,7 +739,7 @@ class Model:
         self[dof].delta = value
 
     def predict_dof_increment(self, dof, value):
-        """Predicts the solution by incrementing the dof
+        """Predict the solution by incrementing the dof.
 
         Parameters
         ----------
@@ -741,8 +752,9 @@ class Model:
         self[dof].delta += value
 
     def predict_with_last_increment(self, value=None):
-        """Predicts the solution by incrementing lambda and all dofs with the
-           increment of the last solution step
+        """Predict the solution by incrementing lambda and all dofs.
+
+        Uses the increment of the last solution step.
 
         Parameters
         ----------
@@ -779,7 +791,7 @@ class Model:
         self.load_factor += last_increment[-1]
 
     def predict_tangential(self, strategy, **options):
-        """ Make a tangential prediction
+        """Make a tangential prediction.
 
         Predicts the solution by incrementing lambda and all dofs with the
         increment of the last solution step.
@@ -868,8 +880,7 @@ class Model:
                     factor = -factor
 
         else:
-            raise ValueError('Invalid strategy for prediction: {}'
-                             .format(strategy))
+            raise ValueError(f'Invalid strategy for prediction: {strategy}')
 
         # scale tangent vector
         tangent *= factor
@@ -882,7 +893,7 @@ class Model:
         self.load_factor += tangent[-1]
 
     def combine_prediction_with_eigenvector(self, beta):
-        """Combine the prediciton with the first eigenvector
+        """Combine the prediciton with the first eigenvector.
 
         Parameters
         ----------
@@ -938,7 +949,7 @@ class Model:
         self.load_factor += delta_lam
 
     def scale_prediction(self, factor):
-        """scale the prediction with a factor
+        """Scale the prediction with a factor.
 
         Parameters
         ----------
@@ -981,7 +992,7 @@ class Model:
         self.load_factor += delta_lambda
 
     def get_delta_dof_vector(self, model_b=None, assembler=None):
-        """gets the delta dof between this and a given model_b as a numpy array
+        """Get the delta dof between this and a given model_b as a numpy array.
 
         Parameters
         ----------
@@ -1021,6 +1032,7 @@ class Model:
         return delta
 
     def load_displacement_curve(self, dof, skip_iterations=True):
+        """Get the load displacement curve for a specific degree of freedom."""
         history = self.get_model_history(skip_iterations)
 
         data = np.zeros([2, len(history)])
@@ -1039,6 +1051,7 @@ class Model:
         return canvas.html(600, self)
 
     def show(self, height=600, timestep=0):
+        """Show the model."""
         from nfem.visualization.canvas_3d import Canvas3D
 
         canvas = Canvas3D(height=height)
