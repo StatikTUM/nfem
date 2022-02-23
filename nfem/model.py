@@ -429,7 +429,7 @@ class Model:
 
         solve.solve_linear(self)
 
-    def perform_load_control_step(self, tolerance=1e-5, max_iterations=200, info=False, **options):
+    def perform_load_control_step(self, tolerance=1e-5, max_iterations=500, info=False, **options):
         """Perform a solution step using load control."""
         solution_info = solve.solve_load_control(self, tolerance, max_iterations, **options)
         if info:
@@ -437,7 +437,7 @@ class Model:
             solution_info.show()
             print()
 
-    def perform_displacement_control_step(self, dof, tolerance=1e-5, max_iterations=200, info=False, **options):
+    def perform_displacement_control_step(self, dof, tolerance=1e-5, max_iterations=500, info=False, **options):
         """Perform a solution step using displacement control."""
         solution_info = solve.solve_displacement_control(self, dof, tolerance, max_iterations, **options)
         if info:
@@ -445,7 +445,7 @@ class Model:
             solution_info.show()
             print()
 
-    def perform_arc_length_control_step(self, tolerance=1e-5, max_iterations=200, info=False, **options):
+    def perform_arc_length_control_step(self, tolerance=1e-5, max_iterations=500, info=False, **options):
         """Perform a solution step using arc-length control."""
         solution_info = solve.arc_length_control_step(self, **options)
         if info:
@@ -453,7 +453,7 @@ class Model:
             solution_info.show()
             print()
 
-    def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=200, **options):
+    def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=500, **options):
         """Perform a non linear solution step on the model.
 
         The path following strategy is chose according to the parameter.
