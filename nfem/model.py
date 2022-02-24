@@ -1116,7 +1116,7 @@ class Model:
         return data
 
     def _repr_html_(self) -> str:
-        from nfem.visualization.canvas_3d import Canvas3D
+        from nfem.canvas_3d import Canvas3D
 
         canvas = Canvas3D(height=600)
 
@@ -1124,7 +1124,7 @@ class Model:
 
     def show(self, height: int = 600, timestep: int = 0) -> None:
         """Show the model."""
-        from nfem.visualization.canvas_3d import Canvas3D
+        from nfem.canvas_3d import Canvas3D
 
         canvas = Canvas3D(height=height)
 
