@@ -1136,10 +1136,32 @@ class Model:
 
         return canvas.html(600, self)
 
-    def show(self, height: int = 600, timestep: int = 0) -> None:
-        """Show the model."""
+    def html(self) -> str:
         from nfem.canvas_3d import Canvas3D
 
-        canvas = Canvas3D(height=height)
+        canvas = Canvas3D(height=600)
 
-        canvas.show(height, self)
+        return canvas.raw_html(600, self)
+
+    def show(self, height: int = 600, timestep: int = 0) -> None:
+        """Show the model."""
+        try:
+            from nfem.canvas_3d import Canvas3D
+            canvas = Canvas3D(height=height)
+            canvas.show(height, self)
+        except (ImportError, NameError):
+            from PyQt6.QtWebEngineWidgets import QWebEngineView
+            from PyQt6.QtWidgets import QApplication
+
+            import sys
+
+            html = self.html()
+
+            app = QApplication(sys.argv)
+
+            view = QWebEngineView()
+            view.setWindowTitle('nfem')
+            view.setHtml(html)
+            view.show()
+
+            sys.exit(app.exec())

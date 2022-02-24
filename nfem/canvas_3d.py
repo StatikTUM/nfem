@@ -77,6 +77,11 @@ class Canvas3D:
         return template
 
     def html(self, height, model):
+        content = self.raw_html(height, model)
+
+        return f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{html.escape(content)}"></iframe>'
+
+    def raw_html(self, height, model):
         timesteps_data = []
 
         for model in model.get_model_history():
@@ -116,7 +121,8 @@ class Canvas3D:
         template = self._embed_js(template, 'index.js')
 
         content = template.replace("const data = {}", "const data = " + json.dumps(data))
-        return f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{html.escape(content)}"></iframe>'
+        
+        return content
 
     def show(self, height, model):
         display_html(self.html(height, model), raw=True)
