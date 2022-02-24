@@ -14,6 +14,12 @@ from typing import Optional, Sequence
 Vector = npt.NDArray[np.float64]
 Matrix = npt.NDArray[np.float64]
 
+dg = np.array([
+    [-1, 0, 0, 1, 0, 0],
+    [0, -1, 0, 0, 1, 0],
+    [0, 0, -1, 0, 0, 1],
+])
+
 
 class Truss:
     """Nonlinear truss element."""
@@ -122,9 +128,7 @@ class Truss:
 
         dp = sig * self.area * L / A11 * A1
 
-        return dp @ [[-1, 0, 0, 1, 0, 0],
-                     [0, -1, 0, 0, 1, 0],
-                     [0, 0, -1, 0, 0, 1]]
+        return dp @ dg
 
     def compute_linear_k(self) -> Matrix:
         """Compute the linear stiffness matrix of the element."""
@@ -134,12 +138,6 @@ class Truss:
         L = np.sqrt(A11)
 
         ddp = self.youngs_modulus * self.area / A11**2 * L * np.outer(A1, A1)
-
-        dg = np.array([
-            [-1, 0, 0, 1, 0, 0],
-            [0, -1, 0, 0, 1, 0],
-            [0, 0, -1, 0, 0, 1],
-        ])
 
         return dg.T @ ddp @ dg
 
@@ -155,12 +153,6 @@ class Truss:
         sig = eps * self.youngs_modulus + self.prestress
 
         ddp = sig * self.area / A11 * L * np.eye(3)
-
-        dg = np.array([
-            [-1, 0, 0, 1, 0, 0],
-            [0, -1, 0, 0, 1, 0],
-            [0, 0, -1, 0, 0, 1],
-        ])
 
         return dg.T @ ddp @ dg
 
@@ -179,9 +171,7 @@ class Truss:
 
         dp = sig * self.area * L / A11 * a1
 
-        return dp @ [[-1, 0, 0, 1, 0, 0],
-                     [0, -1, 0, 0, 1, 0],
-                     [0, 0, -1, 0, 0, 1]]
+        return dp @ dg
 
     def compute_k(self) -> Matrix:
         """Compute the nonlinear stiffness matrix of the element."""
@@ -199,12 +189,6 @@ class Truss:
             sig * self.area / A11 * L * np.eye(3)
         )
 
-        dg = np.array([
-            [-1, 0, 0, 1, 0, 0],
-            [0, -1, 0, 0, 1, 0],
-            [0, 0, -1, 0, 0, 1],
-        ])
-
         return dg.T @ ddp @ dg
 
     def compute_ke(self) -> Matrix:
@@ -221,12 +205,6 @@ class Truss:
 
         ddp = self.youngs_modulus * self.area / A11**2 * L * np.outer(a1, a1)
 
-        dg = np.array([
-            [-1, 0, 0, 1, 0, 0],
-            [0, -1, 0, 0, 1, 0],
-            [0, 0, -1, 0, 0, 1],
-        ])
-
         return dg.T @ ddp @ dg
 
     def compute_kg(self) -> Matrix:
@@ -241,12 +219,6 @@ class Truss:
         sig = eps * self.youngs_modulus + self.prestress
 
         ddp = sig * self.area / A11 * L * np.eye(3)
-
-        dg = np.array([
-            [-1, 0, 0, 1, 0, 0],
-            [0, -1, 0, 0, 1, 0],
-            [0, 0, -1, 0, 0, 1],
-        ])
 
         return dg.T @ ddp @ dg
 
