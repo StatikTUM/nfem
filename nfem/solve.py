@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import nfem
 from nfem.assembler import Assembler
 from nfem.nonlinear_solution_data import NonlinearSolutionInfo
 from nfem.model_status import ModelStatus
@@ -71,9 +72,8 @@ def solve_linear(model):
     return SolutionInfo(converged=True, iterations=1, residual_norm=0)
 
 
-def solve_load_control(model, tolerance: float = 1e-5,
-                       max_iterations: int = 100, solve_det_k: bool = True,
-                       solve_attendant_eigenvalue: bool = False):
+def solve_load_control(model: nfem.Model, tolerance: float = 1e-5, 
+                       max_iterations: int = 100):
     assembler = Assembler(model)
 
     load_factor_hat = model.load_factor
@@ -174,22 +174,12 @@ def solve_load_control(model, tolerance: float = 1e-5,
 
     model.status = ModelStatus.equilibrium
 
-    if solve_det_k:
-        k.fill(0)
-        assembler.assemble_matrix(element_k, out=k)
-        model.det_k = la.det(k[:n, :n])
-
-    if solve_attendant_eigenvalue:
-        model.solve_eigenvalues(assembler=assembler)
-
     return NonlinearSolutionInfo(rnorm, ['λ', '|r|', '|du|'], data)
 
 
-def solve_displacement_control(model, dof: Tuple[str, str],
+def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
                                tolerance: float = 1e-5,
-                               max_iterations: int = 100,
-                               solve_det_k: bool = True,
-                               solve_attendant_eigenvalue: bool = False):
+                               max_iterations: int = 100):
     assembler = Assembler(model)
 
     dof_index = assembler.dof_indices[dof]
@@ -291,21 +281,11 @@ def solve_displacement_control(model, dof: Tuple[str, str],
 
     model.status = ModelStatus.equilibrium
 
-    if solve_det_k:
-        k.fill(0)
-        assembler.assemble_matrix(element_k, out=k)
-        model.det_k = la.det(k[:n, :n])
-
-    if solve_attendant_eigenvalue:
-        model.solve_eigenvalues(assembler=assembler)
-
     return NonlinearSolutionInfo(rnorm, ['λ', '|r|', '|du|'], data)
 
 
-def solve_arc_length_control(model, tolerance: float = 1e-5,
-                             max_iterations: int = 100,
-                             solve_det_k: bool = True,
-                             solve_attendant_eigenvalue: bool = False):
+def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
+                             max_iterations: int = 100):
     assembler = Assembler(model)
 
     previous_model = model.get_previous_model()
@@ -420,14 +400,6 @@ def solve_arc_length_control(model, tolerance: float = 1e-5,
         assembler.dofs[i].residual = r[i]
 
     model.status = ModelStatus.equilibrium
-
-    if solve_det_k:
-        k.fill(0)
-        assembler.assemble_matrix(element_k, out=k)
-        model.det_k = la.det(k[:n, :n])
-
-    if solve_attendant_eigenvalue:
-        model.solve_eigenvalues(assembler=assembler)
 
     return NonlinearSolutionInfo(rnorm, ['λ', '|r|', '|du|'], data)
 

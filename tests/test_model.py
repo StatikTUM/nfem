@@ -23,7 +23,7 @@ def model():
 
 
 def test_model_dofs(model):
-    assert_equal(len(model.dofs), 9)
+    assert_equal(len(model.dofs), 2)
 
 
 def test_model_nodes(model):

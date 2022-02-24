@@ -2,86 +2,64 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
-from typing import List, Optional, Type
-
-import numpy as np
-import numpy.linalg as la
-
-from scipy.linalg import eig
-
+from nfem import solve
+from nfem.assembler import Assembler
 from nfem.dof import Dof
+from nfem.element import Element
 from nfem.key_collection import KeyCollection
 from nfem.model_status import ModelStatus
 from nfem.node import Node
-from nfem.truss import Truss
 from nfem.spring import Spring
+from nfem.truss import Truss
 
-from nfem.assembler import Assembler
+import numpy as np
+import numpy.linalg as la
+import numpy.typing as npt
 
-from nfem import solve
+from scipy.linalg import eig
+
+from copy import deepcopy
+from typing import List, Optional, Type, Sequence
+
+Vector = npt.NDArray[np.float64]
+Matrix = npt.NDArray[np.float64]
 
 
 class Model:
-    """Model of a nonlinear finite element problem.
+    """Model of a nonlinear finite element problem."""
 
-    Attributes
-    ----------
-    name : str
-        Name of the model.
-    nodes : dict
-        Dictionary that stores node_id : node object
-    elements : str
-        Dictionary that stores element_id : element object
-    load_factor : float
-        load factor
-    previous_model : Model
-        Previous state of this model
-    """
-
-    nodes: KeyCollection[str, Node]
-
-    def __init__(self, name=None):
+    def __init__(self, name: str = None):
         """Create a new model.
 
-        Parameters
-        ----------
-        name : str
-            Name of the model.
+        :name: Name of the model.
         """
-        self.name = name
-        self.status = ModelStatus.initial
-        self.nodes = KeyCollection()
-        self.elements = KeyCollection()
-        self.load_factor = 0.0
-        self._previous_model = None
-        self.det_k = None
-        self.first_eigenvalue = None
-        self.first_eigenvector_model = None
+        self.name: str = name
+        self.status: ModelStatus = ModelStatus.initial
+        self.nodes: KeyCollection[str, Node] = KeyCollection()
+        self.elements: KeyCollection[str, Element] = KeyCollection()
+        self.load_factor: float = 0.0
+        self._previous_model: Model = None
+        self.det_k: Optional[float] = None
+        self.first_eigenvalue: Optional[float] = None
+        self.first_eigenvector_model: Optional[Vector] = None
 
     # === modeling
 
-    def add_node(self, id: str, x: float, y: float, z: float, support: str = '', fx: float = 0.0, fy: float = 0.0, fz: float = 0.0):
+    def add_node(self, id: str, x: float, y: float, z: float,
+                 support: str = '', fx: float = 0.0, fy: float = 0.0,
+                 fz: float = 0.0) -> None:
         """Add a three dimensional node to the model.
 
         Parameters
         ----------
-        id: str
-            Unique ID of the node.
-        x: float
-            X coordinate.
-        y: float
-            Y coordinate.
-        z: float
-            Z coordinate.
-        support: str, optional
-            Directions in which the displacements are fixed.
-        fx: float, optional
-            External force in x direction.
-        fy: float, optional
-            External force in y direction.
-        fz: float, optional
-            External force in z direction.
+        @id: Unique ID of the node.
+        @x: X coordinate.
+        @y: Y coordinate.
+        @z: Z coordinate.
+        @support: Directions with supports.
+        @fx: External force in x direction.
+        @fy: External force in y direction.
+        @fz: External force in z direction.
         """
         if not isinstance(id, str):
             raise TypeError('The node id is not a text string')
@@ -104,30 +82,19 @@ class Model:
         node.dof('v').external_force = fy
         node.dof('w').external_force = fz
 
-    def add_truss(self, id: str, node_a: str, node_b: str, youngs_modulus: float, area: float, prestress: float = 0.0, tensile_strength: Optional[float] = None, compressive_strength: Optional[float] = None):
+    def add_truss(self, id: str, node_a: str, node_b: str,
+                  youngs_modulus: float, area: float, prestress: float = 0.0,
+                  tensile_strength: Optional[float] = None,
+                  compressive_strength: Optional[float] = None) -> None:
         """Add a three dimensional truss element to the model.
 
-        Parameters
-        ----------
-        id : str
-            Unique ID of the element.
-        node_a : str
-            ID of the first node.
-        node_b : str
-            ID of the second node.
-        youngs_modulus : float
-            Youngs modulus of the material for the truss.
-        area : float
-            Area of the cross section for the truss.
-        tensile_strength : Optional[float]
-            Tensile strength of the truss.
-        compressive_strength : Optional[float]
-            Compressive strength of the truss.
-
-        Returns
-        ----------
-        Truss
-            The new Truss
+        @id: Unique ID of the element.
+        @node_a: ID of the first node.
+        @node_b: ID of the second node.
+        @youngs_modulus: Youngs modulus of the material for the truss.
+        @area: Area of the cross section for the truss.
+        @tensile_strength: Tensile strength of the truss.
+        @compressive_strength: Compressive strength of the truss.
 
         Examples
         --------
@@ -145,22 +112,34 @@ class Model:
             raise TypeError('The id of node_b is not a text string')
 
         if id in self.elements:
-            raise KeyError(f'The model already contains an element with id "{id}"')
+            raise KeyError('The model already contains an element with id ' +
+                           f'"{id}"')
 
         if node_a not in self.nodes:
-            raise KeyError(f'The model does not contain a node with id "{node_a}"')
+            raise KeyError('The model does not contain a node with id ' +
+                           f'"{node_a}"')
 
         if node_b not in self.nodes:
-            raise KeyError(f'The model does not contain a node with id "{node_b}"')
+            raise KeyError('The model does not contain a node with id ' +
+                           f'"{node_b}"')
 
-        element = Truss(id, self.nodes[node_a], self.nodes[node_b], youngs_modulus, area, prestress)
+        element = Truss(id, self.nodes[node_a], self.nodes[node_b],
+                        youngs_modulus, area, prestress)
         element.tensile_strength = tensile_strength
         element.compressive_strength = compressive_strength
 
         self.elements._add(element)
 
-    def add_spring(self, id: str, node: str, kx: float = 0.0, ky: float = 0.0, kz: float = 0.0):
-        """Add a spring element."""
+    def add_spring(self, id: str, node: str, kx: float = 0.0, ky: float = 0.0,
+                   kz: float = 0.0) -> None:
+        """Add a spring element.
+
+        @id: Unique ID.
+        @node: Adjacent node.
+        @kx: Stiffness in x direction.
+        @ky: Stiffness in y direction.
+        @kz: Stiffness in z direction.
+        """
         if not isinstance(id, str):
             raise TypeError('The element id is not a text string')
 
@@ -168,22 +147,33 @@ class Model:
             raise TypeError('The id of node is not a text string')
 
         if id in self.elements:
-            raise KeyError(f'The model already contains an element with id "{id}"')
+            raise KeyError('The model already contains an element with id ' +
+                           f'"{id}"')
 
         if node not in self.nodes:
-            raise KeyError(f'The model does not contain a node with id "{node}"')
+            raise KeyError('The model does not contain a node with id ' +
+                           f'"{node}"')
 
         element = Spring(id, self.nodes[node], kx, ky, kz)
 
         self.elements._add(element)
 
-    def add_element(self, element_type: Type, id: str, nodes: List[Node], **properties):
-        """Add an element."""
+    def add_element(self, element_type: Type, id: str, nodes: List[Node],
+                    *args, **kwargs) -> None:
+        """Add an element (Advanced!).
+
+        @element_type: Factory for the new element.
+        @id: Unique ID.
+        @nodes: Adjacent Nodes.
+        @args: Additional arguments passed to the factory.
+        @kwargs: Additional arguments passed to the factory.
+        """
         if not isinstance(id, str):
             raise TypeError('The element id is not a text string')
 
         if id in self.elements:
-            raise KeyError(f'The model already contains an element with id "{id}"')
+            raise KeyError('The model already contains an element with id ' +
+                           f'"{id}"')
 
         node_list = []
 
@@ -192,17 +182,18 @@ class Model:
                 raise TypeError(f'The id "{node}" is not a text string')
 
             if node not in self.nodes:
-                raise KeyError(f'The model does not contain a node with id "{node}"')
+                raise KeyError('The model does not contain a node with id ' +
+                               f'"{node}"')
 
             node_list.append(self.nodes[node])
 
-        element = element_type(id, node_list, **properties)
+        element = element_type(id, node_list, *args, **kwargs)
 
         self.elements._add(element)
 
     # === degree of freedoms
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Dof:
         """Get a degree of freedom."""
         if isinstance(key, Dof):
             node_key, dof_type = key.id
@@ -211,24 +202,20 @@ class Model:
         return self.nodes[node_key].dof(dof_type)
 
     @property
-    def dofs(self):
+    def dofs(self) -> Sequence[Dof]:
         """Get all degrees of freedom."""
-        return Assembler(self).dofs
+        assembler = Assembler(self)
+
+        n, _ = assembler.size
+
+        return assembler.dofs[:n]
 
     # === increment
 
-    def get_dof_increment(self, dof):
+    def get_dof_increment(self, dof) -> float:
         """Get the increment of the dof during the last solution step.
 
-        Parameters
-        ----------
-        dof : tuple(node_id, dof_type)
-            Dof that is asked
-
-        Returns
-        -------
-        delta : float
-            Increment of the dof during the last step
+        @dof: Dof that is asked.
         """
         if self.get_previous_model() is None:
             return 0.0
@@ -240,14 +227,8 @@ class Model:
 
         return current_value - previous_value
 
-    def get_lam_increment(self):
-        """Get the increment of lambda during the last solution step.
-
-        Returns
-        -------
-        delta : float
-            Increment of lambda during the last step
-        """
+    def get_lam_increment(self) -> float:
+        """Get the increment of lambda during the last solution step."""
         if self.get_previous_model() is None:
             return 0.0
 
@@ -256,12 +237,15 @@ class Model:
 
         return current_value - previous_value
 
-    def get_increment_vector(self, assembler=None):
-        """Get the increment that resulted in the current position."""
+    def get_increment_vector(self, assembler: Assembler = None) -> Vector:
+        """Get the increment that resulted in the current position.
+
+        @assembler: Initialized assembler.
+        """
         if assembler is None:
             assembler = Assembler(self)
 
-        n, m = assembler.size
+        n, _ = assembler.size
 
         increment = np.zeros(n + 1)
 
@@ -276,25 +260,20 @@ class Model:
 
         return increment
 
-    def get_increment_norm(self, assembler=None):
-        """Get the vector norm of the current increment."""
+    def get_increment_norm(self, assembler: Assembler = None) -> float:
+        """Get the vector norm of the current increment.
+
+        @assembler: Initialized assembler.
+        """
         increment = self.get_increment_vector(assembler)
         return la.norm(increment)
 
     # === model history
 
-    def get_previous_model(self, skip_iterations=True):
+    def get_previous_model(self, skip_iterations: bool = True) -> Model:
         """Get the previous model of the current model.
 
-        Parameters
-        ----------
-        skip_iterations : bool
-            Flag if iteration or predicted previous models should be skipped
-
-        Returns
-        -------
-        model : Model
-            The previous model object
+        @skip_iterations: True if iterations or predictions should be skipped.
         """
         if not skip_iterations:
             return self._previous_model
@@ -302,20 +281,16 @@ class Model:
         # find the most previous model that is not an iteration or prediction
         previous_model = self._previous_model
 
-        while previous_model is not None and previous_model.status in [ModelStatus.duplicate,
-                                                                       ModelStatus.prediction, ModelStatus.iteration]:
+        while (previous_model is not None and
+               previous_model.status in [ModelStatus.duplicate,
+                                         ModelStatus.prediction,
+                                         ModelStatus.iteration]):
             previous_model = previous_model._previous_model
 
         return previous_model
 
-    def get_initial_model(self):
-        """Get the initial model of this model.
-
-        Returns
-        ----------
-        model : Model
-            initial model
-        """
+    def get_initial_model(self) -> Model:
+        """Get the initial model of this model."""
         current_model = self
 
         while current_model.get_previous_model() is not None:
@@ -323,18 +298,10 @@ class Model:
 
         return current_model
 
-    def get_model_history(self, skip_iterations=True):
+    def get_model_history(self, skip_iterations: bool = True) -> List[Model]:
         """Get a list of all previous models of this model.
 
-        Parameters
-        ----------
-        skip_iterations : bool
-            Flag that decides if non converged previous models should be considered
-
-        Returns
-        ----------
-        history : list
-            List of previous models
+        @skip_iterations: True if non converged models should be considered.
         """
         history = [self]
 
@@ -347,28 +314,26 @@ class Model:
 
         return history
 
-    def get_duplicate(self, name=None, branch=False):
+    def get_duplicate(self, name: str = None, branch: bool = False) -> Model:
         r"""Get a duplicate of the model.
 
-        Parameters
-        ----------
-        name : str, optional
-            Name of the new model.
-        branch : bool, optional
-            If `branch` is `False` the duplicate will be a successor of the current model:
+        @name: Name of the new model.
+        @branch: True to create a new branch.
 
-                previous ----> current ----> duplicate
 
-            If `branch` is `True` the duplicate will be a successor of the previous model:
+        Notes
+        -----
+        If `branch` is `False` the duplicate will be a successor of the
+        current model:
 
-                previous ----> current
-                          \
-                           \-> duplicate
+            previous ----> current ----> duplicate
 
-        Returns
-        -------
-        model : Model
-            Duplicate of the current model.
+        If `branch` is `True` the duplicate will be a successor of the
+        previous model:
+
+            previous ----> current
+                        \
+                        \-> duplicate
         """
         temp_previous_model = self._previous_model
         self._previous_model = None
@@ -393,7 +358,7 @@ class Model:
 
         return duplicate
 
-    def new_timestep(self, name=None):
+    def new_timestep(self, name: str = None) -> Model:
         """Create a new timestep."""
         temp_previous_model = self._previous_model
         self._previous_model = None
@@ -415,7 +380,7 @@ class Model:
 
     # === solving
 
-    def perform_linear_solution_step(self, info=False):
+    def perform_linear_solution_step(self, info: bool = False) -> None:
         """Perform a linear solution step on the model.
 
         It uses the current load factor.
@@ -429,84 +394,239 @@ class Model:
 
         solve.solve_linear(self)
 
-    def perform_load_control_step(self, tolerance=1e-5, max_iterations=500, info=False, **options):
+    def perform_load_control_step(self,
+                                  tolerance: float = 1e-5,
+                                  max_iterations: int = 500,
+                                  info: bool = False,
+                                  solve_det_k: bool = True,
+                                  solve_attendant_eigenvalue: bool = False
+                                  ) -> None:
         """Perform a solution step using load control."""
-        solution_info = solve.solve_load_control(self, tolerance, max_iterations, **options)
+        solution_info = solve.solve_load_control(self, tolerance, max_iterations)
+
+        if solve_det_k or solve_attendant_eigenvalue:
+            assembler = Assembler(self)
+
+            n, m = assembler.size
+
+        if solve_det_k:
+            k = np.zeros((m, m))
+            assembler.assemble_matrix(lambda e: e.compute_k(), out=k)
+            self.det_k = la.det(k[:n, :n])
+
+        if solve_attendant_eigenvalue:
+            self.solve_eigenvalues(assembler=assembler)
+
         if info:
             print(f'Load-Control with λ = {self.load_factor}')
             solution_info.show()
             print()
 
-    def perform_displacement_control_step(self, dof, tolerance=1e-5, max_iterations=500, info=False, **options):
+    def perform_displacement_control_step(self,
+                                          dof,
+                                          tolerance: float = 1e-5,
+                                          max_iterations: int = 500,
+                                          info: bool = False,
+                                          solve_det_k: bool = True,
+                                          solve_attendant_eigenvalue: bool = False
+                                          ) -> None:
         """Perform a solution step using displacement control."""
-        solution_info = solve.solve_displacement_control(self, dof, tolerance, max_iterations, **options)
+        solution_info = solve.solve_displacement_control(self, dof, tolerance, max_iterations)
+
+        if solve_det_k or solve_attendant_eigenvalue:
+            assembler = Assembler(self)
+
+            n, m = assembler.size
+
+        if solve_det_k:
+            k = np.zeros((m, m))
+            assembler.assemble_matrix(lambda e: e.compute_k(), out=k)
+            self.det_k = la.det(k[:n, :n])
+
+        if solve_attendant_eigenvalue:
+            self.solve_eigenvalues(assembler=assembler)
+
         if info:
             print(f'Displacement-Control with {dof[1]} at node {dof[0]} = {self[dof].delta}')
             solution_info.show()
             print()
 
-    def perform_arc_length_control_step(self, tolerance=1e-5, max_iterations=500, info=False, **options):
+    def perform_arc_length_control_step(self,
+                                        tolerance: float = 1e-5,
+                                        max_iterations: int = 500,
+                                        info: bool = False,
+                                        solve_det_k: bool = True,
+                                        solve_attendant_eigenvalue: bool = False
+                                        ) -> None:
         """Perform a solution step using arc-length control."""
-        solution_info = solve.solve_arc_length_control(self, tolerance, max_iterations, **options)
+        solution_info = solve.solve_arc_length_control(self, tolerance, max_iterations)
+
+        if solve_det_k or solve_attendant_eigenvalue:
+            assembler = Assembler(self)
+
+            n, m = assembler.size
+
+        if solve_det_k:
+            k = np.zeros((m, m))
+            assembler.assemble_matrix(lambda e: e.compute_k(), out=k)
+            self.det_k = la.det(k[:n, :n])
+
+        if solve_attendant_eigenvalue:
+            self.solve_eigenvalues(assembler=assembler)
+
         if info:
-            print(f'Arc-Length-Control with length = {solution_info.constraint.squared_l_hat**0.5}')
+            print('Arc-Length-Control with length = ' +
+                  f'{solution_info.constraint.squared_l_hat**0.5}')
             solution_info.show()
             print()
 
-    def get_stiffness(self, mode='comp'):
+    def get_stiffness(self, mode: str = 'comp') -> Matrix:
         """Get the stiffness matrix of the system."""
+        if mode == 'comp':
+            return self.compute_k()
+        elif mode == 'elas':
+            return self.compute_ke()
+        elif mode == 'geom':
+            return self.compute_kg()
+        elif mode == 'disp':
+            return self.compute_kd()
+
+        raise ValueError('mode')
+
+    def compute_linear_r(self) -> Vector:
+        """Compute the linear residual force vector of the element."""
         assembler = Assembler(self)
 
-        n, m = assembler.size
+        n, _ = assembler.size
 
-        k = np.zeros((m, m))
+        def compute_local(element: Element) -> Vector:
+            return element.compute_linear_r()
 
-        if mode == 'comp':
-            assembler.assemble_matrix(lambda element: element.compute_k(), out=k)
-        elif mode == 'elas':
-            assembler.assemble_matrix(lambda element: element.compute_ke(), out=k)
-        elif mode == 'disp':
-            assembler.assemble_matrix(lambda element: element.compute_kd(), out=k)
-        elif mode == 'geom':
-            assembler.assemble_matrix(lambda element: element.compute_kg(), out=k)
-        else:
-            raise ValueError('mode')
+        r = assembler.assemble_vector(compute_local)
+
+        return r[:n]
+
+    def compute_linear_k(self) -> Matrix:
+        """Compute the linear stiffness matrix of the element."""
+        assembler = Assembler(self)
+
+        n, _ = assembler.size
+
+        def compute_local(element: Element) -> Vector:
+            return element.compute_linear_k()
+
+        k = assembler.assemble_matrix(compute_local)
 
         return k[:n, :n]
 
-    def solve_det_k(self):
-        """Compute the determinant of k.
-
-        Parameters
-        ----------
-        k : numpy.ndarray (optional)
-            stiffness matrix can be directly passed.
-        assembler : Object (optional)
-            assembler can be passed to speed up if k is not given
-        """
+    def compute_linear_kg(self) -> Matrix:
+        """Compute the linear geometric stiffness matrix of the element."""
         assembler = Assembler(self)
 
-        n, m = assembler.size
+        n, _ = assembler.size
 
-        k = np.zeros((m, m))
+        def compute_local(element: Element) -> Vector:
+            return element.compute_linear_kg()
 
-        assembler.assemble_matrix(lambda element: element.compute_k(), out=k)
+        k = assembler.assemble_matrix(compute_local)
 
-        self.det_k = la.det(k[:n, :n])
+        return k[:n, :n]
+
+    def compute_r(self) -> Vector:
+        """Compute the nonlinear residual force vector of the element."""
+        assembler = Assembler(self)
+
+        n, _ = assembler.size
+
+        def compute_local(element: Element) -> Vector:
+            return element.compute_r()
+
+        r = assembler.assemble_vector(compute_local)
+
+        return r[:n]
+
+    def compute_k(self) -> Matrix:
+        """Compute the nonlinear stiffness matrix of the element."""
+        assembler = Assembler(self)
+
+        n, _ = assembler.size
+
+        def compute_local(element: Element) -> Vector:
+            return element.compute_k()
+
+        k = assembler.assemble_matrix(compute_local)
+
+        return k[:n, :n]
+
+    def compute_ke(self) -> Matrix:
+        """Compute the elastic stiffness matrix of the element."""
+        assembler = Assembler(self)
+
+        n, _ = assembler.size
+
+        def compute_local(element: Element) -> Vector:
+            return element.compute_ke()
+
+        k = assembler.assemble_matrix(compute_local)
+
+        return k[:n, :n]
+
+    def compute_km(self) -> Matrix:
+        """Compute the material stiffness matrix of the element."""
+        assembler = Assembler(self)
+
+        n, _ = assembler.size
+
+        def compute_local(element: Element) -> Vector:
+            return element.compute_km()
+
+        k = assembler.assemble_matrix(compute_local)
+
+        return k[:n, :n]
+
+    def compute_kg(self) -> Matrix:
+        """Compute the geometric stiffness matrix of the element."""
+        assembler = Assembler(self)
+
+        n, _ = assembler.size
+
+        def compute_local(element: Element) -> Vector:
+            return element.compute_kg()
+
+        k = assembler.assemble_matrix(compute_local)
+
+        return k[:n, :n]
+
+    def compute_kd(self) -> Matrix:
+        """Compute the initial-displacement stiffness matrix of the element."""
+        assembler = Assembler(self)
+
+        n, _ = assembler.size
+
+        def compute_local(element: Element) -> Vector:
+            return element.compute_kd()
+
+        k = assembler.assemble_matrix(compute_local)
+
+        return k[:n, :n]
+
+    def solve_det_k(self) -> None:
+        """Compute the determinant of k."""
+        k = self.compute_k()
+
+        self.det_k = la.det(k)
 
         print(f'Det(K): {self.det_k}')
 
-    def solve_linear_eigenvalues(self, assembler=None):
+    def solve_linear_eigenvalues(self, assembler: Assembler = None) -> None:
         """Solve the linearized eigenvalue problem.
 
+        @assembler: Initialized assembler.
+
+        Eigenvalue problem:
         [ k_e + eigvals * k_g(linear strain) ] * eigvecs = 0
 
         Stores the first positive eigenvalue and vector
-
-        Parameters
-        ----------
-        assembler : Object (optional)
-            assembler can be passed to speed up
         """
         if assembler is None:
             assembler = Assembler(self)
@@ -567,17 +687,15 @@ class Model:
 
         self.first_eigenvector_model = model
 
-    def solve_eigenvalues(self, assembler=None):
+    def solve_eigenvalues(self, assembler: Assembler = None) -> None:
         """Solve the eigenvalue problem.
 
+        @assembler: Initialized assembler.
+
+        Eigenvalue problem:
         [ k_m + eigvals * k_g ] * eigvecs = 0
 
         Stores the closest (most critical) eigenvalue and vector
-
-        Parameters
-        ----------
-        assembler : Object (optional)
-            assembler can be passed to speed up
         """
         if assembler is None:
             assembler = Assembler(self)
@@ -627,14 +745,11 @@ class Model:
 
         self.first_eigenvector_model = model
 
-    def get_tangent_vector(self, assembler=None):
+    def get_tangent_vector(self, assembler: Assembler = None) -> Vector:
         """Get the tangent vector.
 
-        Returns
-        -------
-        tangent : ndarray
-            Tangent vector t = [v, 1]
-            with v = d_u / d_lambda ... incremental velocity
+        @tangent: Tangent vector t = [v, 1]
+                  with v = d_u / d_lambda ... incremental velocity
         """
         if assembler is None:
             assembler = Assembler(self)
@@ -667,72 +782,51 @@ class Model:
 
     # === prediction functions
 
-    def predict_load_factor(self, value):
+    def predict_load_factor(self, value: float) -> None:
         """Predict the solution by predictor_method lambda.
 
-        Parameters
-        ----------
-        value : float
-            Value for the new load factor lambda.
+        @value: Value for the new load factor lambda.
         """
         self.status = ModelStatus.prediction
         self.load_factor = value
 
-    def predict_load_increment(self, value):
+    def predict_load_increment(self, value: float) -> None:
         """Predict the solution by incrementing lambda.
 
-        Parameters
-        ----------
-        value : float
-            Value that is used to increment the load factor lambda.
+        @value: Value that is used to increment the load factor lambda.
         """
         self.status = ModelStatus.prediction
         self.load_factor += value
 
-    def predict_dof_state(self, dof, value):
+    def predict_dof_state(self, dof, value: float) -> None:
         """Predict the solution by predictor_method the dof.
 
-        Parameters
-        ----------
-        dof : object
-            Dof that is prescribed.
-        value : float
-            Value that is used to prescribe the dof.
+        @dof: Dof that is prescribed.
+        @value: Value that is used to prescribe the dof.
         """
         self.status = ModelStatus.prediction
         self[dof].delta = value
 
-    def predict_dof_increment(self, dof, value):
+    def predict_dof_increment(self, dof, value: float) -> None:
         """Predict the solution by incrementing the dof.
 
-        Parameters
-        ----------
-        dof : object
-            Dof that is incremented.
-        value : float
-            Value that is used to increment the dof.
+        @dof: Dof that is incremented.
+        @value: Value that is used to increment the dof.
         """
         self.status = ModelStatus.prediction
         self[dof].delta += value
 
-    def predict_with_last_increment(self, value=None):
+    def predict_with_last_increment(self, value: Optional[float] = None) -> None:
         """Predict the solution by incrementing lambda and all dofs.
 
         Uses the increment of the last solution step.
 
-        Parameters
-        ----------
-        value : float (optional)
-            Length of the increment
-
-        Raises
-        ------
-        RuntimeError
-            If the model has not already one calculated step.
+        @value: Length of the increment
         """
         self.status = ModelStatus.prediction
         if self.get_previous_model().get_previous_model() is None:
-            raise RuntimeError('predict_with_last_increment can only be used after the first step!')
+            raise RuntimeError('predict_with_last_increment can only be used' +
+                               ' after the first step!')
 
         assembler = Assembler(self)
 
@@ -741,7 +835,7 @@ class Model:
         length = la.norm(last_increment)
 
         if value is not None and length != 0.0:
-            last_increment *= value/length
+            last_increment *= value / length
             length *= value
 
         if length == 0.0:
@@ -859,35 +953,30 @@ class Model:
     def combine_prediction_with_eigenvector(self, beta):
         """Combine the prediciton with the first eigenvector.
 
-        Parameters
-        ----------
-        beta : float
-            factor between -1.0 and 1.0 used for a linear combination of the
-            prediction with the eigenvector
+        @beta: Factor between -1.0 and 1.0 used for a linear combination of the
+               prediction with the eigenvector.
 
-        Raises
-        ------
-        RuntimeError
-            If the model is not in prediction status
-        ValueError
-            If the beta is not between -1.0 and 1.0
+        :raises RuntimeError: If the model is not in prediction status.
+        :raises ValueError: If the beta is not between -1.0 and 1.0.
         """
         if self.status != ModelStatus.prediction:
-            raise RuntimeError('Model is not a predictor. Cannot combine with eigenvector!')
+            raise RuntimeError('Model is not a predictor. Cannot combine' +
+                               ' with eigenvector!')
 
         if beta < -1.0 or beta > 1.0:
             raise ValueError('beta needs to be between -1.0 and 1.0')
 
         previous_model = self.get_previous_model()
         if previous_model.first_eigenvector_model is None:
-            print('WARNING: solving eigenvalue problem in order to do branch switching')
+            print('WARNING: solving eigenvalue problem in order to do branch' +
+                  ' switching')
             previous_model.solve_eigenvalues()
 
         eigenvector_model = previous_model.first_eigenvector_model
 
         assembler = Assembler(self)
 
-        u_prediction = self.get_delta_dof_vector(model_b=previous_model, assembler=assembler)
+        u_prediction = self.get_delta_dof_vector(previous_model, assembler)
 
         prediction_length = la.norm(u_prediction)
 
@@ -900,7 +989,8 @@ class Model:
 
         delta_prediction = prediction - u_prediction
 
-        # lambda = 0 for the eigenvector. Note: TRUSS.xls uses the same value as for the last increment
+        # lambda = 0 for the eigenvector. Note: TRUSS.xls uses the same value
+        # as for the last increment
         delta_lam = - self.get_lam_increment()
 
         # update dofs at model
@@ -915,21 +1005,14 @@ class Model:
     def scale_prediction(self, factor):
         """Scale the prediction with a factor.
 
-        Parameters
-        ----------
-        factor : float
-            factor used to scale the prediction
+        @factor: Factor used to scale the prediction.
 
-
-        Raises
-        ------
-        RuntimeError
-            If the model is not in prediction status
-        RuntimeError
-            If the model has no previous model
+        @raises RuntimeError: If the model is not in prediction status
+        @raises RuntimeError: If the model has no previous model
         """
         if self.status != ModelStatus.prediction:
-            raise RuntimeError('Model is not a predictor. Can only scale predictor!')
+            raise RuntimeError('Model is not a predictor. Can only scale' +
+                               ' predictor!')
 
         if factor == 1.0:
             return
@@ -955,30 +1038,17 @@ class Model:
 
         self.load_factor += delta_lambda
 
-    def get_delta_dof_vector(self, model_b=None, assembler=None):
+    def get_delta_dof_vector(self, model_b: Model = None,
+                             assembler: Assembler = None) -> Vector:
         """Get the delta dof between this and a given model_b as a numpy array.
 
-        Parameters
-        ----------
-        model_b : Model
-            Model that is used as reference for the delta dof calculation. If
-            not given, the initial model is used as reference.
-        assembler: Assembler
-            Assembler is used to order the dofs in the vector. If not given, a
-            new assembler is created
+        @model_b: Model that is used as reference for the delta dof
+            calculation. If not given, the initial model is used as reference.
+        @assembler: Assembler is used to order the dofs in the vector. If not
+            given, a new assembler is created.
 
-
-        Returns
-        ------
-        delta : np.ndarray
-            vector with the delta of all dofs
-
-        Raises
-        ------
-        RuntimeError
-            If the model is not in prediction status
-        RuntimeError
-            If the model has no previous model
+        @raises RuntimeError: If the model is not in prediction status.
+        @raises RuntimeError: If the model has no previous model.
         """
         if model_b is None:
             model_b = self.get_initial_model()
@@ -995,7 +1065,7 @@ class Model:
 
         return delta
 
-    def load_displacement_curve(self, dof, skip_iterations=True):
+    def load_displacement_curve(self, dof, skip_iterations: bool = True):
         """Get the load displacement curve for a specific degree of freedom."""
         history = self.get_model_history(skip_iterations)
 
@@ -1007,14 +1077,14 @@ class Model:
 
         return data
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         from nfem.visualization.canvas_3d import Canvas3D
 
         canvas = Canvas3D(height=600)
 
         return canvas.html(600, self)
 
-    def show(self, height=600, timestep=0):
+    def show(self, height: int = 600, timestep: int = 0) -> None:
         """Show the model."""
         from nfem.visualization.canvas_3d import Canvas3D
 
