@@ -210,288 +210,7 @@ class Model:
 
         return assembler.dofs[:n]
 
-    # === increment
-
-    def get_dof_increment(self, dof) -> float:
-        """Get the increment of the dof during the last solution step.
-
-        @dof: Dof that is asked.
-        """
-        if self.get_previous_model() is None:
-            return 0.0
-
-        previous_model = self.get_previous_model()
-
-        current_value = self[dof].delta
-        previous_value = previous_model[dof].delta
-
-        return current_value - previous_value
-
-    def get_lam_increment(self) -> float:
-        """Get the increment of lambda during the last solution step."""
-        if self.get_previous_model() is None:
-            return 0.0
-
-        current_value = self.load_factor
-        previous_value = self.get_previous_model().load_factor
-
-        return current_value - previous_value
-
-    def get_increment_vector(self, assembler: Assembler = None) -> Vector:
-        """Get the increment that resulted in the current position.
-
-        @assembler: Initialized assembler.
-        """
-        if assembler is None:
-            assembler = Assembler(self)
-
-        n, _ = assembler.size
-
-        increment = np.zeros(n + 1)
-
-        if self.get_previous_model() is None:
-            print('WARNING: Increment is zero because no previous model exists!')
-            return increment
-
-        for index, dof in enumerate(assembler.dofs[:n]):
-            increment[index] = self.get_dof_increment(dof)
-
-        increment[-1] = self.get_lam_increment()
-
-        return increment
-
-    def get_increment_norm(self, assembler: Assembler = None) -> float:
-        """Get the vector norm of the current increment.
-
-        @assembler: Initialized assembler.
-        """
-        increment = self.get_increment_vector(assembler)
-        return la.norm(increment)
-
-    # === model history
-
-    def get_previous_model(self, skip_iterations: bool = True) -> Model:
-        """Get the previous model of the current model.
-
-        @skip_iterations: True if iterations or predictions should be skipped.
-        """
-        if not skip_iterations:
-            return self._previous_model
-
-        # find the most previous model that is not an iteration or prediction
-        previous_model = self._previous_model
-
-        while (previous_model is not None and
-               previous_model.status in [ModelStatus.duplicate,
-                                         ModelStatus.prediction,
-                                         ModelStatus.iteration]):
-            previous_model = previous_model._previous_model
-
-        return previous_model
-
-    def get_initial_model(self) -> Model:
-        """Get the initial model of this model."""
-        current_model = self
-
-        while current_model.get_previous_model() is not None:
-            current_model = current_model.get_previous_model()
-
-        return current_model
-
-    def get_model_history(self, skip_iterations: bool = True) -> List[Model]:
-        """Get a list of all previous models of this model.
-
-        @skip_iterations: True if non converged models should be considered.
-        """
-        history = [self]
-
-        current_model = self
-
-        while current_model.get_previous_model(skip_iterations) is not None:
-            current_model = current_model.get_previous_model(skip_iterations)
-
-            history = [current_model] + history
-
-        return history
-
-    def get_duplicate(self, name: str = None, branch: bool = False) -> Model:
-        r"""Get a duplicate of the model.
-
-        @name: Name of the new model.
-        @branch: True to create a new branch.
-
-
-        Notes
-        -----
-        If `branch` is `False` the duplicate will be a successor of the
-        current model:
-
-            previous ----> current ----> duplicate
-
-        If `branch` is `True` the duplicate will be a successor of the
-        previous model:
-
-            previous ----> current
-                        \
-                        \-> duplicate
-        """
-        temp_previous_model = self._previous_model
-        self._previous_model = None
-
-        duplicate = deepcopy(self)
-
-        self._previous_model = temp_previous_model
-
-        if branch:
-            duplicate._previous_model = self._previous_model
-        else:
-            duplicate._previous_model = self
-            duplicate.status = ModelStatus.duplicate
-
-        if name is not None:
-            duplicate.name = name
-
-        # make sure the duplicated model is in a clean state
-        duplicate.det_k = None
-        duplicate.first_eigenvalue = None
-        duplicate.first_eigenvector_model = None
-
-        return duplicate
-
-    def new_timestep(self, name: str = None) -> Model:
-        """Create a new timestep."""
-        temp_previous_model = self._previous_model
-        self._previous_model = None
-
-        duplicate = deepcopy(self)
-
-        self._previous_model = temp_previous_model
-
-        duplicate._previous_model = self
-
-        if name is not None:
-            duplicate.name = name
-
-        duplicate.det_k = None
-        duplicate.first_eigenvalue = None
-        duplicate.first_eigenvector_model = None
-
-        return duplicate
-
-    # === solving
-
-    def perform_linear_solution_step(self, info: bool = False) -> None:
-        """Perform a linear solution step on the model.
-
-        It uses the current load factor.
-        The results are stored at the dofs and used to update the current
-        coordinates of the nodes.
-        """
-        if info:
-            print("Start linear solution step...")
-            print(f"lambda : {self.load_factor}")
-            print()
-
-        solve.solve_linear(self)
-
-    def perform_load_control_step(self,
-                                  tolerance: float = 1e-5,
-                                  max_iterations: int = 500,
-                                  info: bool = False,
-                                  solve_det_k: bool = True,
-                                  solve_attendant_eigenvalue: bool = False
-                                  ) -> None:
-        """Perform a solution step using load control."""
-        solution_info = solve.solve_load_control(self, tolerance, max_iterations)
-
-        if solve_det_k or solve_attendant_eigenvalue:
-            assembler = Assembler(self)
-
-            n, m = assembler.size
-
-        if solve_det_k:
-            k = np.zeros((m, m))
-            assembler.assemble_matrix(lambda e: e.compute_k(), out=k)
-            self.det_k = la.det(k[:n, :n])
-
-        if solve_attendant_eigenvalue:
-            self.solve_eigenvalues(assembler=assembler)
-
-        if info:
-            print(f'Load-Control with λ = {self.load_factor}')
-            solution_info.show()
-            print()
-
-    def perform_displacement_control_step(self,
-                                          dof,
-                                          tolerance: float = 1e-5,
-                                          max_iterations: int = 500,
-                                          info: bool = False,
-                                          solve_det_k: bool = True,
-                                          solve_attendant_eigenvalue: bool = False
-                                          ) -> None:
-        """Perform a solution step using displacement control."""
-        solution_info = solve.solve_displacement_control(self, dof, tolerance, max_iterations)
-
-        if solve_det_k or solve_attendant_eigenvalue:
-            assembler = Assembler(self)
-
-            n, m = assembler.size
-
-        if solve_det_k:
-            k = np.zeros((m, m))
-            assembler.assemble_matrix(lambda e: e.compute_k(), out=k)
-            self.det_k = la.det(k[:n, :n])
-
-        if solve_attendant_eigenvalue:
-            self.solve_eigenvalues(assembler=assembler)
-
-        if info:
-            print(f'Displacement-Control with {dof[1]} at node {dof[0]} = {self[dof].delta}')
-            solution_info.show()
-            print()
-
-    def perform_arc_length_control_step(self,
-                                        tolerance: float = 1e-5,
-                                        max_iterations: int = 500,
-                                        info: bool = False,
-                                        solve_det_k: bool = True,
-                                        solve_attendant_eigenvalue: bool = False
-                                        ) -> None:
-        """Perform a solution step using arc-length control."""
-        solution_info = solve.solve_arc_length_control(self, tolerance, max_iterations)
-
-        if solve_det_k or solve_attendant_eigenvalue:
-            assembler = Assembler(self)
-
-            n, m = assembler.size
-
-        if solve_det_k:
-            k = np.zeros((m, m))
-            assembler.assemble_matrix(lambda e: e.compute_k(), out=k)
-            self.det_k = la.det(k[:n, :n])
-
-        if solve_attendant_eigenvalue:
-            self.solve_eigenvalues(assembler=assembler)
-
-        if info:
-            print('Arc-Length-Control with length = ' +
-                  f'{solution_info.constraint.squared_l_hat**0.5}')
-            solution_info.show()
-            print()
-
-    def get_stiffness(self, mode: str = 'comp') -> Matrix:
-        """Get the stiffness matrix of the system."""
-        if mode == 'comp':
-            return self.compute_k()
-        elif mode == 'elas':
-            return self.compute_ke()
-        elif mode == 'geom':
-            return self.compute_kg()
-        elif mode == 'disp':
-            return self.compute_kd()
-
-        raise ValueError('mode')
+    # === r and k
 
     def compute_linear_r(self) -> Vector:
         """Compute the linear residual force vector of the element."""
@@ -610,11 +329,302 @@ class Model:
 
         return k[:n, :n]
 
-    def solve_det_k(self) -> None:
+    def compute_det_k(self) -> float:
         """Compute the determinant of k."""
         k = self.compute_k()
 
-        self.det_k = la.det(k)
+        return la.det(k)
+
+    # === increment
+
+    def get_dof_increment(self, dof) -> float:
+        """Get the increment of the dof during the last solution step.
+
+        @dof: Dof that is asked.
+        """
+        if self.get_previous_model() is None:
+            return 0.0
+
+        previous_model = self.get_previous_model()
+
+        current_value = self[dof].delta
+        previous_value = previous_model[dof].delta
+
+        return current_value - previous_value
+
+    def get_lam_increment(self) -> float:
+        """Get the increment of lambda during the last solution step."""
+        if self.get_previous_model() is None:
+            return 0.0
+
+        current_value = self.load_factor
+        previous_value = self.get_previous_model().load_factor
+
+        return current_value - previous_value
+
+    def get_increment_vector(self, assembler: Assembler = None) -> Vector:
+        """Get the increment that resulted in the current position.
+
+        @assembler: Initialized assembler.
+        """
+        if assembler is None:
+            assembler = Assembler(self)
+
+        n, _ = assembler.size
+
+        increment = np.zeros(n + 1)
+
+        if self.get_previous_model() is None:
+            print('WARNING: Increment is zero because no previous model' +
+                  ' exists!')
+            return increment
+
+        for index, dof in enumerate(assembler.dofs[:n]):
+            increment[index] = self.get_dof_increment(dof)
+
+        increment[-1] = self.get_lam_increment()
+
+        return increment
+
+    def get_increment_norm(self, assembler: Assembler = None) -> float:
+        """Get the vector norm of the current increment.
+
+        @assembler: Initialized assembler.
+        """
+        increment = self.get_increment_vector(assembler)
+        return la.norm(increment)
+
+    # === model history
+
+    def get_previous_model(self, skip_iterations: bool = True) -> Model:
+        """Get the previous model of the current model.
+
+        @skip_iterations: True if iterations or predictions should be skipped.
+        """
+        if not skip_iterations:
+            return self._previous_model
+
+        # find the most previous model that is not an iteration or prediction
+        previous_model = self._previous_model
+
+        while (previous_model is not None and
+               previous_model.status in [ModelStatus.duplicate,
+                                         ModelStatus.prediction,
+                                         ModelStatus.iteration]):
+            previous_model = previous_model._previous_model
+
+        return previous_model
+
+    def get_initial_model(self) -> Model:
+        """Get the initial model of this model."""
+        current_model = self
+
+        while current_model.get_previous_model() is not None:
+            current_model = current_model.get_previous_model()
+
+        return current_model
+
+    def get_model_history(self, skip_iterations: bool = True) -> List[Model]:
+        """Get a list of all previous models of this model.
+
+        @skip_iterations: True if non converged models should be considered.
+        """
+        history = [self]
+
+        current_model = self
+
+        while current_model.get_previous_model(skip_iterations) is not None:
+            current_model = current_model.get_previous_model(skip_iterations)
+
+            history = [current_model] + history
+
+        return history
+
+    def get_duplicate(self, name: str = None, branch: bool = False) -> Model:
+        r"""Get a duplicate of the model.
+
+        @name: Name of the new model.
+        @branch: True to create a new branch.
+
+
+        Notes
+        -----
+        If `branch` is `False` the duplicate will be a successor of the
+        current model:
+
+            previous ----> current ----> duplicate
+
+        If `branch` is `True` the duplicate will be a successor of the
+        previous model:
+
+            previous ----> current
+                    \
+                     \---> duplicate
+        """
+        temp_previous_model = self._previous_model
+        self._previous_model = None
+
+        duplicate = deepcopy(self)
+
+        self._previous_model = temp_previous_model
+
+        if branch:
+            duplicate._previous_model = self._previous_model
+        else:
+            duplicate._previous_model = self
+            duplicate.status = ModelStatus.duplicate
+
+        if name is not None:
+            duplicate.name = name
+
+        # make sure the duplicated model is in a clean state
+        duplicate.det_k = None
+        duplicate.first_eigenvalue = None
+        duplicate.first_eigenvector_model = None
+
+        return duplicate
+
+    def new_timestep(self, name: str = None) -> Model:
+        """Create a new timestep."""
+        temp_previous_model = self._previous_model
+        self._previous_model = None
+
+        duplicate = deepcopy(self)
+
+        self._previous_model = temp_previous_model
+
+        duplicate._previous_model = self
+
+        if name is not None:
+            duplicate.name = name
+
+        duplicate.det_k = None
+        duplicate.first_eigenvalue = None
+        duplicate.first_eigenvector_model = None
+
+        return duplicate
+
+    # === solving
+
+    def perform_linear_solution_step(self, info: bool = False) -> None:
+        """Perform a linear solution step on the model.
+
+        It uses the current load factor.
+        The results are stored at the dofs and used to update the current
+        coordinates of the nodes.
+        """
+        if info:
+            print("Start linear solution step...")
+            print(f"lambda : {self.load_factor}")
+            print()
+
+        solve.solve_linear(self)
+
+    def perform_load_control_step(self,
+                                  tolerance: float = 1e-5,
+                                  max_iterations: int = 500,
+                                  info: bool = False,
+                                  solve_det_k: bool = True,
+                                  solve_attendant_eigenvalue: bool = False
+                                  ) -> None:
+        """Perform a solution step using load control."""
+        solution = solve.solve_load_control(self, tolerance, max_iterations)
+
+        if solve_det_k or solve_attendant_eigenvalue:
+            assembler = Assembler(self)
+
+            n, m = assembler.size
+
+        if solve_det_k:
+            k = np.zeros((m, m))
+            assembler.assemble_matrix(lambda e: e.compute_k(), out=k)
+            self.det_k = la.det(k[:n, :n])
+
+        if solve_attendant_eigenvalue:
+            self.solve_eigenvalues(assembler=assembler)
+
+        if info:
+            print(f'Load-Control with λ = {self.load_factor}')
+            solution.show()
+            print()
+
+    def perform_displacement_control_step(self,
+                                          dof,
+                                          tolerance: float = 1e-5,
+                                          max_iterations: int = 500,
+                                          info: bool = False,
+                                          solve_det_k: bool = True,
+                                          solve_attendant_eigenvalue: bool = False
+                                          ) -> None:
+        """Perform a solution step using displacement control."""
+        solution = solve.solve_displacement_control(self, dof, tolerance,
+                                                    max_iterations)
+
+        if solve_det_k or solve_attendant_eigenvalue:
+            assembler = Assembler(self)
+
+            n, m = assembler.size
+
+        if solve_det_k:
+            k = np.zeros((m, m))
+            assembler.assemble_matrix(lambda e: e.compute_k(), out=k)
+            self.det_k = la.det(k[:n, :n])
+
+        if solve_attendant_eigenvalue:
+            self.solve_eigenvalues(assembler=assembler)
+
+        if info:
+            print(f'Displacement-Control with {dof[1]} at node {dof[0]} =' +
+                  f' {self[dof].delta}')
+            solution.show()
+            print()
+
+    def perform_arc_length_control_step(self,
+                                        tolerance: float = 1e-5,
+                                        max_iterations: int = 500,
+                                        info: bool = False,
+                                        solve_det_k: bool = True,
+                                        solve_attendant_eigenvalue: bool = False
+                                        ) -> None:
+        """Perform a solution step using arc-length control."""
+        solution = solve.solve_arc_length_control(
+            self, tolerance, max_iterations)
+
+        if solve_det_k or solve_attendant_eigenvalue:
+            assembler = Assembler(self)
+
+            n, m = assembler.size
+
+        if solve_det_k:
+            k = np.zeros((m, m))
+            assembler.assemble_matrix(lambda e: e.compute_k(), out=k)
+            self.det_k = la.det(k[:n, :n])
+
+        if solve_attendant_eigenvalue:
+            self.solve_eigenvalues(assembler=assembler)
+
+        if info:
+            print('Arc-Length-Control with length = ' +
+                  f'{solution.constraint.squared_l_hat**0.5}')
+            solution.show()
+            print()
+
+    def get_stiffness(self, mode: str = 'comp') -> Matrix:
+        """Get the stiffness matrix of the system."""
+        if mode == 'comp':
+            return self.compute_k()
+        elif mode == 'elas':
+            return self.compute_ke()
+        elif mode == 'geom':
+            return self.compute_kg()
+        elif mode == 'disp':
+            return self.compute_kd()
+
+        raise ValueError('mode')
+
+    def solve_det_k(self) -> None:
+        """Compute, stores and prints the determinant of k."""
+        self.det_k = self.compute_det_k()
 
         print(f'Det(K): {self.det_k}')
 
@@ -638,8 +648,10 @@ class Model:
         k_g = np.zeros((m, m))
         print("=================================")
         print('Linearized prebuckling (LPB) analysis ...')
-        assembler.assemble_matrix(lambda element: element.compute_linear_k(), out=k_e)
-        assembler.assemble_matrix(lambda element: element.compute_linear_kg(), out=k_g)
+        assembler.assemble_matrix(
+            lambda element: element.compute_linear_k(), out=k_e)
+        assembler.assemble_matrix(
+            lambda element: element.compute_linear_kg(), out=k_g)
 
         # solve eigenvalue problem
         eigvals, eigvecs = eig(k_e[:n, :n], -k_g[:n, :n])
@@ -667,7 +679,9 @@ class Model:
         eigvecs = eigvecs[:, i:]
 
         print(f'First linear eigenvalue: {eigvals[0]}')
-        print(f'First linear eigenvalue * lambda: {eigvals[0] * self.load_factor}')  # this is printed in TRUSS
+        # this is printed in TRUSS
+        print('First linear eigenvalue * lambda:' +
+              f' {eigvals[0] * self.load_factor}')
         if len(eigvecs[0]) < 10:
             print(f'First linear eigenvector: {eigvecs[0]}')
 
@@ -707,8 +721,10 @@ class Model:
         k_g = np.zeros((m, m))
         print("=================================")
         print('Attendant eigenvalue analysis ...')
-        assembler.assemble_matrix(lambda element: element.compute_km(), out=k_m)
-        assembler.assemble_matrix(lambda element: element.compute_kg(), out=k_g)
+        assembler.assemble_matrix(
+            lambda element: element.compute_km(), out=k_m)
+        assembler.assemble_matrix(
+            lambda element: element.compute_kg(), out=k_g)
 
         # solve eigenvalue problem
         eigvals, eigvecs = eig(k_m[:n, :n], -k_g[:n, :n])
@@ -721,11 +737,14 @@ class Model:
         eigvals = eigvals[idx]
         eigvecs = eigvecs[:, idx]
 
-        # find index of closest eigenvalue to 1 (we could store all but that seems like an overkill)
+        # find index of closest eigenvalue to 1 (we could store all but that
+        # seems like an overkill)
         idx = (np.abs(eigvals - 1.0)).argmin()
 
         print(f'Closest eigenvalue: {eigvals[idx]}')
-        print(f'Closest eigenvalue * lambda: {eigvals[idx] * self.load_factor}')  # this is printed in TRUSS
+        # this is printed in TRUSS
+        print(
+            f'Closest eigenvalue * lambda: {eigvals[idx] * self.load_factor}')
         if len(eigvecs[idx]) < 10:
             print('Closest eigenvector: {eigvecs[idx]}')
 
@@ -816,7 +835,9 @@ class Model:
         self.status = ModelStatus.prediction
         self[dof].delta += value
 
-    def predict_with_last_increment(self, value: Optional[float] = None) -> None:
+    def predict_with_last_increment(self,
+                                    value: Optional[float] = None
+                                    ) -> None:
         """Predict the solution by incrementing lambda and all dofs.
 
         Uses the increment of the last solution step.
@@ -830,7 +851,9 @@ class Model:
 
         assembler = Assembler(self)
 
-        last_increment = self.get_previous_model().get_increment_vector(assembler)
+        previous_model = self.get_previous_model()
+
+        last_increment = previous_model.get_increment_vector(assembler)
 
         length = la.norm(last_increment)
 
@@ -916,7 +939,8 @@ class Model:
             previous_model = self.get_previous_model()
 
             if previous_model.get_previous_model() is not None:
-                previous_increment = previous_model.get_increment_vector(assembler)
+                previous_increment = previous_model.get_increment_vector(
+                    assembler)
 
             if 'value' in options.keys():
                 prescribed_length = options['value']
@@ -926,7 +950,7 @@ class Model:
                 prescribed_length = 0.0
 
             if prescribed_length == 0.0:
-                print("WARNING: The length of the prescribed increment is 0.0!")
+                print("WARNING: Length of the prescribed increment is 0.0!")
 
             current_length = la.norm(tangent)
 
@@ -980,7 +1004,8 @@ class Model:
 
         prediction_length = la.norm(u_prediction)
 
-        eigenvector = eigenvector_model.get_delta_dof_vector(assembler=assembler)
+        eigenvector = eigenvector_model.get_delta_dof_vector(
+            assembler=assembler)
 
         # scale eigenvector to the length of the prediction
         eigenvector *= (1.0/(la.norm(eigenvector)/prediction_length))
@@ -1026,7 +1051,8 @@ class Model:
 
         n, _ = assembler.size
 
-        delta_dof_vector = self.get_delta_dof_vector(previous_model, assembler=assembler)
+        delta_dof_vector = self.get_delta_dof_vector(
+            previous_model, assembler=assembler)
 
         delta_lambda = self.load_factor - previous_model.load_factor
 
