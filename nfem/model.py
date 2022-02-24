@@ -230,12 +230,12 @@ class Model:
         r = np.empty(m)
 
         for i, dof in enumerate(assembler.dofs):
-            r[i] = dof.residual
+            r[i] = dof.external_force
+
+        r[:] *= self.load_factor
 
         def compute_local(element: Element) -> Vector:
             return element.compute_linear_r()
-
-        r[:] *= self.load_factor
 
         r = assembler.assemble_vector(compute_local)
 
@@ -273,15 +273,15 @@ class Model:
 
         n, m = assembler.size
 
-        def compute_local(element: Element) -> Vector:
-            return element.compute_r()
-
         r = np.empty(m)
 
         for i, dof in enumerate(assembler.dofs):
-            r[i] = dof.residual
+            r[i] = dof.external_force
 
         r[:] *= self.load_factor
+
+        def compute_local(element: Element) -> Vector:
+            return element.compute_r()
 
         assembler.assemble_vector(compute_local, out=r)
 
