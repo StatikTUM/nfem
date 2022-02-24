@@ -238,12 +238,17 @@ class Model:
         """Compute the linear stiffness matrix of the element."""
         assembler = Assembler(self)
 
-        n, _ = assembler.size
+        n, m = assembler.size
 
         def compute_local(element: Element) -> Vector:
-            return element.compute_linear_k()
+            return element.compute_linear_r()
 
-        k = assembler.assemble_matrix(compute_local)
+        r = np.empty(m)
+
+        for i, dof in enumerate(assembler.dofs):
+            r[i] = dof.residual
+
+        assembler.assemble_vector(compute_local, out=r)
 
         return k[:n, :n]
 
@@ -264,12 +269,17 @@ class Model:
         """Compute the nonlinear residual force vector of the element."""
         assembler = Assembler(self)
 
-        n, _ = assembler.size
+        n, m = assembler.size
 
         def compute_local(element: Element) -> Vector:
             return element.compute_r()
 
-        r = assembler.assemble_vector(compute_local)
+        r = np.empty(m)
+
+        for i, dof in enumerate(assembler.dofs):
+            r[i] = dof.residual
+
+        assembler.assemble_vector(compute_local, out=r)
 
         return r[:n]
 
