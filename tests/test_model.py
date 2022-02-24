@@ -151,3 +151,8 @@ def test_add_element():
 
     assert_almost_equal(model.nodes['B'].u, 0)
     assert_almost_equal(model.nodes['B'].v, -0.1)
+
+def test_dof(model):
+    assert_equal(model.dof('B.u').value, 1)
+    assert_equal(model.dof('B.v').value, 1)
+    assert_equal(model.dof('B.w').value, 0)

@@ -19,7 +19,9 @@ import numpy.typing as npt
 from scipy.linalg import eig
 
 from copy import deepcopy
-from typing import List, Optional, Type, Sequence
+from typing import List, Optional, Sequence, Tuple, Type, Union
+
+DofID = Union[str, Dof, Tuple[str, str]]
 
 Vector = npt.NDArray[np.float64]
 Matrix = npt.NDArray[np.float64]
@@ -195,7 +197,9 @@ class Model:
 
     def __getitem__(self, key) -> Dof:
         """Get a degree of freedom."""
-        if isinstance(key, Dof):
+        if isinstance(key, str):
+            return self.dof(key)
+        elif isinstance(key, Dof):
             node_key, dof_type = key.id
         else:
             node_key, dof_type = key
@@ -209,6 +213,11 @@ class Model:
         n, _ = assembler.size
 
         return assembler.dofs[:n]
+
+    def dof(self, id: str) -> Dof:
+        """Get a degree of freedom."""
+        node, direction = id.rsplit('.', maxsplit=1)
+        return self.nodes[node].dof(direction)
 
     # === r and k
 
@@ -549,12 +558,13 @@ class Model:
             print()
 
     def perform_displacement_control_step(self,
-                                          dof,
+                                          dof: DofID,
                                           tolerance: float = 1e-5,
                                           max_iterations: int = 500,
                                           info: bool = False,
                                           solve_det_k: bool = True,
-                                          solve_attendant_eigenvalue: bool = False
+                                          solve_attendant_eigenvalue: bool
+                                          = False
                                           ) -> None:
         """Perform a solution step using displacement control."""
         solution = solve.solve_displacement_control(self, dof, tolerance,
@@ -584,7 +594,8 @@ class Model:
                                         max_iterations: int = 500,
                                         info: bool = False,
                                         solve_det_k: bool = True,
-                                        solve_attendant_eigenvalue: bool = False
+                                        solve_attendant_eigenvalue: bool
+                                        = False
                                         ) -> None:
         """Perform a solution step using arc-length control."""
         solution = solve.solve_arc_length_control(
@@ -817,7 +828,7 @@ class Model:
         self.status = ModelStatus.prediction
         self.load_factor += value
 
-    def predict_dof_state(self, dof, value: float) -> None:
+    def predict_dof_state(self, dof: DofID, value: float) -> None:
         """Predict the solution by predictor_method the dof.
 
         @dof: Dof that is prescribed.
@@ -826,7 +837,7 @@ class Model:
         self.status = ModelStatus.prediction
         self[dof].delta = value
 
-    def predict_dof_increment(self, dof, value: float) -> None:
+    def predict_dof_increment(self, dof: DofID, value: float) -> None:
         """Predict the solution by incrementing the dof.
 
         @dof: Dof that is incremented.
@@ -1091,7 +1102,8 @@ class Model:
 
         return delta
 
-    def load_displacement_curve(self, dof, skip_iterations: bool = True):
+    def load_displacement_curve(self, dof: DofID,
+                                skip_iterations: bool = True):
         """Get the load displacement curve for a specific degree of freedom."""
         history = self.get_model_history(skip_iterations)
 
