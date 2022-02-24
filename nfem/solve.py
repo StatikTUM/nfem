@@ -1,7 +1,10 @@
+"""Strategies for solving linear and nonlinear FE problems."""
+
 from __future__ import annotations
 
 import nfem
 from nfem.assembler import Assembler
+from nfem.element import Element
 from nfem.nonlinear_solution_data import NonlinearSolutionInfo
 from nfem.model_status import ModelStatus
 
@@ -12,7 +15,8 @@ import io
 from typing import Tuple
 
 
-def solve_linear(model):
+def solve_linear(model: nfem.Model):
+    """Solve the linear FE problem."""
     assembler = Assembler(model)
 
     n, m = assembler.size
@@ -27,11 +31,11 @@ def solve_linear(model):
 
     r *= model.load_factor
 
-    assembler.assemble_vector(element_linear_r, out=r)
+    assembler.assemble_vector(_element_linear_r, out=r)
 
     # compute stiffness matrix of the system
 
-    assembler.assemble_matrix(element_linear_k, out=k)
+    assembler.assemble_matrix(_element_linear_k, out=k)
 
     # build right-hand-side
 
@@ -60,7 +64,7 @@ def solve_linear(model):
 
     r *= model.load_factor
 
-    assembler.assemble_vector(element_linear_r, out=r)
+    assembler.assemble_vector(_element_linear_r, out=r)
 
     # update residual forces
 
@@ -72,8 +76,9 @@ def solve_linear(model):
     return SolutionInfo(converged=True, iterations=1, residual_norm=0)
 
 
-def solve_load_control(model: nfem.Model, tolerance: float = 1e-5, 
+def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
                        max_iterations: int = 100):
+    """Solve the nonlinear FE problem using load control."""
     assembler = Assembler(model)
 
     load_factor_hat = model.load_factor
@@ -98,7 +103,7 @@ def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
 
         r *= model.load_factor
 
-        assembler.assemble_vector(element_r, out=r)
+        assembler.assemble_vector(_element_r, out=r)
 
         # build right-hand-side of the equation system
 
@@ -129,7 +134,7 @@ def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
         # compute stiffness matrix of the system
 
         k.fill(0)
-        assembler.assemble_matrix(element_k, out=k)
+        assembler.assemble_matrix(_element_k, out=k)
 
         # build left-hand-side of the equation system
 
@@ -154,9 +159,9 @@ def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
         model.load_factor += delta[n]
 
         data.append([
-            format(model.load_factor),
-            format(rnorm),
-            format(la.norm(delta)),
+            _format(model.load_factor),
+            _format(rnorm),
+            _format(la.norm(delta)),
         ])
 
         iteration += 1
@@ -180,6 +185,7 @@ def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
 def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
                                tolerance: float = 1e-5,
                                max_iterations: int = 100):
+    """Solve the nonlinear FE problem using displacement control."""
     assembler = Assembler(model)
 
     dof_index = assembler.dof_indices[dof]
@@ -204,7 +210,7 @@ def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
             r[i] = -assembler.dofs[i].external_force
         r *= model.load_factor
 
-        assembler.assemble_vector(element_r, out=r)
+        assembler.assemble_vector(_element_r, out=r)
 
         # build right-hand-side of the equation system
 
@@ -236,7 +242,7 @@ def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
         # compute stiffness matrix of the system
 
         k.fill(0)
-        assembler.assemble_matrix(element_k, out=k)
+        assembler.assemble_matrix(_element_k, out=k)
 
         # build left-hand-side of the equation system
 
@@ -261,9 +267,9 @@ def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
         model.load_factor += delta[n]
 
         data.append([
-            format(model.load_factor),
-            format(rnorm),
-            format(la.norm(delta)),
+            _format(model.load_factor),
+            _format(rnorm),
+            _format(la.norm(delta)),
         ])
 
         iteration += 1
@@ -286,6 +292,7 @@ def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
 
 def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
                              max_iterations: int = 100):
+    """Solve the nonlinear FE problem using arc-length control."""
     assembler = Assembler(model)
 
     previous_model = model.get_previous_model()
@@ -320,7 +327,7 @@ def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
             r[i] = -assembler.dofs[i].external_force
         r *= model.load_factor
 
-        assembler.assemble_vector(element_r, out=r)
+        assembler.assemble_vector(_element_r, out=r)
 
         # build right-hand-side of the equation system
 
@@ -352,7 +359,7 @@ def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
         # compute stiffness matrix of the system
 
         k.fill(0)
-        assembler.assemble_matrix(element_k, out=k)
+        assembler.assemble_matrix(_element_k, out=k)
 
         # build left-hand-side of the equation system
 
@@ -381,9 +388,9 @@ def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
         model.load_factor += delta[n]
 
         data.append([
-            format(model.load_factor),
-            format(rnorm),
-            format(la.norm(delta)),
+            _format(model.load_factor),
+            _format(rnorm),
+            _format(la.norm(delta)),
         ])
 
         iteration += 1
@@ -404,33 +411,37 @@ def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
     return NonlinearSolutionInfo(rnorm, ['λ', '|r|', '|du|'], data)
 
 
-def element_linear_r(element):
+def _element_linear_r(element: Element):
     return element.compute_linear_r()
 
 
-def element_linear_k(element):
+def _element_linear_k(element: Element):
     return element.compute_linear_k()
 
 
-def element_r(element):
+def _element_r(element: Element):
     return element.compute_r()
 
 
-def element_k(element):
+def _element_k(element: Element):
     return element.compute_k()
 
 
-def format(value, digits=6):
-    return '{:.6e}'.format(value) if value is not None else ''
+def _format(value, digits=6):
+    return f'{value:.6e}' if value is not None else ''
 
 
 class SolutionInfo:
-    def __init__(self, converged, iterations, residual_norm):
+    """Container for linear solution info."""
+
+    def __init__(self, converged: bool, iterations: int, residual_norm: float):
+        """Create a new linear SolutionInfo."""
         self.converged = converged
         self.iterations = iterations
         self.residual_norm = residual_norm
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Get a text representation of the object."""
         output = io.StringIO()
         if self.converged:
             print('System converged!', file=output)

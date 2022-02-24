@@ -11,6 +11,9 @@ import numpy.typing as npt
 
 from typing import Optional, Sequence
 
+Vector = npt.NDArray[np.float64]
+Matrix = npt.NDArray[np.float64]
+
 
 class Truss:
     """Nonlinear truss element."""
@@ -106,7 +109,7 @@ class Truss:
 
     # linear analysis
 
-    def compute_linear_r(self) -> npt.NDArray[float]:
+    def compute_linear_r(self) -> Vector:
         """Compute the linear residual force vector of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -123,7 +126,7 @@ class Truss:
                      [0, -1, 0, 0, 1, 0],
                      [0, 0, -1, 0, 0, 1]]
 
-    def compute_linear_k(self) -> npt.NDArray[float]:
+    def compute_linear_k(self) -> Matrix:
         """Compute the linear stiffness matrix of the element."""
         A1 = self.node_b.ref_location - self.node_a.ref_location
 
@@ -140,7 +143,7 @@ class Truss:
 
         return dg.T @ ddp @ dg
 
-    def compute_linear_kg(self) -> npt.NDArray[float]:
+    def compute_linear_kg(self) -> Matrix:
         """Compute the linear geometric stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -163,7 +166,7 @@ class Truss:
 
     # nonlinear analysis
 
-    def compute_r(self) -> npt.NDArray[float]:
+    def compute_r(self) -> Vector:
         """Compute the nonlinear residual force vector of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -180,7 +183,7 @@ class Truss:
                      [0, -1, 0, 0, 1, 0],
                      [0, 0, -1, 0, 0, 1]]
 
-    def compute_k(self) -> npt.NDArray[float]:
+    def compute_k(self) -> Matrix:
         """Compute the nonlinear stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -204,11 +207,11 @@ class Truss:
 
         return dg.T @ ddp @ dg
 
-    def compute_ke(self) -> npt.NDArray[float]:
+    def compute_ke(self) -> Matrix:
         """Compute the elastic stiffness matrix of the element."""
         return self.compute_linear_k()
 
-    def compute_km(self) -> npt.NDArray[float]:
+    def compute_km(self) -> Matrix:
         """Compute the material stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -226,7 +229,7 @@ class Truss:
 
         return dg.T @ ddp @ dg
 
-    def compute_kg(self) -> npt.NDArray[float]:
+    def compute_kg(self) -> Matrix:
         """Compute the geometric stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
         A1 = self.node_b.ref_location - self.node_a.ref_location
@@ -247,7 +250,7 @@ class Truss:
 
         return dg.T @ ddp @ dg
 
-    def compute_kd(self) -> npt.NDArray[float]:
+    def compute_kd(self) -> Matrix:
         """Compute the initial-displacement stiffness matrix of the element."""
         km = self.compute_km()
         ke = self.compute_linear_k()
@@ -256,7 +259,7 @@ class Truss:
 
     # visualization
 
-    def draw(self, item):
+    def draw(self, item) -> None:
         """Draw the truss."""
         sigma = self.compute_sigma_pk2()
         color = 'black'
