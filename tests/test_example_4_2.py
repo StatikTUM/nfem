@@ -25,7 +25,7 @@ def model():
 def test_example(model):
     model = model.get_duplicate()
     model.predict_tangential(strategy='lambda', value=0.05)
-    model.perform_non_linear_solution_step(strategy='load-control')
+    model.perform_load_control_step()
 
     model = nfem.bracketing(model)
 
@@ -37,12 +37,12 @@ def test_example(model):
     current_delta_v = model.get_dof_increment(dof=('C', 'v'))
     model.scale_prediction(desired_delta_v / current_delta_v)
 
-    model.perform_non_linear_solution_step(strategy='arc-length-control')
+    model.perform_arc_length_control_step()
 
     for step in range(30):
         model = model.get_duplicate()
         model.predict_tangential(strategy='arc-length')
-        model.perform_non_linear_solution_step(strategy='arc-length-control')
+        model.perform_arc_length_control_step()
 
     assert_almost_equal(model.load_displacement_curve(('C', 'u')).T, [
         [0, 0.0],

@@ -21,7 +21,7 @@ def test_a(model):
     model.nodes['B'].fy = 0.5
 
     model = model.get_duplicate()
-    model.perform_non_linear_solution_step(strategy='load-control')
+    model.perform_load_control_step()
 
     assert_almost_equal(model.nodes['B'].v, 1.0875149418525858)
 
@@ -31,7 +31,7 @@ def test_b(model):
     model.add_spring('ks', node='B', ky=0.8)
 
     model = model.get_duplicate()
-    model.perform_non_linear_solution_step(strategy='load-control')
+    model.perform_load_control_step()
 
     assert_almost_equal(model.nodes['B'].v, 0.8502106048504516)
 
@@ -47,7 +47,7 @@ def test_c(model):
     model.add_spring('ks', node='B', ky=0.8)
 
     model = model.get_duplicate()
-    model.perform_non_linear_solution_step(strategy='load-control')
+    model.perform_load_control_step()
 
     assert_almost_equal(model.nodes['A'].u, 1.3553296964261339)
     assert_almost_equal(model.nodes['B'].v, 1.9462770095396955)

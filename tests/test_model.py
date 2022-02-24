@@ -97,11 +97,6 @@ def test_new_timestep(model):
     assert_equal(new_timestep.get_previous_model(), model)
 
 
-def test_invalid_strategy_raises(model):
-    with pytest.raises(ValueError):
-        model.perform_non_linear_solution_step('invalid')
-
-
 def test_predict_load_increment(model):
     model.predict_load_increment(5)
 

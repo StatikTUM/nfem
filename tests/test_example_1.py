@@ -58,7 +58,7 @@ def test_nonlinear(model, load_curve):
 
         trace_b.append(model.nodes['B'].location)
 
-        model.perform_non_linear_solution_step(strategy='load-control')
+        model.perform_load_control_step()
 
     assert_allclose(trace_b, [
         [1,  0.98585786, 0],

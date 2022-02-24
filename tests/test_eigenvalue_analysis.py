@@ -38,7 +38,7 @@ def model_2():
 def test_limit_point(model_1):
     model = model_1
     model.load_factor = 0.1
-    model.perform_non_linear_solution_step(strategy="load-control")
+    model.perform_load_control_step()
     model.solve_eigenvalues()
 
     ev_actual = model.first_eigenvalue
@@ -58,7 +58,7 @@ def test_limit_point(model_1):
 def test_bifurcation_point(model_2):
     model = model_2
     model.load_factor = 0.1
-    model.perform_non_linear_solution_step(strategy="load-control")
+    model.perform_load_control_step()
     model.solve_eigenvalues()
 
     ev_actual = model.first_eigenvalue

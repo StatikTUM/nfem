@@ -66,7 +66,7 @@ def test_1a(model_1):
     for load_factor in load_curve:
         model_1 = model_1.get_duplicate()
         model_1.load_factor = load_factor
-        model_1.perform_non_linear_solution_step(strategy='load-control', max_iterations=1000)
+        model_1.perform_load_control_step(max_iterations=1000)
 
     actual = model_1.load_displacement_curve(('B', 'v'), skip_iterations=False)
 
@@ -79,7 +79,7 @@ def test_1b(model_1):
     for u_hat in displacement_curve:
         model_1 = model_1.get_duplicate()
         model_1.predict_tangential(strategy='dof', dof=('B', 'v'), value=u_hat)
-        model_1.perform_non_linear_solution_step(strategy='displacement-control', dof=('B', 'v'))
+        model_1.perform_displacement_control_step(dof=('B', 'v'))
 
     actual = model_1.load_displacement_curve(('B', 'v'), skip_iterations=False)
 
@@ -139,12 +139,12 @@ def test_1c(model_1):
 
     model_1 = model_1.get_duplicate()
     model_1.predict_tangential(strategy='lambda', value=0.05)
-    model_1.perform_non_linear_solution_step(strategy='load-control')
+    model_1.perform_load_control_step()
 
     for step in range(1, number_of_steps):
         model_1 = model_1.get_duplicate()
         model_1.predict_tangential(strategy='arc-length')
-        model_1.perform_non_linear_solution_step(strategy='arc-length-control')
+        model_1.perform_arc_length_control_step()
 
     actual = model_1.load_displacement_curve(('B', 'v'), skip_iterations=False)
 
@@ -225,12 +225,12 @@ def test_1c(model_1):
 
 def test_2(model_2):
     model_2.predict_tangential(strategy='lambda', value=0.03)
-    model_2.perform_non_linear_solution_step(strategy='load-control')
+    model_2.perform_load_control_step()
 
     for step in range(1, 120):
         model_2 = model_2.get_duplicate()
         model_2.predict_tangential(strategy='arc-length')
-        model_2.perform_non_linear_solution_step(strategy='arc-length-control')
+        model_2.perform_arc_length_control_step()
 
     actual = model_2.load_displacement_curve(('B', 'v'), skip_iterations=False)
 
@@ -362,12 +362,12 @@ def test_2(model_2):
 
 def test_3(model_3):
     model_3.predict_tangential(strategy='lambda', value=0.03)
-    model_3.perform_non_linear_solution_step(strategy='load-control')
+    model_3.perform_load_control_step()
 
     for step in range(1, 120):
         model_3 = model_3.get_duplicate()
         model_3.predict_tangential(strategy='arc-length')
-        model_3.perform_non_linear_solution_step(strategy='arc-length-control')
+        model_3.perform_arc_length_control_step()
 
     actual = model_3.load_displacement_curve(('B', 'v'), skip_iterations=False)
 

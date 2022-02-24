@@ -39,7 +39,7 @@ def test_bracketing_limit_point(model_1):
     model = model_1.get_duplicate()
 
     model.predict_tangential(strategy="lambda", value=0.05)
-    model.perform_non_linear_solution_step(strategy="load-control")
+    model.perform_load_control_step()
 
     critical_model = nfem.bracketing(model)
 
@@ -52,7 +52,7 @@ def test_bracketing_bifurcation_point(model_2):
     model = model_2.get_duplicate()
 
     model.predict_tangential(strategy="lambda", value=0.05)
-    model.perform_non_linear_solution_step(strategy="load-control")
+    model.perform_load_control_step()
 
     critical_model = nfem.bracketing(model)
     actual = critical_model.load_factor

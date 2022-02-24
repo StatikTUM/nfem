@@ -453,51 +453,6 @@ class Model:
             solution_info.show()
             print()
 
-    def perform_non_linear_solution_step(self, strategy, tolerance=1e-5, max_iterations=500, **options):
-        """Perform a non linear solution step on the model.
-
-        The path following strategy is chose according to the parameter.
-        A newton raphson algorithm is used to iteratively solve the nonlinear
-        equation system r(u,lam) = 0
-        The results are stored at the dofs and used to update the current
-        coordinates of the nodes.
-
-        Parameters
-        ----------
-        strategy : string
-            Path following strategy. Available options:
-            - load-control
-            - displacement-control
-            - arc-length-control
-        max_iterations: int
-            Maximum number of iteration for the newton raphson
-        tolerance : float
-            Tolerance for the newton raphson
-        **options: kwargs (key word arguments)
-            Additional options e.g.
-            - dof=('B','v'): for displacement-control
-            - solve_det_k=True: for solving the determinant of k at convergence
-            - solve_attendant_eigenvalue=True: for solving the attendant eigenvalue problem at convergence
-        """
-        if options.get('info', False):
-            print("\n=================================")
-            print("Start non linear solution step...")
-
-        if strategy == 'load-control':
-            info = solve.solve_load_control(self, tolerance, max_iterations, **options)
-        elif strategy == 'displacement-control':
-            dof = options.pop('dof')
-            info = solve.solve_displacement_control(self, dof, tolerance, max_iterations, **options)
-        elif strategy == 'arc-length-control':
-            info = solve.solve_arc_length_control(self, tolerance, max_iterations, **options)
-        else:
-            raise ValueError('Invalid path following strategy:' + strategy)
-
-        if options.get('info', False):
-            print(f'Residual norm: {info.residual_norm}.')
-            print(f'Solution found after {info.iterations} iteration steps.')
-            print()
-
     def get_stiffness(self, mode='comp'):
         """Get the stiffness matrix of the system."""
         assembler = Assembler(self)
