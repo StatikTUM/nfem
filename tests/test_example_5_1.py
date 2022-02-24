@@ -50,19 +50,19 @@ def test_nonlinear_solution_fails(model_1):
     with pytest.raises(RuntimeError):
         model = model_1.get_duplicate()
         model.predict_load_factor(value=0.1)
-        model.perform_non_linear_solution_step(strategy='load-control')
+        model.perform_load_control_step()
 
 
 def test_nonlinear_with_prestress(model_2):
     model = model_2.get_duplicate()
     model.predict_tangential(strategy='lambda', value=0.01)
-    model.perform_non_linear_solution_step(strategy='load-control')
+    model.perform_load_control_step()
 
     model = model.get_duplicate()
     for element in model.elements:
         element.prestress = 0
 
-    model.perform_non_linear_solution_step(strategy='load-control')
+    model.perform_load_control_step()
 
     assert_almost_equal(model.load_displacement_curve(('C', 'v')).T, [
         [0.0, 0.0],
@@ -73,7 +73,7 @@ def test_nonlinear_with_prestress(model_2):
     for step in range(7):
         model = model.get_duplicate()
         model.predict_tangential(strategy='arc-length')
-        model.perform_non_linear_solution_step(strategy='arc-length-control')
+        model.perform_arc_length_control_step()
 
     assert_almost_equal(model.load_displacement_curve(('C', 'v')).T[-1], [-3.33696062209198, 2.7207022912488386])
 
@@ -81,12 +81,12 @@ def test_nonlinear_with_prestress(model_2):
 def test_nonlinear_without_prestress(model_1):
     model = model_1.get_duplicate()
     model.predict_dof_state(dof=('C', 'v'), value=-0.2)
-    model.perform_non_linear_solution_step(strategy='displacement-control', dof=('C', 'v'))
+    model.perform_displacement_control_step(dof=('C', 'v'))
 
     for step in range(15):
         model = model.get_duplicate()
         model.predict_tangential(strategy='delta-dof',  dof=('C', 'v'), value=-0.2)
-        model.perform_non_linear_solution_step(strategy='displacement-control', dof=('C', 'v'))
+        model.perform_displacement_control_step(dof=('C', 'v'))
 
     assert_almost_equal(model.load_displacement_curve(('C', 'v')).T, [
         [0, 0.0],

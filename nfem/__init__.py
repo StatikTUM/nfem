@@ -19,7 +19,7 @@ from nfem.assembler import Assembler
 
 from nfem.bracketing import bracketing
 
-from nfem.visualization import Plot2D
+from nfem.plot import Plot2D
 
 __all__ = [
     'Model',

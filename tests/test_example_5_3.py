@@ -39,11 +39,7 @@ def test_nonlinear_solution(model):
 
     model.predict_tangential(strategy="lambda", value=0.01)
 
-    model.perform_non_linear_solution_step(
-        strategy="load-control",
-        solve_det_k=True,
-        solve_attendant_eigenvalue=True,
-    )
+    model.perform_load_control_step()
 
     model = nfem.bracketing(model, max_steps=500)
 

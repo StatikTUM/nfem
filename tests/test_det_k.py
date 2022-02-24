@@ -30,7 +30,7 @@ def test_det_k_initial_model(model):
 
 def test_det_k_after_solution(model):
     model.load_factor = 0.1
-    model.perform_non_linear_solution_step(strategy="load-control")
+    model.perform_load_control_step()
     model.solve_det_k()
     actual_value = model.det_k
     expected_value = 0.19510608810631772

@@ -96,7 +96,7 @@ def bracketing(model, tol=1e-7, max_steps=100, raise_error=True, **options):
 
             model_0.predict_tangential(strategy="arc-length")
 
-            model_0.perform_non_linear_solution_step(strategy='arc-length-control', **options)
+            model_0.perform_arc_length_control_step(**options)
 
         elif bisectioning or np.sign(det_k_0) != np.sign(det_k_1):
             # sign of the determinant changed, target is between det_k_1 and det_k_0
@@ -142,7 +142,7 @@ def minmax(model, **options):
 
     model_3.predict_tangential(strategy="arc-length")
 
-    model_3.perform_non_linear_solution_step(strategy='arc-length-control', **options)
+    model_3.perform_arc_length_control_step(**options)
 
     x1 = 0.0
     x2 = np.linalg.norm(model_2.get_increment_vector())
@@ -167,7 +167,7 @@ def minmax(model, **options):
 
         model.scale_prediction((xv-x2)/(x3-x2))
 
-        model.perform_non_linear_solution_step(strategy='arc-length-control', **options)
+        model.perform_arc_length_control_step(**options)
         return model
 
     elif xv >= x1:
@@ -177,7 +177,7 @@ def minmax(model, **options):
 
         model.scale_prediction((xv)/(x2))
 
-        model.perform_non_linear_solution_step(strategy='arc-length-control', **options)
+        model.perform_arc_length_control_step(**options)
 
         return model
     else:
@@ -203,7 +203,7 @@ def bisection(model, **options):
 
     tmp_model.load_factor = (lower_limit_model.load_factor + upper_limit_model.load_factor) / 2
 
-    tmp_model.perform_non_linear_solution_step(strategy='arc-length-control', **options)
+    tmp_model.perform_arc_length_control_step(**options)
 
     if np.sign(lower_limit_model.det_k) == np.sign(tmp_model.det_k):
         model._previous_model = tmp_model

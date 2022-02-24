@@ -24,7 +24,7 @@ def model():
 def test_branch_switching(model):
     bifurcation_model = model.get_duplicate()
     bifurcation_model.load_factor = 0.1
-    bifurcation_model.perform_non_linear_solution_step(strategy='load-control')
+    bifurcation_model.perform_load_control_step()
 
     critical_model = nfem.bracketing(bifurcation_model)
 
@@ -36,7 +36,7 @@ def test_branch_switching(model):
 
     predicted_model.scale_prediction(factor=20000)
 
-    predicted_model.perform_non_linear_solution_step(strategy='arc-length-control')
+    predicted_model.perform_arc_length_control_step()
 
     # compare lambda
     actual = predicted_model.load_factor

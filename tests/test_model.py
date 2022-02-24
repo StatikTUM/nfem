@@ -23,7 +23,7 @@ def model():
 
 
 def test_model_dofs(model):
-    assert_equal(len(model.dofs), 9)
+    assert_equal(len(model.dofs), 2)
 
 
 def test_model_nodes(model):
@@ -97,11 +97,6 @@ def test_new_timestep(model):
     assert_equal(new_timestep.get_previous_model(), model)
 
 
-def test_invalid_strategy_raises(model):
-    with pytest.raises(ValueError):
-        model.perform_non_linear_solution_step('invalid')
-
-
 def test_predict_load_increment(model):
     model.predict_load_increment(5)
 
@@ -156,3 +151,9 @@ def test_add_element():
 
     assert_almost_equal(model.nodes['B'].u, 0)
     assert_almost_equal(model.nodes['B'].v, -0.1)
+
+
+def test_dof(model):
+    assert_equal(model.dof('B.u').value, 1)
+    assert_equal(model.dof('B.v').value, 1)
+    assert_equal(model.dof('B.w').value, 0)
