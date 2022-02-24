@@ -230,7 +230,7 @@ class Model:
         r = np.empty(m)
 
         for i, dof in enumerate(assembler.dofs):
-            r[i] = dof.external_force
+            r[i] = -dof.external_force
 
         r[:] *= self.load_factor
 
@@ -276,7 +276,7 @@ class Model:
         r = np.empty(m)
 
         for i, dof in enumerate(assembler.dofs):
-            r[i] = dof.external_force
+            r[i] = -dof.external_force
 
         r[:] *= self.load_factor
 
