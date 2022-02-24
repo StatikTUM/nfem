@@ -1136,6 +1136,13 @@ class Model:
 
         return canvas.html(600, self)
 
+    def html(self) -> str:
+        from nfem.canvas_3d import Canvas3D
+
+        canvas = Canvas3D(height=600)
+
+        return canvas.raw_html(600, self)
+
     def show(self, height: int = 600, timestep: int = 0) -> None:
         """Show the model."""
         from nfem.canvas_3d import Canvas3D
