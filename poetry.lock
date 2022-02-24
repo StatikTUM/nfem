@@ -1036,14 +1036,14 @@ test = ["pytest"]
 
 [[package]]
 name = "testpath"
-version = "0.5.0"
+version = "0.6.0"
 description = "Test utilities for code working with files and commands"
 category = "main"
 optional = false
 python-versions = ">= 3.5"
 
 [package.extras]
-test = ["pytest", "pathlib2"]
+test = ["pytest"]
 
 [[package]]
 name = "toml"
@@ -1124,10 +1124,13 @@ python-versions = ">=3.7"
 docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
+[extras]
+qt = []
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "8b484d535fa58f88ab4e5245499b0da844820a4cc1d74c2c8902bb64512b60d0"
+content-hash = "fb74ee4d151768045c7ffee0dbaf672b8dd3eabaedfec204acfa2937d8e291e8"
 
 [metadata.files]
 appnope = [
@@ -1774,8 +1777,8 @@ terminado = [
     {file = "terminado-0.13.1.tar.gz", hash = "sha256:5b82b5c6e991f0705a76f961f43262a7fb1e55b093c16dca83f16384a7f39b7b"},
 ]
 testpath = [
-    {file = "testpath-0.5.0-py3-none-any.whl", hash = "sha256:8044f9a0bab6567fc644a3593164e872543bb44225b0e24846e2c89237937589"},
-    {file = "testpath-0.5.0.tar.gz", hash = "sha256:1acf7a0bcd3004ae8357409fc33751e16d37ccc650921da1094a86581ad1e417"},
+    {file = "testpath-0.6.0-py3-none-any.whl", hash = "sha256:8ada9f80a2ac6fb0391aa7cdb1a7d11cfa8429f693eda83f74dde570fe6fa639"},
+    {file = "testpath-0.6.0.tar.gz", hash = "sha256:2f1b97e6442c02681ebe01bd84f531028a7caea1af3825000f52345c30285e0f"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
