@@ -1,6 +1,13 @@
-import nfem
 import pytest
+
+import nfem
+
 from numpy.testing import assert_equal
+
+
+if __name__ == '__main__':
+    import sys
+    pytest.main(sys.argv)
 
 
 @pytest.fixture
