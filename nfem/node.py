@@ -296,57 +296,102 @@ class Node:
 
     def draw(self, item):
         """Draw the node."""
-        item.set_label_location(self.ref_location, self.location)
 
-        item.add_support(
-            location=self.ref_location,
-            direction=self.support,
-            layer=10,
-            color='gray',
-        )
+        # reference configuration
 
-        item.add_support(
-            location=self.location,
-            direction=self.support,
-            layer=20,
-            color='black',
-        )
+        ref_a = self.ref_location.tolist()
 
-        item.add_point(
-            location=self.ref_location,
-            layer=10,
-            color='gray',
-        )
+        if self.support_x:
+            item.append({
+                "type": "Support",
+                "position": ref_a,
+                "direction": "x",
+                "layer": "10",
+            })
 
-        item.add_point(
-            location=self.location,
-            layer=20,
-            color='black',
-        )
+        if self.support_y:
+            item.append({
+                "type": "Support",
+                "position": ref_a,
+                "direction": "y",
+                "layer": "10",
+            })
 
-        d = self.location - self.ref_location
+        if self.support_z:
+            item.append({
+                "type": "Support",
+                "position": ref_a,
+                "direction": "z",
+                "layer": "10",
+            })
 
-        item.add_result('Location undeformed', self.ref_location.tolist())
-        item.add_result('Location', self.location.tolist())
-        item.add_result('Displacement', d.tolist())
-        item.add_result('Displacement X', float(d[0]))
-        item.add_result('Displacement Y', float(d[1]))
-        item.add_result('Displacement Z', float(d[2]))
+        item.append({
+            "type": "Points",
+            "position": ref_a,
+            "material": "PtDarkGray6",
+            "layer": "10",
+        })
 
-        if np.linalg.norm(self.external_force) > 1e-8:
-            direction = self.external_force
-            direction /= np.linalg.norm(direction)
+        # actual configuration
 
-            item.add_arrow(
-                location=self.ref_location - direction,
-                direction=direction,
-                layer=13,
-                color='gray',
-            )
+        a = self.location.tolist()
 
-            item.add_arrow(
-                location=self.location - direction,
-                direction=direction,
-                layer=23,
-                color='blue',
-            )
+        if self.support_x:
+            item.append({
+                "type": "Support",
+                "position": a,
+                "direction": "x",
+                "layer": "20",
+            })
+
+        if self.support_y:
+            item.append({
+                "type": "Support",
+                "position": a,
+                "direction": "y",
+                "layer": "20",
+            })
+
+        if self.support_z:
+            item.append({
+                "type": "Support",
+                "position": a,
+                "direction": "z",
+                "layer": "20",
+            })
+
+        item.append({
+            "type": "Points",
+            "position": a,
+            "material": "PtBlack6",
+            "layer": "20",
+        })
+
+        # item.set_label_location(self.ref_location, self.location)
+
+        # d = self.location - self.ref_location
+
+        # item.add_result('Location undeformed', self.ref_location.tolist())
+        # item.add_result('Location', self.location.tolist())
+        # item.add_result('Displacement', d.tolist())
+        # item.add_result('Displacement X', float(d[0]))
+        # item.add_result('Displacement Y', float(d[1]))
+        # item.add_result('Displacement Z', float(d[2]))
+
+        # if np.linalg.norm(self.external_force) > 1e-8:
+        #     direction = self.external_force
+        #     direction /= np.linalg.norm(direction)
+
+        #     item.add_arrow(
+        #         location=self.ref_location - direction,
+        #         direction=direction,
+        #         layer=13,
+        #         color='gray',
+        #     )
+
+        #     item.add_arrow(
+        #         location=self.location - direction,
+        #         direction=direction,
+        #         layer=23,
+        #         color='blue',
+        #     )
