@@ -21,6 +21,14 @@ dg = np.array([
 ])
 
 
+def _select(sigma, negative, zero, positive):
+    if sigma < -1e-4:
+        return negative
+    if sigma > 1e-4:
+        return positive
+    return zero
+
+
 class Truss:
     """Nonlinear truss element."""
 
@@ -231,55 +239,64 @@ class Truss:
 
     # visualization
 
-    def draw(self, item) -> None:
+    def draw(self, canvas) -> None:
         """Draw the truss."""
+
+        # reference configuration
+
+        ref_a = self.node_a.ref_location.tolist()
+        ref_b = self.node_b.ref_location.tolist()
+
+        canvas.append({
+            "type": "Line",
+            "material": "LnDarkGray1",
+            "position": [*ref_a, *ref_b],
+            "layer": 0,
+            "layer": "10",
+        })
+
+        # actual configuration
+
+        a = self.node_a.location.tolist()
+        b = self.node_b.location.tolist()
+
         sigma = self.compute_sigma_pk2()
-        color = 'black'
-        eta = None
 
-        if self.compute_sigma_pk2() > 1e-3:
-            color = 'blue'
-            if self.tensile_strength is not None:
-                sigma_max = self.tensile_strength
-                eta = sigma / sigma_max
-        elif self.compute_sigma_pk2() < -1e-3:
-            color = 'red'
-            if self.compressive_strength is not None:
-                sigma_max = -self.compressive_strength
-                eta = sigma / sigma_max
-        elif (self.tensile_strength is not None and
-              self.compressive_strength is not None):
-            eta = 0.0
+        canvas.append({
+            "type": "Line",
+            "material": _select(sigma, "LnBlue2", "LnBlack2", "LnRed2"),
+            "position": [*a, *b],
+            "layer": 0,
+            "layer": "20",
+        })
 
-        item.set_label_location(
-            ref=0.5 * (self.node_a.ref_location + self.node_b.ref_location),
-            act=0.5 * (self.node_a.location + self.node_b.location),
-        )
+        # eta = None
 
-        item.add_line(
-            points=[
-                self.node_a.ref_location,
-                self.node_b.ref_location,
-            ],
-            layer=10,
-            color='gray',
-        )
+        # if self.compute_sigma_pk2() > 1e-3:
+        #     color = 'blue'
+        #     if self.tensile_strength is not None:
+        #         sigma_max = self.tensile_strength
+        #         eta = sigma / sigma_max
+        # elif self.compute_sigma_pk2() < -1e-3:
+        #     color = 'red'
+        #     if self.compressive_strength is not None:
+        #         sigma_max = -self.compressive_strength
+        #         eta = sigma / sigma_max
+        # elif (self.tensile_strength is not None and
+        #       self.compressive_strength is not None):
+        #     eta = 0.0
 
-        item.add_line(
-            points=[
-                self.node_a.location,
-                self.node_b.location,
-            ],
-            layer=20,
-            color=color,
-        )
+        # item.set_label_location(
+        #     ref=0.5 * (self.node_a.ref_location + self.node_b.ref_location),
+        #     act=0.5 * (self.node_a.location + self.node_b.location),
+        # )
 
-        item.add_result('Length undeformed', self.ref_length)
-        item.add_result('Length', self.length)
-        item.add_result('Engineering Strain', self.compute_epsilon_lin())
-        item.add_result('Green-Lagrange Strain', self.compute_epsilon_gl())
-        item.add_result('PK2 Stress', sigma)
-        item.add_result('Normal Force', self.normal_force)
+        # item.add_result('Length undeformed', self.ref_length)
+        # item.add_result('Length', self.length)
+        # item.add_result('Engineering Strain', self.compute_epsilon_lin())
+        # item.add_result('Green-Lagrange Strain', self.compute_epsilon_gl())
+        # item.add_result('PK2 Stress', sigma)
+        # item.add_result('Normal Force', self.normal_force)
 
-        if eta is not None:
-            item.add_result('Degree of Utilization', eta)
+        # if eta is not None:
+        #     item.add_result('Degree of Utilization', eta)
