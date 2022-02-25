@@ -91,10 +91,25 @@ class Spring:
 
     def draw(self, canvas) -> None:
         """Draw the spring."""
-        location = self.node.location
+        location = self.node.location.tolist()
+
         if self.kx != 0:
-            canvas.spring(location, 'x')
+            canvas.append({
+                'type': 'Spring',
+                'position': location,
+                'direction': 'x',
+            })
+
         if self.ky != 0:
-            canvas.spring(location, 'y')
+            canvas.append({
+                'type': 'Spring',
+                'position': location,
+                'direction': 'y',
+            })
+
         if self.kz != 0:
-            canvas.spring(location, 'z')
+            canvas.append({
+                'type': 'Spring',
+                'position': location,
+                'direction': 'z',
+            })
