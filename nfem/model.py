@@ -634,19 +634,6 @@ class Model:
             solution.show()
             print()
 
-    def get_stiffness(self, mode: str = 'comp') -> Matrix:
-        """Get the stiffness matrix of the system."""
-        if mode == 'comp':
-            return self.compute_k()
-        elif mode == 'elas':
-            return self.compute_ke()
-        elif mode == 'geom':
-            return self.compute_kg()
-        elif mode == 'disp':
-            return self.compute_kd()
-
-        raise ValueError('mode')
-
     def solve_det_k(self) -> None:
         """Compute, stores and prints the determinant of k."""
         self.det_k = self.compute_det_k()
