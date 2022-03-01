@@ -1145,11 +1145,12 @@ class Model:
 
     def show(self, height: int = 600, timestep: int = 0) -> None:
         """Show the model."""
-        try:
+        import sys
+        if 'ipykernel' in sys.modules:
             from nfem.canvas_3d import Canvas3D
             canvas = Canvas3D(height=height)
             canvas.show(height, self)
-        except (ImportError, NameError):
+        else:
             from PyQt6.QtWebEngineWidgets import QWebEngineView
             from PyQt6.QtWidgets import QApplication
 
