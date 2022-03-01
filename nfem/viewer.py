@@ -60,7 +60,7 @@ def _load_with_data(path, data):
     with open(path, 'r') as f:
         html = f.read()
 
-    start_tag = '<script id="data" type="application/json">'
+    start_tag = '<script id="nfem-data" type="application/json">'
     end_tag = '</script>'
 
     start_index = html.find(start_tag) + len(start_tag)
