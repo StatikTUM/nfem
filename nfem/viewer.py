@@ -42,6 +42,16 @@ class Viewer:
         return _iframe(html_content, height)
 
 
+def load_html(name: str, data):
+    return _load_with_data(f'{ROOT}/html/{name}.html', data)
+
+
+def load_iframe(name: str, data):
+    content = load_html(name, data)
+
+    return f'<iframe seamless frameborder="0" allowfullscreen width="100%" onload="this.style.height=(this.contentWindow.document.body.scrollHeight+20)+\'px\';" srcdoc="{html.escape(content)}"></iframe>'
+
+
 def _iframe(content: str, height: int):
     return f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{html.escape(content)}"></iframe>'
 

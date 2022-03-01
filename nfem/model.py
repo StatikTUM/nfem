@@ -536,12 +536,12 @@ class Model:
         The results are stored at the dofs and used to update the current
         coordinates of the nodes.
         """
-        if info:
-            print("Start linear solution step...")
-            print(f"lambda : {self.load_factor}")
-            print()
+        solution = solve.solve_linear(self)
 
-        solve.solve_linear(self)
+        if info:
+            print(f'Linear solution with λ = {self.load_factor}')
+            solution.show()
+            print()
 
     def perform_load_control_step(self,
                                   tolerance: float = 1e-5,
