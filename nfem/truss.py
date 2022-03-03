@@ -21,6 +21,14 @@ dg = np.array([
 ])
 
 
+def _select(sigma, negative, zero, positive):
+    if sigma < -1e-4:
+        return negative
+    if sigma > 1e-4:
+        return positive
+    return zero
+
+
 class Truss:
     """Nonlinear truss element."""
 
@@ -233,53 +241,64 @@ class Truss:
 
     def draw(self, item) -> None:
         """Draw the truss."""
+
+        # reference configuration
+
+        ref_a = self.node_a.ref_location.tolist()
+        ref_b = self.node_b.ref_location.tolist()
+
+        item.append({
+            "type": "Line",
+            "material": "LnDarkGray1",
+            "position": [*ref_a, *ref_b],
+            "layer": 0,
+            "layer": "10",
+        })
+
+        # actual configuration
+
+        a = self.node_a.location.tolist()
+        b = self.node_b.location.tolist()
+
         sigma = self.compute_sigma_pk2()
-        color = 'black'
+
+        item.append({
+            "type": "Line",
+            "material": _select(sigma, "LnBlue2", "LnBlack2", "LnRed2"),
+            "position": [*a, *b],
+            "layer": 0,
+            "layer": "20",
+        })
+
+        c = (0.5 * (self.node_a.location + self.node_b.location)).tolist()
+
         eta = None
 
-        if self.compute_sigma_pk2() > 1e-3:
-            color = 'blue'
-            if self.tensile_strength is not None:
-                sigma_max = self.tensile_strength
+        t_strength = self.tensile_strength
+        c_strength = self.compressive_strength
+
+        if sigma > 1e-3:
+            if t_strength is not None:
+                sigma_max = t_strength
                 eta = sigma / sigma_max
-        elif self.compute_sigma_pk2() < -1e-3:
-            color = 'red'
-            if self.compressive_strength is not None:
-                sigma_max = -self.compressive_strength
+        elif sigma < -1e-3:
+            if c_strength is not None:
+                sigma_max = -c_strength
                 eta = sigma / sigma_max
-        elif (self.tensile_strength is not None and
-              self.compressive_strength is not None):
+        elif t_strength is not None and c_strength is not None:
             eta = 0.0
 
-        item.set_label_location(
-            ref=0.5 * (self.node_a.ref_location + self.node_b.ref_location),
-            act=0.5 * (self.node_a.location + self.node_b.location),
-        )
-
-        item.add_line(
-            points=[
-                self.node_a.ref_location,
-                self.node_b.ref_location,
-            ],
-            layer=10,
-            color='gray',
-        )
-
-        item.add_line(
-            points=[
-                self.node_a.location,
-                self.node_b.location,
-            ],
-            layer=20,
-            color=color,
-        )
-
-        item.add_result('Length undeformed', self.ref_length)
-        item.add_result('Length', self.length)
-        item.add_result('Engineering Strain', self.compute_epsilon_lin())
-        item.add_result('Green-Lagrange Strain', self.compute_epsilon_gl())
-        item.add_result('PK2 Stress', sigma)
-        item.add_result('Normal Force', self.normal_force)
-
-        if eta is not None:
-            item.add_result('Degree of Utilization', eta)
+        item.append({
+            "type": "ElementData",
+            "position": c,
+            "data": {
+                "ID": self.id,
+                "Length undeformed": self.ref_length,
+                "Length": self.length,
+                "Engineering Strain": self.compute_epsilon_lin(),
+                "Green-Lagrange Strain": self.compute_epsilon_gl(),
+                "PK2 Stress": sigma,
+                "Normal Force": self.normal_force,
+                "Degree of Utilization": eta or "-",
+            },
+        })

@@ -529,6 +529,24 @@ class Model:
 
     # === solving
 
+    def solve_linear(self) -> solve.SolutionInfo:
+        """Perform a linear solution step on the model."""
+        return solve.solve_linear(self)
+
+    def solve_load_control(self, tolerance: float = 1e-5, max_iterations: int = 500) -> solve.SolutionInfo:
+        """Perform a solution step using load control."""
+        return solve.solve_load_control(self, tolerance, max_iterations)
+
+    def solve_displacement_control(self, dof: DofID, tolerance: float = 1e-5, max_iterations: int = 500) -> solve.SolutionInfo:
+        """Perform a solution step using displacement control."""
+        return solve.solve_displacement_control(self, dof, tolerance, max_iterations)
+
+    def solve_arc_length_control(self, tolerance: float = 1e-5, max_iterations: int = 500) -> solve.SolutionInfo:
+        """Perform a solution step using arc-length control."""
+        return solve.solve_arc_length_control(self, tolerance, max_iterations)
+
+    # ---
+
     def perform_linear_solution_step(self, info: bool = False) -> None:
         """Perform a linear solution step on the model.
 
@@ -536,12 +554,12 @@ class Model:
         The results are stored at the dofs and used to update the current
         coordinates of the nodes.
         """
-        if info:
-            print("Start linear solution step...")
-            print(f"lambda : {self.load_factor}")
-            print()
+        solution = self.solve_linear()
 
-        solve.solve_linear(self)
+        if info:
+            print(f'Linear solution with λ = {self.load_factor}')
+            solution.show()
+            print()
 
     def perform_load_control_step(self,
                                   tolerance: float = 1e-5,
@@ -581,8 +599,8 @@ class Model:
                                           = False
                                           ) -> None:
         """Perform a solution step using displacement control."""
-        solution = solve.solve_displacement_control(self, dof, tolerance,
-                                                    max_iterations)
+        solution = self.solve_displacement_control(dof, tolerance,
+                                                   max_iterations)
 
         if solve_det_k or solve_attendant_eigenvalue:
             assembler = Assembler(self)
@@ -612,8 +630,7 @@ class Model:
                                         = False
                                         ) -> None:
         """Perform a solution step using arc-length control."""
-        solution = solve.solve_arc_length_control(
-            self, tolerance, max_iterations)
+        solution = self.solve_arc_length_control(tolerance, max_iterations)
 
         if solve_det_k or solve_attendant_eigenvalue:
             assembler = Assembler(self)
@@ -633,19 +650,6 @@ class Model:
                   f'{solution.constraint.squared_l_hat**0.5}')
             solution.show()
             print()
-
-    def get_stiffness(self, mode: str = 'comp') -> Matrix:
-        """Get the stiffness matrix of the system."""
-        if mode == 'comp':
-            return self.compute_k()
-        elif mode == 'elas':
-            return self.compute_ke()
-        elif mode == 'geom':
-            return self.compute_kg()
-        elif mode == 'disp':
-            return self.compute_kd()
-
-        raise ValueError('mode')
 
     def solve_det_k(self) -> None:
         """Compute, stores and prints the determinant of k."""
@@ -1130,26 +1134,45 @@ class Model:
         return data
 
     def _repr_html_(self) -> str:
-        from nfem.canvas_3d import Canvas3D
-
-        canvas = Canvas3D(height=600)
-
-        return canvas.html(600, self)
+        return self.html()
 
     def html(self) -> str:
-        from nfem.canvas_3d import Canvas3D
+        timesteps = []
 
-        canvas = Canvas3D(height=600)
+        for model in self.get_model_history():
+            timestep = {}
 
-        return canvas.raw_html(600, self)
+            timestep['name'] = model.name or ''
+
+            timestep['objects'] = objects = []
+
+            for element in model.elements:
+                element.draw(objects)
+
+            for node in model.nodes:
+                node.draw(objects)
+
+            timesteps.append(timestep)
+
+        data = dict(
+            settings=dict(
+            ),
+            timesteps=timesteps,
+        )
+
+        from nfem.viewer import load_html
+
+        return load_html('model-viewer', data)
 
     def show(self, height: int = 600, timestep: int = 0) -> None:
         """Show the model."""
-        try:
-            from nfem.canvas_3d import Canvas3D
-            canvas = Canvas3D(height=height)
-            canvas.show(height, self)
-        except (ImportError, NameError):
+        import sys
+        if 'ipykernel' in sys.modules:
+            from html import escape
+            from IPython.display import display_html
+            raw_html = self.html()
+            display_html(f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{escape(raw_html)}"></iframe>', raw=True)
+        else:
             from PyQt6.QtWebEngineWidgets import QWebEngineView
             from PyQt6.QtWidgets import QApplication
 

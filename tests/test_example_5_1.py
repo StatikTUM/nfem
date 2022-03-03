@@ -75,7 +75,8 @@ def test_nonlinear_with_prestress(model_2):
         model.predict_tangential(strategy='arc-length')
         model.perform_arc_length_control_step()
 
-    assert_almost_equal(model.load_displacement_curve(('C', 'v')).T[-1], [-3.33696062209198, 2.7207022912488386])
+    assert_almost_equal(model.load_displacement_curve(('C', 'v')).T[-1],
+        [-3.33696062209198, 2.7207022912488386])
 
 
 def test_nonlinear_without_prestress(model_1):
@@ -85,53 +86,51 @@ def test_nonlinear_without_prestress(model_1):
 
     for step in range(15):
         model = model.get_duplicate()
-        model.predict_tangential(strategy='delta-dof',  dof=('C', 'v'), value=-0.2)
+        model.predict_tangential(strategy='delta-dof', dof=('C', 'v'), value=-0.2)
         model.perform_displacement_control_step(dof=('C', 'v'))
 
     assert_almost_equal(model.load_displacement_curve(('C', 'v')).T, [
-        [0, 0.0],
+        [-0.0, 0.0],
         [-0.2, 0.0006258749552864138],
         [-0.4, 0.00502517767054208],
-        [-0.6000000000000001, 0.017028343698052933],
+        [-0.6, 0.017028343698052933],
         [-0.8, 0.04047117406708145],
         [-1.0, 0.07905232475409663],
         [-1.2, 0.1362597616503292],
         [-1.4, 0.2153089908177671],
-        [-1.5999999999999999, 0.3192544581116804],
-        [-1.7999999999999998, 0.4510682197015355],
-        [-1.9999999999999998, 0.6137121212797986],
-        [-2.1999999999999997, 0.8101805413028882],
+        [-1.6, 0.3192544581116804],
+        [-1.8, 0.4510682197015355],
+        [-2.0, 0.6137121212797986],
+        [-2.2, 0.8101805413028882],
         [-2.4, 1.0435183439235614],
         [-2.6, 1.3168232048485564],
-        [-2.8000000000000003, 1.6332401300737045],
-        [-3.0000000000000004, 1.9959531892454738],
-        [-3.2000000000000006, 2.4081771325499424],
+        [-2.8, 1.6332401300737045],
+        [-3.0, 1.9959531892454738],
+        [-3.2, 2.4081771325499424],
     ])
 
 
 def test_stiffness_without_prestress(model_1):
     model = model_1.get_duplicate()
 
-    print(model.get_stiffness())
-
-    assert_array_almost_equal(model.get_stiffness(),
-        [[ 2, 0, -1, 0,  0, 0],
-         [ 0, 0,  0, 0,  0, 0],
-         [-1, 0,  2, 0, -1, 0],
-         [ 0, 0,  0, 0,  0, 0],
-         [ 0, 0, -1, 0,  2, 0],
-         [ 0, 0,  0, 0,  0, 0]])
+    assert_array_almost_equal(model.compute_k(), [
+        [+2, 0, -1, 0, +0, 0],
+        [+0, 0, +0, 0, +0, 0],
+        [-1, 0, +2, 0, -1, 0],
+        [+0, 0, +0, 0, +0, 0],
+        [+0, 0, -1, 0, +2, 0],
+        [+0, 0, +0, 0, +0, 0],
+    ])
 
 
 def test_stiffness_with_prestress(model_2):
     model = model_2.get_duplicate()
 
-    print(model.get_stiffness())
-
-    assert_array_almost_equal(model.get_stiffness(),
-        [[ 4,  0, -2,  0,  0,  0],
-         [ 0,  2,  0, -1,  0,  0],
-         [-2,  0,  4,  0, -2,  0],
-         [ 0, -1,  0,  2,  0, -1],
-         [ 0,  0, -2,  0,  4,  0],
-         [ 0,  0,  0, -1,  0,  2]])
+    assert_array_almost_equal(model.compute_k(), [
+        [+4, +0, -2, +0, +0, +0],
+        [+0, +2, +0, -1, +0, +0],
+        [-2, +0, +4, +0, -2, +0],
+        [+0, -1, +0, +2, +0, -1],
+        [+0, +0, -2, +0, +4, +0],
+        [+0, +0, +0, -1, +0, +2],
+    ])

@@ -5,66 +5,113 @@ from __future__ import annotations
 import nfem
 from nfem.assembler import Assembler
 from nfem.element import Element
-from nfem.nonlinear_solution_data import NonlinearSolutionInfo
 from nfem.model_status import ModelStatus
+from nfem.viewer import load_html
 
 import numpy as np
 import numpy.linalg as la
 
 import io
-from typing import Tuple
+from typing import Tuple, List
 
 
 def solve_linear(model: nfem.Model):
     """Solve the linear FE problem."""
     assembler = Assembler(model)
 
+    load_factor_hat = model.load_factor
+
     n, m = assembler.size
 
-    r = np.zeros(m)
-    k = np.zeros((m, m))
+    r = np.empty(m)
+    k = np.empty((m, m))
 
-    # compute residual forces of the system
+    rhs = np.empty(n + 1)
+    lhs = np.empty((n + 1, n + 1))
 
-    for i in range(m):
-        r[i] = -assembler.dofs[i].external_force
+    rnorm_history: List[float] = []
+    dnorm_history: List[float] = []
 
-    r *= model.load_factor
+    load_factor_hat = model.load_factor
+    tolerance = 1e-6
+    max_iterations = 2
 
-    assembler.assemble_vector(_element_linear_r, out=r)
+    iteration = 0
 
-    # compute stiffness matrix of the system
+    while True:
+        # compute residual forces of the system
 
-    assembler.assemble_matrix(_element_linear_k, out=k)
+        for i in range(m):
+            r[i] = -assembler.dofs[i].external_force
 
-    # build right-hand-side
+        r *= model.load_factor
 
-    rhs = -r[:n]
+        assembler.assemble_vector(_element_linear_r, out=r)
 
-    # build left-hand-side
+        # build right-hand-side of the equation system
 
-    lhs = k[:n, :n]
+        rhs[:n] = -r[:n]
+        rhs[n] = model.load_factor - load_factor_hat
 
-    # Solve linear equation system: lhs * delta = rhs
+        # check residual criterion
 
-    try:
-        delta = la.solve(lhs, rhs)
-    except np.linalg.LinAlgError:
-        raise RuntimeError('Stiffness matrix is singular')
+        rnorm = la.norm(rhs)
+        rnorm_history.append(rnorm)
 
-    # update model
+        if rnorm < tolerance:
+            break
 
-    for i in range(n):
-        assembler.dofs[i].value += delta[i]
+        # check iteration criterion
 
-    # compute residuals
+        if iteration > max_iterations:
+            break
 
-    for i in range(m):
-        r[i] = -assembler.dofs[i].external_force
+        # create a duplicate of the current state before updating and insert it
+        # in the history
 
-    r *= model.load_factor
+        duplicate = model.get_duplicate()
+        duplicate._previous_model = model._previous_model
+        model._previous_model = duplicate
+        duplicate.status = model.status
+        model.status = ModelStatus.iteration
 
-    assembler.assemble_vector(_element_linear_r, out=r)
+        # compute stiffness matrix of the system
+
+        k.fill(0)
+        assembler.assemble_matrix(_element_linear_k, out=k)
+
+        # build left-hand-side of the equation system
+
+        lhs.fill(0)
+        lhs[:n, :n] = k[:n, :n]
+        lhs[n, n] = 1
+        for i in range(n):
+            lhs[i, n] = -assembler.dofs[i].external_force
+
+        # solve linear equation system: lhs * delta = rhs
+
+        try:
+            delta = la.solve(lhs, rhs)
+        except np.linalg.LinAlgError:
+            raise RuntimeError('Stiffness matrix is singular')
+
+        dnorm = la.norm(delta)
+        dnorm_history.append(dnorm)
+
+        # update model
+
+        for i in range(n):
+            assembler.dofs[i].value += delta[i]
+
+        model.load_factor += delta[n]
+
+        iteration += 1
+
+    if iteration > max_iterations:
+        raise RuntimeError(
+            f'Newthon-Raphson did not converge after {max_iterations} steps.' +
+            f' Residual norm: {rnorm}'
+        )
 
     # update residual forces
 
@@ -73,7 +120,7 @@ def solve_linear(model: nfem.Model):
 
     model.status = ModelStatus.equilibrium
 
-    return SolutionInfo(converged=True, iterations=1, residual_norm=0)
+    return SolutionInfo(True, rnorm_history, dnorm_history)
 
 
 def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
@@ -91,7 +138,8 @@ def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
     rhs = np.zeros(n + 1)
     lhs = np.zeros((n + 1, n + 1))
 
-    data = []
+    rnorm_history: List[float] = []
+    dnorm_history: List[float] = []
 
     iteration = 0
 
@@ -113,13 +161,14 @@ def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
         # check residual criterion
 
         rnorm = la.norm(rhs)
+        rnorm_history.append(rnorm)
 
         if rnorm < tolerance:
             break
 
         # check iteration criterion
 
-        if iteration >= max_iterations:
+        if iteration > max_iterations:
             break
 
         # create a duplicate of the current state before updating and insert it
@@ -151,6 +200,9 @@ def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
         except np.linalg.LinAlgError:
             raise RuntimeError('Stiffness matrix is singular')
 
+        dnorm = la.norm(delta)
+        dnorm_history.append(dnorm)
+
         # update model
 
         for i in range(n):
@@ -158,15 +210,9 @@ def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
 
         model.load_factor += delta[n]
 
-        data.append([
-            _format(model.load_factor),
-            _format(rnorm),
-            _format(la.norm(delta)),
-        ])
-
         iteration += 1
 
-    if iteration >= max_iterations:
+    if iteration > max_iterations:
         raise RuntimeError(
             f'Newthon-Raphson did not converge after {max_iterations} steps.' +
             f' Residual norm: {rnorm}'
@@ -179,7 +225,7 @@ def solve_load_control(model: nfem.Model, tolerance: float = 1e-5,
 
     model.status = ModelStatus.equilibrium
 
-    return NonlinearSolutionInfo(rnorm, ['λ', '|r|', '|du|'], data)
+    return SolutionInfo(True, rnorm_history, dnorm_history)
 
 
 def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
@@ -199,7 +245,8 @@ def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
     rhs = np.zeros(n + 1)
     lhs = np.zeros((n + 1, n + 1))
 
-    data = []
+    rnorm_history: List[float] = []
+    dnorm_history: List[float] = []
 
     iteration = 0
 
@@ -221,13 +268,14 @@ def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
         # check residual criterion
 
         rnorm = la.norm(rhs)
+        rnorm_history.append(rnorm)
 
         if rnorm < tolerance:
             break
 
         # check iteration criterion
 
-        if iteration >= max_iterations:
+        if iteration > max_iterations:
             break
 
         # create a duplicate of the current state before updating and insert it
@@ -259,6 +307,9 @@ def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
         except np.linalg.LinAlgError:
             raise RuntimeError('Stiffness matrix is singular')
 
+        dnorm = la.norm(delta)
+        dnorm_history.append(dnorm)
+
         # update model
 
         for i in range(n):
@@ -266,15 +317,9 @@ def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
 
         model.load_factor += delta[n]
 
-        data.append([
-            _format(model.load_factor),
-            _format(rnorm),
-            _format(la.norm(delta)),
-        ])
-
         iteration += 1
 
-    if iteration >= max_iterations:
+    if iteration > max_iterations:
         raise RuntimeError(
             f'Newthon-Raphson did not converge after {max_iterations} steps.' +
             f' Residual norm: {rnorm}'
@@ -287,7 +332,7 @@ def solve_displacement_control(model: nfem.Model, dof: Tuple[str, str],
 
     model.status = ModelStatus.equilibrium
 
-    return NonlinearSolutionInfo(rnorm, ['λ', '|r|', '|du|'], data)
+    return SolutionInfo(True, rnorm_history, dnorm_history)
 
 
 def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
@@ -316,7 +361,8 @@ def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
     rhs = np.zeros(n + 1)
     lhs = np.zeros((n + 1, n + 1))
 
-    data = []
+    rnorm_history: List[float] = []
+    dnorm_history: List[float] = []
 
     iteration = 0
 
@@ -338,13 +384,14 @@ def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
         # check residual criterion
 
         rnorm = la.norm(rhs)
+        rnorm_history.append(rnorm)
 
         if rnorm < tolerance:
             break
 
         # check iteration criterion
 
-        if iteration >= max_iterations:
+        if iteration > max_iterations:
             break
 
         # create a duplicate of the current state before updating and insert it
@@ -380,6 +427,9 @@ def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
         except np.linalg.LinAlgError:
             raise RuntimeError('Stiffness matrix is singular')
 
+        dnorm = la.norm(delta)
+        dnorm_history.append(dnorm)
+
         # update model
 
         for i in range(n):
@@ -387,15 +437,9 @@ def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
 
         model.load_factor += delta[n]
 
-        data.append([
-            _format(model.load_factor),
-            _format(rnorm),
-            _format(la.norm(delta)),
-        ])
-
         iteration += 1
 
-    if iteration >= max_iterations:
+    if iteration > max_iterations:
         raise RuntimeError(
             f'Newthon-Raphson did not converge after {max_iterations} steps.' +
             f' Residual norm: {rnorm}'
@@ -408,7 +452,7 @@ def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
 
     model.status = ModelStatus.equilibrium
 
-    return NonlinearSolutionInfo(rnorm, ['λ', '|r|', '|du|'], data)
+    return SolutionInfo(True, rnorm_history, dnorm_history)
 
 
 def _element_linear_r(element: Element):
@@ -427,18 +471,14 @@ def _element_k(element: Element):
     return element.compute_k()
 
 
-def _format(value, digits=6):
-    return f'{value:.6e}' if value is not None else ''
-
-
 class SolutionInfo:
     """Container for linear solution info."""
 
-    def __init__(self, converged: bool, iterations: int, residual_norm: float):
+    def __init__(self, converged: bool, rnorm: List[float], dnorm: List[float]):
         """Create a new linear SolutionInfo."""
         self.converged = converged
-        self.iterations = iterations
-        self.residual_norm = residual_norm
+        self.rnorm = rnorm
+        self.dnorm = dnorm
 
     def __repr__(self) -> str:
         """Get a text representation of the object."""
@@ -447,8 +487,25 @@ class SolutionInfo:
             print('System converged!', file=output)
         else:
             print('System not converged!', file=output)
-        print(f'# Iterations  = {self.iterations}', file=output)
-        print(f'Residual Norm = {self.residual_norm}', file=output)
+        print(f'# Iterations  = {len(self.rnorm) - 1}', file=output)
+        print(f'Residual Norm = {self.rnorm[-1]}', file=output)
         contents = output.getvalue()
         output.close()
         return contents
+
+    def _repr_html_(self) -> str:
+        data = dict(
+            converged=self.converged,
+            rnorm=self.rnorm,
+            xnorm=self.dnorm,
+        )
+
+        return load_html('solution-viewer', data)
+
+    def show(self) -> None:
+        import sys
+        if 'ipykernel' in sys.modules:
+            from IPython.display import display
+            display(self)
+        else:
+            print(f'Solution converged after {len(self.rnorm) - 1} iterations.')
