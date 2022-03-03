@@ -1,11 +1,9 @@
-'''
-Tests for model creation
-'''
 import pytest
-import numpy
-from numpy.testing import assert_almost_equal, assert_equal
 
 import nfem
+
+import numpy
+from numpy.testing import assert_almost_equal, assert_equal
 
 
 @pytest.fixture
