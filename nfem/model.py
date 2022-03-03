@@ -1134,26 +1134,44 @@ class Model:
         return data
 
     def _repr_html_(self) -> str:
-        from nfem.canvas_3d import Canvas3D
-
-        canvas = Canvas3D(height=600)
-
-        return canvas.html(600, self)
+        return self.html()
 
     def html(self) -> str:
-        from nfem.canvas_3d import Canvas3D
+        timesteps = []
 
-        canvas = Canvas3D(height=600)
+        for model in self.get_model_history():
+            timestep = {}
 
-        return canvas.raw_html(600, self)
+            timestep['name'] = model.name or ''
+
+            timestep['objects'] = objects = []
+
+            for element in model.elements:
+                element.draw(objects)
+
+            for node in model.nodes:
+                node.draw(objects)
+
+            timesteps.append(timestep)
+
+        data = dict(
+            settings=dict(
+            ),
+            timesteps=timesteps,
+        )
+
+        from nfem.viewer import load_html
+
+        return load_html('model-viewer', data)
 
     def show(self, height: int = 600, timestep: int = 0) -> None:
         """Show the model."""
         import sys
         if 'ipykernel' in sys.modules:
-            from nfem.canvas_3d import Canvas3D
-            canvas = Canvas3D(height=height)
-            canvas.show(height, self)
+            from html import escape
+            from IPython.display import display_html
+            raw_html = self.html()
+            display_html(f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{escape(raw_html)}"></iframe>', raw=True)
         else:
             from PyQt6.QtWebEngineWidgets import QWebEngineView
             from PyQt6.QtWidgets import QApplication
