@@ -272,6 +272,22 @@ class Truss:
 
         c = (0.5 * (self.node_a.location + self.node_b.location)).tolist()
 
+        eta = None
+
+        t_strength = self.tensile_strength
+        c_strength = self.compressive_strength
+
+        if sigma > 1e-3:
+            if t_strength is not None:
+                sigma_max = t_strength
+                eta = sigma / sigma_max
+        elif sigma < -1e-3:
+            if c_strength is not None:
+                sigma_max = -c_strength
+                eta = sigma / sigma_max
+        elif t_strength is not None and c_strength is not None:
+            eta = 0.0
+
         item.append({
             "type": "ElementData",
             "position": c,
@@ -283,24 +299,6 @@ class Truss:
                 "Green-Lagrange Strain": self.compute_epsilon_gl(),
                 "PK2 Stress": sigma,
                 "Normal Force": self.normal_force,
+                "Degree of Utilization": eta or "-",
             },
         })
-
-        # eta = None
-
-        # if self.compute_sigma_pk2() > 1e-3:
-        #     color = 'blue'
-        #     if self.tensile_strength is not None:
-        #         sigma_max = self.tensile_strength
-        #         eta = sigma / sigma_max
-        # elif self.compute_sigma_pk2() < -1e-3:
-        #     color = 'red'
-        #     if self.compressive_strength is not None:
-        #         sigma_max = -self.compressive_strength
-        #         eta = sigma / sigma_max
-        # elif (self.tensile_strength is not None and
-        #       self.compressive_strength is not None):
-        #     eta = 0.0
-
-        # if eta is not None:
-        #     item.add_result('Degree of Utilization', eta)
