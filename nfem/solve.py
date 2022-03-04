@@ -6,7 +6,7 @@ import nfem
 from nfem.assembler import Assembler
 from nfem.element import Element
 from nfem.model_status import ModelStatus
-from nfem.viewer import load_html
+from nfem.viewer import load_html, show_html
 
 import numpy as np
 import numpy.linalg as la
@@ -493,7 +493,7 @@ class SolutionInfo:
         output.close()
         return contents
 
-    def _repr_html_(self) -> str:
+    def html(self) -> str:
         data = dict(
             converged=self.converged,
             rnorm=self.rnorm,
@@ -502,10 +502,10 @@ class SolutionInfo:
 
         return load_html('solution-viewer', data)
 
+    def _repr_html_(self) -> str:
+        return self.html()
+
     def show(self) -> None:
-        import sys
-        if 'ipykernel' in sys.modules:
-            from IPython.display import display
-            display(self)
-        else:
-            print(f'Solution converged after {len(self.rnorm) - 1} iterations.')
+        raw_html = self.html()
+
+        show_html(raw_html)

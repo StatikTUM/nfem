@@ -11,6 +11,7 @@ from nfem.model_status import ModelStatus
 from nfem.node import Node
 from nfem.spring import Spring
 from nfem.truss import Truss
+from nfem.viewer import show_html
 
 import numpy as np
 import numpy.linalg as la
@@ -1164,27 +1165,7 @@ class Model:
 
         return load_html('model-viewer', data)
 
-    def show(self, height: int = 600, timestep: int = 0) -> None:
-        """Show the model."""
-        import sys
-        if 'ipykernel' in sys.modules:
-            from html import escape
-            from IPython.display import display_html
-            raw_html = self.html()
-            display_html(f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{escape(raw_html)}"></iframe>', raw=True)
-        else:
-            from PyQt6.QtWebEngineWidgets import QWebEngineView
-            from PyQt6.QtWidgets import QApplication
+    def show(self, height: int = 500, timestep: int = 0) -> None:
+        raw_html = self.html()
 
-            import sys
-
-            html = self.html()
-
-            app = QApplication(sys.argv)
-
-            view = QWebEngineView()
-            view.setWindowTitle('nfem')
-            view.setHtml(html)
-            view.show()
-
-            sys.exit(app.exec())
+        show_html(raw_html, height, iframe=True)

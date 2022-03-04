@@ -11,7 +11,7 @@ ROOT = pathlib.Path(__file__).parent.resolve()
 def load_html(name: str, data):
     path = f'{ROOT}/html/{name}.html'
 
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         html = f.read()
 
     start_tag = '<script type="application/json">'
@@ -27,3 +27,29 @@ def load_html(name: str, data):
     tail = html[end_index:]
 
     return head + json.dumps(data) + tail
+
+
+def show_html(raw_html, height=400, iframe=False):
+    import sys
+    if 'ipykernel' in sys.modules:
+        from html import escape
+        from IPython.display import display_html
+
+        if iframe:
+            display_html(f'<iframe sandbox="allow-modals" seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{escape(raw_html)}"></iframe>', raw=True)
+        else:
+            display_html(raw_html, raw=True)
+    else:
+        from PyQt6.QtWebEngineWidgets import QWebEngineView
+        from PyQt6.QtWidgets import QApplication
+
+        import sys
+
+        app = QApplication(sys.argv + ['--disable-logging'])
+
+        view = QWebEngineView()
+        view.setWindowTitle('nfem')
+        view.setHtml(raw_html)
+        view.show()
+
+        sys.exit(app.exec())
