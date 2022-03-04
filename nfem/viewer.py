@@ -36,7 +36,7 @@ def show_html(raw_html, height=400, iframe=False):
         from IPython.display import display_html
 
         if iframe:
-            display_html(f'<iframe sandbox="allow-modals" seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{escape(raw_html)}"></iframe>', raw=True)
+            display_html(f'<iframe seamless frameborder="0" allowfullscreen width="100%" height="{height}" srcdoc="{escape(raw_html)}"></iframe>', raw=True)
         else:
             display_html(raw_html, raw=True)
     else:
