@@ -1134,8 +1134,8 @@ class Model:
 
         return data
 
-    def _repr_html_(self) -> str:
-        return self.html()
+    def _ipython_display_(self) -> None:
+        self.show()
 
     def html(self) -> str:
         timesteps = []
