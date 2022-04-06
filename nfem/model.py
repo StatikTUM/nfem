@@ -1137,15 +1137,15 @@ class Model:
     def _ipython_display_(self) -> None:
         self.show()
 
-    def html(self) -> str:
+    def html(self, height: int = 500, timestep: int = 0) -> str:
         timesteps = []
 
         for model in self.get_model_history():
-            timestep = {}
+            ts = {}
 
-            timestep['name'] = model.name or ''
+            ts['name'] = model.name or ''
 
-            timestep['objects'] = objects = []
+            ts['objects'] = objects = []
 
             for element in model.elements:
                 element.draw(objects)
@@ -1153,10 +1153,12 @@ class Model:
             for node in model.nodes:
                 node.draw(objects)
 
-            timesteps.append(timestep)
+            timesteps.append(ts)
 
         data = dict(
             settings=dict(
+                height=height,
+                timestep=timestep,
             ),
             timesteps=timesteps,
         )
@@ -1166,6 +1168,6 @@ class Model:
         return load_html('model-viewer', data)
 
     def show(self, height: int = 500, timestep: int = 0) -> None:
-        raw_html = self.html()
+        raw_html = self.html(height, timestep)
 
         show_html(raw_html, height, iframe=True)
