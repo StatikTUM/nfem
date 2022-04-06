@@ -398,7 +398,7 @@ class Node:
                 "position": ref_a,
                 "direction": direction.tolist(),
                 "color": "DarkGray",
-                "layer": 10,
+                "layer": "13",
             })
 
             item.append({
@@ -406,7 +406,7 @@ class Node:
                 "position": a,
                 "direction": direction.tolist(),
                 "color": "Green",
-                "layer": 23,
+                "layer": "23",
             })
 
         if np.linalg.norm(self.residual) > 1e-4:
@@ -415,16 +415,8 @@ class Node:
 
             item.append({
                 "type": "Arrow",
-                "position": ref_a,
-                "direction": direction.tolist(),
-                "color": "DarkGray",
-                "layer": 10,
-            })
-
-            item.append({
-                "type": "Arrow",
                 "position": a,
                 "direction": direction.tolist(),
                 "color": "Purple",
-                "layer": 23,
+                "layer": "23",
             })
