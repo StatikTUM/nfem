@@ -39,6 +39,7 @@ class Truss:
     prestress: float
     tensile_strength: Optional[float]
     compressive_strength: Optional[float]
+    length_factor: float
 
     def __init__(self, id: str, node_a: Node, node_b: Node,
                  youngs_modulus: float, area: float, prestress: float = 0.0):
@@ -58,6 +59,7 @@ class Truss:
         self.prestress = prestress
         self.tensile_strength: Optional[float] = None
         self.compressive_strength: Optional[float] = None
+        self.length_factor = 1.0
 
     @property
     def dofs(self) -> Sequence[Dof]:
@@ -76,7 +78,7 @@ class Truss:
         a = self.node_a.ref_location
         b = self.node_b.ref_location
 
-        return la.norm(b - a)  # type: ignore
+        return la.norm(b - a) * self.length_factor  # type: ignore
 
     @property
     def length(self) -> float:
@@ -91,7 +93,7 @@ class Truss:
     def compute_epsilon_gl(self) -> float:
         """Get the Green-Lagrange strain."""
         # reference base vector
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        A1 = (self.node_b.ref_location - self.node_a.ref_location) * self.length_factor
 
         # actual base vector
         a1 = self.node_b.location - self.node_a.location
@@ -101,7 +103,7 @@ class Truss:
     def compute_epsilon_lin(self) -> float:
         """Get the linear strain."""
         # reference base vector
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        A1 = (self.node_b.ref_location - self.node_a.ref_location) * self.length_factor
 
         # actual base vector
         a1 = self.node_b.location - self.node_a.location
@@ -126,7 +128,7 @@ class Truss:
     def compute_linear_r(self) -> Vector:
         """Compute the linear residual force vector of the element."""
         a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        A1 = (self.node_b.ref_location - self.node_a.ref_location) * self.length_factor
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -140,7 +142,7 @@ class Truss:
 
     def compute_linear_k(self) -> Matrix:
         """Compute the linear stiffness matrix of the element."""
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        A1 = (self.node_b.ref_location - self.node_a.ref_location) * self.length_factor
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -152,7 +154,7 @@ class Truss:
     def compute_linear_kg(self) -> Matrix:
         """Compute the linear geometric stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        A1 = (self.node_b.ref_location - self.node_a.ref_location) * self.length_factor
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -169,7 +171,7 @@ class Truss:
     def compute_r(self) -> Vector:
         """Compute the nonlinear residual force vector of the element."""
         a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        A1 = (self.node_b.ref_location - self.node_a.ref_location) * self.length_factor
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -184,7 +186,7 @@ class Truss:
     def compute_k(self) -> Matrix:
         """Compute the nonlinear stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        A1 = (self.node_b.ref_location - self.node_a.ref_location) * self.length_factor
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -206,7 +208,7 @@ class Truss:
     def compute_km(self) -> Matrix:
         """Compute the material stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        A1 = (self.node_b.ref_location - self.node_a.ref_location) * self.length_factor
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -218,7 +220,7 @@ class Truss:
     def compute_kg(self) -> Matrix:
         """Compute the geometric stiffness matrix of the element."""
         a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        A1 = (self.node_b.ref_location - self.node_a.ref_location) * self.length_factor
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
