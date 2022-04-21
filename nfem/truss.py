@@ -21,10 +21,10 @@ dg = np.array([
 ])
 
 
-def _select(sigma, negative, zero, positive):
-    if sigma < -1e-4:
+def _select(sigma, negative, zero, positive, tolerance=1e-4):
+    if sigma < -tolerance:
         return negative
-    if sigma > 1e-4:
+    if sigma > tolerance:
         return positive
     return zero
 
