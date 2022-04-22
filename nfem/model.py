@@ -775,7 +775,7 @@ class Model:
         print(
             f'Closest eigenvalue * lambda: {eigvals[idx] * self.load_factor}')
         if len(eigvecs[idx]) < 10:
-            print('Closest eigenvector: {eigvecs[idx]}')
+            print(f'Closest eigenvector: {eigvecs[idx]}')
 
         self.first_eigenvalue = eigvals[idx]
 
