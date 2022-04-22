@@ -631,7 +631,7 @@ class Model:
                                         = False
                                         ) -> None:
         """Perform a solution step using arc-length control."""
-        solution = self.solve_arc_length_control(tolerance, max_iterations)
+        solution_info = self.solve_arc_length_control(tolerance, max_iterations)
 
         if solve_det_k or solve_attendant_eigenvalue:
             assembler = Assembler(self)
@@ -647,9 +647,8 @@ class Model:
             self.solve_eigenvalues(assembler=assembler)
 
         if info:
-            print('Arc-Length-Control with length = ' +
-                  f'{solution.constraint.squared_l_hat**0.5}')
-            solution.show()
+            print(solution_info.message)
+            solution_info.show()
             print()
 
     def solve_det_k(self) -> None:
