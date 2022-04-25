@@ -452,7 +452,10 @@ def solve_arc_length_control(model: nfem.Model, tolerance: float = 1e-5,
 
     model.status = ModelStatus.equilibrium
 
-    return SolutionInfo(True, rnorm_history, dnorm_history)
+    solution_info = SolutionInfo(True, rnorm_history, dnorm_history)
+    solution_info.message = f'Arc-Length-Control with length = {squared_l_hat**0.5}'
+
+    return solution_info
 
 
 def _element_linear_r(element: Element):
@@ -473,6 +476,8 @@ def _element_k(element: Element):
 
 class SolutionInfo:
     """Container for linear solution info."""
+
+    message: str
 
     def __init__(self, converged: bool, rnorm: List[float], dnorm: List[float]):
         """Create a new linear SolutionInfo."""
