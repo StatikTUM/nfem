@@ -301,6 +301,9 @@ class Model:
 
         return k[:n, :n]
 
+    def get_stiffness(self) -> Matrix:
+        return self.compute_k()
+
     def compute_ke(self) -> Matrix:
         """Compute the elastic stiffness matrix of the element."""
         assembler = Assembler(self)
