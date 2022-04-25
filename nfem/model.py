@@ -251,7 +251,7 @@ class Model:
         def compute_local(element: Element) -> Vector:
             return element.compute_linear_k()
 
-        k = assembler.assemble_vector(compute_local)
+        k = assembler.assemble_matrix(compute_local)
 
         return k[:n, :n]
 
