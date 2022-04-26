@@ -27,7 +27,7 @@ scipy = [
     { version = "^1.7.2", python = ">=3.10,<3.11" },
 ]
 importlib-metadata = { version = "^4.11", python = "<3.8" }
-typing-extensions
+typing-extensions = {}
 
 [tool.poetry.extras]
 qt = ["PyQt6-WebEngine"]
