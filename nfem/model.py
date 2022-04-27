@@ -24,9 +24,6 @@ from typing import List, Optional, Sequence, Tuple, Type, Union
 
 DofID = Union[str, Dof, Tuple[str, str]]
 
-Vector = npt.NDArray[np.float64]
-Matrix = npt.NDArray[np.float64]
-
 
 class Model:
     """Model of a nonlinear finite element problem."""
@@ -44,7 +41,7 @@ class Model:
         self._previous_model: Model = None
         self.det_k: Optional[float] = None
         self.first_eigenvalue: Optional[float] = None
-        self.first_eigenvector_model: Optional[Vector] = None
+        self.first_eigenvector_model: Optional[npt.NDArray[np.float64]] = None
 
     # === modeling
 
@@ -222,7 +219,7 @@ class Model:
 
     # === r and k
 
-    def compute_linear_r(self) -> Vector:
+    def compute_linear_r(self) -> npt.NDArray[np.float64]:
         """Compute the linear residual force vector of the element."""
         assembler = Assembler(self)
 
@@ -235,40 +232,40 @@ class Model:
 
         r[:] *= self.load_factor
 
-        def compute_local(element: Element) -> Vector:
+        def compute_local(element: Element) -> npt.NDArray[np.float64]:
             return element.compute_linear_r()
 
         r = assembler.assemble_vector(compute_local)
 
         return r[:n]
 
-    def compute_linear_k(self) -> Matrix:
+    def compute_linear_k(self) -> npt.NDArray[np.float64]:
         """Compute the linear stiffness matrix of the element."""
         assembler = Assembler(self)
 
         n, _ = assembler.size
 
-        def compute_local(element: Element) -> Vector:
+        def compute_local(element: Element) -> npt.NDArray[np.float64]:
             return element.compute_linear_k()
 
         k = assembler.assemble_matrix(compute_local)
 
         return k[:n, :n]
 
-    def compute_linear_kg(self) -> Matrix:
+    def compute_linear_kg(self) -> npt.NDArray[np.float64]:
         """Compute the linear geometric stiffness matrix of the element."""
         assembler = Assembler(self)
 
         n, _ = assembler.size
 
-        def compute_local(element: Element) -> Vector:
+        def compute_local(element: Element) -> npt.NDArray[np.float64]:
             return element.compute_linear_kg()
 
         k = assembler.assemble_matrix(compute_local)
 
         return k[:n, :n]
 
-    def compute_r(self) -> Vector:
+    def compute_r(self) -> npt.NDArray[np.float64]:
         """Compute the nonlinear residual force vector of the element."""
         assembler = Assembler(self)
 
@@ -281,75 +278,75 @@ class Model:
 
         r[:] *= self.load_factor
 
-        def compute_local(element: Element) -> Vector:
+        def compute_local(element: Element) -> npt.NDArray[np.float64]:
             return element.compute_r()
 
         assembler.assemble_vector(compute_local, out=r)
 
         return r[:n]
 
-    def compute_k(self) -> Matrix:
+    def compute_k(self) -> npt.NDArray[np.float64]:
         """Compute the nonlinear stiffness matrix of the element."""
         assembler = Assembler(self)
 
         n, _ = assembler.size
 
-        def compute_local(element: Element) -> Vector:
+        def compute_local(element: Element) -> npt.NDArray[np.float64]:
             return element.compute_k()
 
         k = assembler.assemble_matrix(compute_local)
 
         return k[:n, :n]
 
-    def get_stiffness(self) -> Matrix:
+    def get_stiffness(self) -> npt.NDArray[np.float64]:
         return self.compute_k()
 
-    def compute_ke(self) -> Matrix:
+    def compute_ke(self) -> npt.NDArray[np.float64]:
         """Compute the elastic stiffness matrix of the element."""
         assembler = Assembler(self)
 
         n, _ = assembler.size
 
-        def compute_local(element: Element) -> Vector:
+        def compute_local(element: Element) -> npt.NDArray[np.float64]:
             return element.compute_ke()
 
         k = assembler.assemble_matrix(compute_local)
 
         return k[:n, :n]
 
-    def compute_km(self) -> Matrix:
+    def compute_km(self) -> npt.NDArray[np.float64]:
         """Compute the material stiffness matrix of the element."""
         assembler = Assembler(self)
 
         n, _ = assembler.size
 
-        def compute_local(element: Element) -> Vector:
+        def compute_local(element: Element) -> npt.NDArray[np.float64]:
             return element.compute_km()
 
         k = assembler.assemble_matrix(compute_local)
 
         return k[:n, :n]
 
-    def compute_kg(self) -> Matrix:
+    def compute_kg(self) -> npt.NDArray[np.float64]:
         """Compute the geometric stiffness matrix of the element."""
         assembler = Assembler(self)
 
         n, _ = assembler.size
 
-        def compute_local(element: Element) -> Vector:
+        def compute_local(element: Element) -> npt.NDArray[np.float64]:
             return element.compute_kg()
 
         k = assembler.assemble_matrix(compute_local)
 
         return k[:n, :n]
 
-    def compute_kd(self) -> Matrix:
+    def compute_kd(self) -> npt.NDArray[np.float64]:
         """Compute the initial-displacement stiffness matrix of the element."""
         assembler = Assembler(self)
 
         n, _ = assembler.size
 
-        def compute_local(element: Element) -> Vector:
+        def compute_local(element: Element) -> npt.NDArray[np.float64]:
             return element.compute_kd()
 
         k = assembler.assemble_matrix(compute_local)
@@ -389,7 +386,7 @@ class Model:
 
         return current_value - previous_value
 
-    def get_increment_vector(self, assembler: Assembler = None) -> Vector:
+    def get_increment_vector(self, assembler: Assembler = None) -> npt.NDArray[np.float64]:
         """Get the increment that resulted in the current position.
 
         @assembler: Initialized assembler.
@@ -796,7 +793,7 @@ class Model:
 
         self.first_eigenvector_model = model
 
-    def get_tangent_vector(self, assembler: Assembler = None) -> Vector:
+    def get_tangent_vector(self, assembler: Assembler = None) -> npt.NDArray[np.float64]:
         """Get the tangent vector.
 
         @tangent: Tangent vector t = [v, 1]
@@ -1097,7 +1094,7 @@ class Model:
         self.load_factor += delta_lambda
 
     def get_delta_dof_vector(self, model_b: Model = None,
-                             assembler: Assembler = None) -> Vector:
+                             assembler: Assembler = None) -> npt.NDArray[np.float64]:
         """Get the delta dof between this and a given model_b as a numpy array.
 
         @model_b: Model that is used as reference for the delta dof

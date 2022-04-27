@@ -9,8 +9,6 @@ import numpy.typing as npt
 
 from typing import Sequence
 
-Vector = npt.NDArray[np.float64]
-
 
 class Node:
     """Three dimensional Node.
@@ -85,7 +83,7 @@ class Node:
         self._dof_z.ref_value = value
 
     @property
-    def ref_location(self) -> Vector:
+    def ref_location(self) -> npt.NDArray[np.float64]:
         """Get or set the location in the undeformed configuration."""
         return np.array([self.ref_x, self.ref_y, self.ref_z])
 
@@ -123,7 +121,7 @@ class Node:
         self._dof_z.value = value
 
     @property
-    def location(self) -> Vector:
+    def location(self) -> npt.NDArray[np.float64]:
         """Get or set the location in the deformed configuration."""
         return np.array([self.x, self.y, self.z])
 
@@ -161,7 +159,7 @@ class Node:
         self._dof_z.delta = value
 
     @property
-    def displacement(self) -> Vector:
+    def displacement(self) -> npt.NDArray[np.float64]:
         """Get or set the displacement."""
         return np.array([self.u, self.v, self.w])
 
@@ -199,7 +197,7 @@ class Node:
         self._dof_z.external_force = value
 
     @property
-    def external_force(self) -> Vector:
+    def external_force(self) -> npt.NDArray[np.float64]:
         """Get or set the external force."""
         return np.array([self.fx, self.fy, self.fz])
 
@@ -237,7 +235,7 @@ class Node:
         self._dof_z.residual = value
 
     @property
-    def residual(self) -> Vector:
+    def residual(self) -> npt.NDArray[np.float64]:
         """Get or set the residual force."""
         return np.array([self.rx, self.ry, self.rz])
 

@@ -10,9 +10,6 @@ import numpy.typing as npt
 
 from typing import Sequence
 
-Vector = npt.NDArray[np.float64]
-Matrix = npt.NDArray[np.float64]
-
 
 class Spring:
     """Linear spring element."""
@@ -41,7 +38,7 @@ class Spring:
 
     # linear analysis
 
-    def compute_linear_r(self) -> Vector:
+    def compute_linear_r(self) -> npt.NDArray[np.float64]:
         """Compute the linear residual force vector of the element."""
         return np.array([
             self.kx * self.node.u,
@@ -49,7 +46,7 @@ class Spring:
             self.kz * self.node.w,
         ], float)
 
-    def compute_linear_k(self) -> Matrix:
+    def compute_linear_k(self) -> npt.NDArray[np.float64]:
         """Compute the linear stiffness matrix of the element."""
         return np.array([
             [self.kx, 0, 0],
@@ -57,33 +54,33 @@ class Spring:
             [0, 0, self.kz],
         ], float)
 
-    def compute_linear_kg(self) -> Matrix:
+    def compute_linear_kg(self) -> npt.NDArray[np.float64]:
         """Compute the linear geometric stiffness matrix of the element."""
         return np.zeros((3, 3))
 
     # nonlinear analysis
 
-    def compute_r(self) -> Vector:
+    def compute_r(self) -> npt.NDArray[np.float64]:
         """Compute the nonlinear residual force vector of the element."""
         return self.compute_linear_r()
 
-    def compute_k(self) -> Matrix:
+    def compute_k(self) -> npt.NDArray[np.float64]:
         """Compute the nonlinear stiffness matrix of the element."""
         return self.compute_ke()
 
-    def compute_ke(self) -> Matrix:
+    def compute_ke(self) -> npt.NDArray[np.float64]:
         """Compute the elastic stiffness matrix of the element."""
         return self.compute_linear_k()
 
-    def compute_km(self) -> Matrix:
+    def compute_km(self) -> npt.NDArray[np.float64]:
         """Compute the material stiffness matrix of the element."""
         return self.compute_linear_k()
 
-    def compute_kg(self) -> Matrix:
+    def compute_kg(self) -> npt.NDArray[np.float64]:
         """Compute the geometric stiffness matrix of the element."""
         return np.zeros((3, 3))
 
-    def compute_kd(self) -> Matrix:
+    def compute_kd(self) -> npt.NDArray[np.float64]:
         """Compute the initial-displacement stiffness matrix of the element."""
         return np.zeros((3, 3))
 
