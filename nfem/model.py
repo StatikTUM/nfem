@@ -235,7 +235,7 @@ class Model:
         def compute_local(element: Element) -> npt.NDArray[np.float64]:
             return element.compute_linear_r()
 
-        r = assembler.assemble_vector(compute_local)
+        assembler.assemble_vector(compute_local, out=r)
 
         return r[:n]
 
