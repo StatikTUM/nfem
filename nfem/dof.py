@@ -43,6 +43,10 @@ class Dof:
         """Hash code for comparisons."""
         return hash(self.id)
 
+    def __repr__(self) -> str:
+        """Text representation."""
+        return f'{self.id[0]}.{self.id[1]}'
+    
     @property
     def delta(self) -> float:
         """Get or set the difference between actual and reference value."""
