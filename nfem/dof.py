@@ -45,7 +45,7 @@ class Dof:
 
     def __repr__(self) -> str:
         """Text representation."""
-        return f'{self.id[0]}.{self.id[1]}'
+        return f'{self.id[0]}_{self.id[1]}'
     
     @property
     def delta(self) -> float:
