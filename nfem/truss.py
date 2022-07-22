@@ -1,4 +1,7 @@
-"""Nonlinear truss element."""
+"""Nonlinear truss element.
+- core-congruential element formulation (http://dx.doi.org/10.1016/j.cma.2021.113817)
+- URS on element level (http://dx.doi.org/10.1016/j.cad.2022.103360)
+"""
 
 from __future__ import annotations
 
@@ -37,6 +40,7 @@ class Truss:
     prestress: float
     tensile_strength: Optional[float]
     compressive_strength: Optional[float]
+    updated_reference_strategy: bool  # URS on element level
 
     def __init__(self, id: str, node_a: Node, node_b: Node,
                  youngs_modulus: float, area: float, prestress: float = 0.0):
@@ -56,6 +60,7 @@ class Truss:
         self.prestress = prestress
         self.tensile_strength: Optional[float] = None
         self.compressive_strength: Optional[float] = None
+        self.updated_reference_strategy = False
 
     @property
     def dofs(self) -> Sequence[Dof]:
@@ -71,10 +76,7 @@ class Truss:
     @property
     def ref_length(self) -> float:
         """Get the length of the undeformed truss."""
-        a = self.node_a.ref_location
-        b = self.node_b.ref_location
-
-        return la.norm(b - a)  # type: ignore
+        return la.norm(self.ref_base_vector)  # type: ignore
 
     @property
     def length(self) -> float:
@@ -84,25 +86,36 @@ class Truss:
 
         return la.norm(b - a)  # type: ignore
 
+    @property
+    def ref_base_vector(self) -> npt.NDArray[np.float64]:
+        if self.updated_reference_strategy:
+            return self.act_base_vector
+
+        return self.node_b.ref_location - self.node_a.ref_location
+
+    @property
+    def act_base_vector(self) -> npt.NDArray[np.float64]:
+        return self.node_b.location - self.node_a.location
+
     # strain and stress
 
     def compute_epsilon_gl(self) -> float:
         """Get the Green-Lagrange strain."""
         # reference base vector
-        A1 = self.node_b.ref_location - self.node_a.ref_location
-
+        A1 = self.ref_base_vector
+        
         # actual base vector
-        a1 = self.node_b.location - self.node_a.location
+        a1 = self.act_base_vector
 
         return (a1 @ a1) / (2 * A1 @ A1) - 0.5
 
     def compute_epsilon_lin(self) -> float:
         """Get the linear strain."""
         # reference base vector
-        A1 = self.node_b.ref_location - self.node_a.ref_location
-
+        A1 = self.ref_base_vector
+        
         # actual base vector
-        a1 = self.node_b.location - self.node_a.location
+        a1 = self.act_base_vector
 
         return (a1 @ A1) / (A1 @ A1) - 1
 
@@ -123,8 +136,11 @@ class Truss:
 
     def compute_linear_r(self) -> npt.NDArray[np.float64]:
         """Compute the linear residual force vector of the element."""
-        a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        # reference base vector
+        A1 = self.ref_base_vector
+        
+        # actual base vector
+        a1 = self.act_base_vector
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -138,7 +154,8 @@ class Truss:
 
     def compute_linear_k(self) -> npt.NDArray[np.float64]:
         """Compute the linear stiffness matrix of the element."""
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        # reference base vector
+        A1 = self.ref_base_vector
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -149,8 +166,11 @@ class Truss:
 
     def compute_linear_kg(self) -> npt.NDArray[np.float64]:
         """Compute the linear geometric stiffness matrix of the element."""
-        a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        # reference base vector
+        A1 = self.ref_base_vector
+        
+        # actual base vector
+        a1 = self.act_base_vector
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -166,8 +186,11 @@ class Truss:
 
     def compute_r(self) -> npt.NDArray[np.float64]:
         """Compute the nonlinear residual force vector of the element."""
-        a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        # reference base vector
+        A1 = self.ref_base_vector
+        
+        # actual base vector
+        a1 = self.act_base_vector
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -181,8 +204,11 @@ class Truss:
 
     def compute_k(self) -> npt.NDArray[np.float64]:
         """Compute the nonlinear stiffness matrix of the element."""
-        a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        # reference base vector
+        A1 = self.ref_base_vector
+        
+        # actual base vector
+        a1 = self.act_base_vector
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -203,8 +229,11 @@ class Truss:
 
     def compute_km(self) -> npt.NDArray[np.float64]:
         """Compute the material stiffness matrix of the element."""
-        a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        # reference base vector
+        A1 = self.ref_base_vector
+        
+        # actual base vector
+        a1 = self.act_base_vector
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
@@ -215,8 +244,11 @@ class Truss:
 
     def compute_kg(self) -> npt.NDArray[np.float64]:
         """Compute the geometric stiffness matrix of the element."""
-        a1 = self.node_b.location - self.node_a.location
-        A1 = self.node_b.ref_location - self.node_a.ref_location
+        # reference base vector
+        A1 = self.ref_base_vector
+        
+        # actual base vector
+        a1 = self.act_base_vector
 
         A11 = A1 @ A1
         L = np.sqrt(A11)
