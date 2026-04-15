@@ -31,9 +31,10 @@ jobs:
           cache: 'poetry'
 
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: false
+          installer-parallel: true
 
       - name: Install dependencies
         run: poetry install --no-interaction
@@ -57,9 +58,10 @@ jobs:
           cache: 'poetry'
 
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: false
+          installer-parallel: true
 
       - name: Patch version number
         run: |
